@@ -1,81 +1,100 @@
-'use client'
+"use client"
 
-import { ArrowRightIcon, MapPinIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import Image from 'next/image'
-
-const events = [
-  {
-    title: "CodeSprint '25: Dev Edition",
-    organizer: "NovaCode Labs",
-    location: "Bengaluru, India",
-    organizerImage: "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop",
-    timeAgo: "23 hrs ago",
-  },
-  {
-    title: "Startup Unplugged: Founder's Q&A",
-    organizer: "LeapNest Ventures",
-    location: "Mumbai, India",
-    organizerImage: "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop",
-    timeAgo: "23 hrs ago",
-  },
-  {
-    title: "TechBridge: AI for Impact",
-    organizer: "MindMesh Technologies",
-    location: "Nairobi, Kenya",
-    organizerImage: "https://images.pexels.com/photos/3861969/pexels-photo-3861969.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop",
-    timeAgo: "23 hrs ago",
-  },
-  {
-    title: "ScaleUp Summit: Growth Hacking 101",
-    organizer: "GrowthPath Systems",
-    location: "Austin, USA",
-    organizerImage: "https://images.pexels.com/photos/3825581/pexels-photo-3825581.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop",
-    timeAgo: "23 hrs ago",
-  },
-  {
-    title: "Women Who Build: Innovation Fair",
-    organizer: "SheStarts Network",
-    location: "Delhi, India",
-    organizerImage: "https://images.pexels.com/photos/3861458/pexels-photo-3861458.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop",
-    timeAgo: "23 hrs ago",
-  },
-  {
-    title: "UX Ignite: Design Thinking for Startups",
-    organizer: "PixelPulse Studio",
-    location: "Berlin, Germany",
-    organizerImage: "https://images.pexels.com/photos/6801648/pexels-photo-6801648.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop",
-    timeAgo: "23 hrs ago",
-  },
-]
+import { ArrowRightIcon, MapPinIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import Image from "next/image"
+import { useRef, useState, useEffect } from "react"
+import { useRouter } from "next/navigation" // Import useRouter
+import { events } from "@/lib/data" // Import from shared data
 
 export default function EventsSection() {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [activeIndex, setActiveIndex] = useState(0)
+  const router = useRouter() // Initialize useRouter
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current
+    if (!scrollElement) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = cardRefs.current.indexOf(entry.target as HTMLDivElement)
+            if (index !== -1) {
+              setActiveIndex(index)
+            }
+          }
+        })
+      },
+      {
+        root: scrollElement,
+        rootMargin: "0px",
+        threshold: 0.7, // 70% of the item must be visible to be considered "active"
+      },
+    )
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref)
+    })
+
+    return () => {
+      cardRefs.current.forEach((ref) => {
+        if (ref) observer.unobserve(ref)
+      })
+    }
+  }, [])
+
+  const scrollToCard = (index: number) => {
+    if (cardRefs.current[index]) {
+      cardRefs.current[index]?.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+      })
+    }
+  }
+
+  const handleExploreClick = () => {
+    router.push("/events") // Navigate to the new events page
+  }
+
   return (
     <section id="events" className="py-8 md:py-16">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col space-y-8">
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="font-poppins font-medium text-white text-2xl md:text-3xl lg:text-4xl">
-              Events
-            </h2>
+            <h2 className="font-poppins font-medium text-white text-2xl md:text-3xl lg:text-4xl">Events</h2>
 
             <Button
               variant="link"
               className="text-white flex items-center gap-3 font-inter text-lg md:text-xl hover:text-purple-400 transition-colors duration-200 self-start sm:self-center"
+              onClick={handleExploreClick} // Add onClick handler
             >
               Explore More
               <ArrowRightIcon className="w-6 h-6 md:w-8 md:h-8" />
             </Button>
           </div>
 
-          {/* Events Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Events Scrollable Container */}
+          <div
+            ref={scrollRef}
+            className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide
+                       scroll-snap-x-mandatory scroll-smooth"
+          >
             {events.map((event, index) => (
               <Card
                 key={index}
-                className="glass-effect hover-lift transition-all duration-300 hover:scale-105 border border-white/20"
+                ref={(el) => (cardRefs.current[index] = el)}
+                className="flex-shrink-0
+                           w-full                                 /* Mobile: 1 card at a time */
+                           sm:w-[calc((100%-theme(spacing.6))/2)] /* Small screens: 2 cards */
+                           md:w-[calc((100%-theme(spacing.6)*2)/3)] /* Medium screens: 3 cards */
+                           lg:w-[calc((100%-theme(spacing.6)*2)/3)] /* Large screens: 3 cards */
+                           glass-effect hover-lift transition-all duration-300 hover:scale-105 border border-white/20
+                           scroll-snap-align-center"
               >
                 <CardContent className="flex flex-col space-y-6 p-6 md:p-8">
                   <div className="flex flex-col space-y-4">
@@ -86,7 +105,7 @@ export default function EventsSection() {
                     <div className="flex items-center gap-3">
                       <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden">
                         <Image
-                          src={event.organizerImage}
+                          src={event.organizerImage || "/placeholder.svg"}
                           alt={event.organizer}
                           fill
                           className="object-cover"
@@ -99,9 +118,7 @@ export default function EventsSection() {
 
                     <div className="flex items-center gap-2">
                       <MapPinIcon className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                      <span className="font-poppins font-medium text-white text-sm md:text-base">
-                        {event.location}
-                      </span>
+                      <span className="font-poppins font-medium text-white text-sm md:text-base">{event.location}</span>
                     </div>
                   </div>
 
@@ -109,12 +126,24 @@ export default function EventsSection() {
                     <Button className="h-10 md:h-12 px-4 md:px-6 py-2 bg-[#8700ff] rounded-full font-poppins text-sm md:text-base hover:bg-[#7300dd] transition-all duration-200">
                       Register
                     </Button>
-                    <span className="font-inter font-medium text-white/80 text-xs md:text-sm">
-                      {event.timeAgo}
-                    </span>
+                    <span className="font-inter font-medium text-white/80 text-xs md:text-sm">{event.timeAgo}</span>
                   </div>
                 </CardContent>
               </Card>
+            ))}
+          </div>
+
+          {/* Pagination Dots (Visible on all screen sizes) */}
+          <div className="flex justify-center gap-2 mt-4">
+            {events.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => scrollToCard(index)}
+                className={`h-2 w-2 rounded-full transition-colors duration-200 ${
+                  index === activeIndex ? "bg-white" : "bg-white/40"
+                }`}
+                aria-label={`Go to event ${index + 1}`}
+              />
             ))}
           </div>
         </div>

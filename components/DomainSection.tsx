@@ -1,78 +1,109 @@
-'use client'
+"use client" // This page needs to be a client component for scroll logic
 
-import { ArrowRightIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import Image from 'next/image'
+import Image from "next/image"
+import { useRef, useState, useEffect } from "react" // Import hooks
+import { domains } from "@/lib/data" // Import from shared data
 
-// Import your local domain images
-import AIMLImg               from '@/public/img/domain/deep-tech.png'
-import BlockchainWeb3Img     from '@/public/img/domain/IT.png'
-import FinTechSolutionsImg   from '@/public/img/domain/drone-tech.png'
-import HealthTechInnovationImg from '@/public/img/domain/agriculture.png'
+export default function DomainsPage() {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [activeIndex, setActiveIndex] = useState(0)
 
-const domains = [
-  { 
-    title: "AI & Machine Learning",
-    image: AIMLImg
-  },
-  { 
-    title: "Blockchain & Web3",
-    image: BlockchainWeb3Img
-  },
-  { 
-    title: "FinTech Solutions",
-    image: FinTechSolutionsImg
-  },
-  { 
-    title: "HealthTech Innovation",
-    image: HealthTechInnovationImg
-  },
-]
+  useEffect(() => {
+    const scrollElement = scrollRef.current
+    if (!scrollElement) return
 
-export default function DomainSection() {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = cardRefs.current.indexOf(entry.target as HTMLDivElement)
+            if (index !== -1) {
+              setActiveIndex(index)
+            }
+          }
+        })
+      },
+      {
+        root: scrollElement,
+        rootMargin: "0px",
+        threshold: 0.7, // 70% of the item must be visible to be considered "active"
+      },
+    )
+
+    cardRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref)
+    })
+
+    return () => {
+      cardRefs.current.forEach((ref) => {
+        if (ref) observer.unobserve(ref)
+      })
+    }
+  }, [])
+
+  const scrollToCard = (index: number) => {
+    if (cardRefs.current[index]) {
+      cardRefs.current[index]?.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+      })
+    }
+  }
+
   return (
-    <section className="py-8 md:py-16">
+    <main className="py-8 md:py-16 min-h-screen bg-gray-900 text-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col space-y-8 md:space-y-11">
-          {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="font-poppins font-medium text-white text-2xl md:text-3xl lg:text-4xl">
-              Domain
-            </h2>
+        <h1 className="font-poppins font-semibold text-3xl md:text-4xl lg:text-5xl mb-8 md:mb-12 text-center">
+          All Domains
+        </h1>
 
-            <Button
-              variant="link"
-              className="text-white flex items-center gap-3 font-inter text-lg md:text-xl hover:text-purple-400 transition-colors duration-200 self-start sm:self-center"
+        {/* Domains Scrollable Container */}
+        <div
+          ref={scrollRef}
+          className="flex overflow-x-auto gap-4 md:gap-6 pb-4 scrollbar-hide
+                     scroll-snap-x-mandatory scroll-smooth"
+        >
+          {domains.map(({ title, image }, index) => (
+            <div
+              key={index}
+              ref={(el) => (cardRefs.current[index] = el)}
+              className="group relative flex-shrink-0
+                         w-full                                 /* Mobile: 1 card at a time */
+                         sm:w-[calc((100%-theme(spacing.4))/2)] /* Small screens: 2 cards */
+                         md:w-[calc((100%-theme(spacing.6)*2)/3)] /* Medium screens: 3 cards */
+                         lg:w-[calc((100%-theme(spacing.6)*3)/4)] /* Large screens: 4 cards */
+                         h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden glass-effect hover-lift transition-all duration-300 hover:scale-105
+                         scroll-snap-align-center"
             >
-              Explore More
-              <ArrowRightIcon className="w-6 h-6 md:w-8 md:h-8" />
-            </Button>
-          </div>
-
-          {/* Domains Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {domains.map(({ title, image }, index) => (
-              <div
-                key={index}
-                className="group relative h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden hover-lift transition-all duration-300 hover:scale-105"
-              >
-                <Image
-                  src={image}
-                  alt={title}
-                  fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6">
-                  <h3 className="font-poppins font-semibold text-white text-lg md:text-xl lg:text-2xl leading-tight">
-                    {title}
-                  </h3>
-                </div>
+              <Image
+                src={image || "/placeholder.svg"}
+                alt={title}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-110"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6">
+                <h3 className="font-poppins font-semibold text-lg md:text-xl lg:text-2xl leading-tight">{title}</h3>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Pagination Dots (Visible on all screen sizes) */}
+        <div className="flex justify-center gap-2 mt-4">
+          {domains.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollToCard(index)}
+              className={`h-2 w-2 rounded-full transition-colors duration-200 ${
+                index === activeIndex ? "bg-white" : "bg-white/40"
+              }`}
+              aria-label={`Go to domain ${index + 1}`}
+            />
+          ))}
         </div>
       </div>
-    </section>
+    </main>
   )
 }
