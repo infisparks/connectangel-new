@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import logo from '@/public/img/logo.png'
-
+import logo from "@/public/img/logo.png"
 export const metadata: Metadata = {
   title: 'ConnectAngles - Fresh Minds, Fierce Missions',
   description: 'Submit your startup, find the right opportunities, and get discovered by the right people.',
@@ -10,14 +9,16 @@ export const metadata: Metadata = {
   viewport: 'width=device-width, initial-scale=1',
   robots: 'index, follow',
 
+  // Open Graph for WhatsApp, Facebook, etc.
   openGraph: {
     title: 'ConnectAngles - Fresh Minds, Fierce Missions',
     description: 'Submit your startup, find the right opportunities, and get discovered by the right people.',
     type: 'website',
     locale: 'en_US',
+    // path to your thumbnail in public/img
     images: [
       {
-        url: logo.src,           // ← use .src
+        url: "https://raw.githubusercontent.com/infisparks/images/refs/heads/main/connectangle.png",
         width: 800,
         height: 600,
         alt: 'ConnectAngles – Fresh Minds, Fierce Missions'
@@ -25,11 +26,12 @@ export const metadata: Metadata = {
     ]
   },
 
+  // Twitter Card
   twitter: {
     card: 'summary_large_image',
     title: 'ConnectAngles - Fresh Minds, Fierce Missions',
     description: 'Submit your startup, find the right opportunities, and get discovered by the right people.',
-    images: [logo.src]          // ← or [ '/img/logo.png' ]
+    images: ['https://raw.githubusercontent.com/infisparks/images/refs/heads/main/connectangle.png']
   }
 }
 
@@ -41,12 +43,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
-        {/* Preconnects for Google Fonts */}
+        {/* Preconnects */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
 
-        {/* Favicon */}
-        <link rel="icon" href={logo.src} />
+        {/* Favicon / Thumbnail */}
+        <link rel="icon" href="/img/whatsapp-thumbnail.png" />
       </head>
       <body className="font-poppins antialiased">
         {children}
