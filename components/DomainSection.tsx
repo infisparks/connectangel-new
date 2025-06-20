@@ -1,8 +1,8 @@
 "use client" // This page needs to be a client component for scroll logic
 
 import Image from "next/image"
-import { useRef, useState, useEffect } from "react" // Import hooks
-import { domains } from "@/lib/data" // Import from shared data
+import { useRef, useState, useEffect } from "react"
+import { domains } from "@/lib/data"
 
 export default function DomainsPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -27,7 +27,7 @@ export default function DomainsPage() {
       {
         root: scrollElement,
         rootMargin: "0px",
-        threshold: 0.7, // 70% of the item must be visible to be considered "active"
+        threshold: 0.7,
       },
     )
 
@@ -61,20 +61,23 @@ export default function DomainsPage() {
         {/* Domains Scrollable Container */}
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto gap-4 md:gap-6 pb-4 scrollbar-hide
-                     scroll-snap-x-mandatory scroll-smooth"
+          className="flex overflow-x-auto gap-4 md:gap-6 pb-4 scroll-snap-x-mandatory scroll-smooth"
+          style={{
+            scrollbarWidth: "none", // Firefox
+            msOverflowStyle: "none", // IE/Edge
+          }}
         >
           {domains.map(({ title, image }, index) => (
             <div
               key={index}
               ref={(el) => (cardRefs.current[index] = el)}
               className="group relative flex-shrink-0
-                         w-full                                 /* Mobile: 1 card at a time */
-                         sm:w-[calc((100%-theme(spacing.4))/2)] /* Small screens: 2 cards */
-                         md:w-[calc((100%-theme(spacing.6)*2)/3)] /* Medium screens: 3 cards */
-                         lg:w-[calc((100%-theme(spacing.6)*3)/4)] /* Large screens: 4 cards */
-                         h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden glass-effect hover-lift transition-all duration-300 hover:scale-105
-                         scroll-snap-align-center"
+                w-full
+                sm:w-[calc((100%-theme(spacing.4))/2)]
+                md:w-[calc((100%-theme(spacing.6)*2)/3)]
+                lg:w-[calc((100%-theme(spacing.6)*3)/4)]
+                h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden glass-effect hover-lift transition-all duration-300 hover:scale-105
+                scroll-snap-align-center"
             >
               <Image
                 src={image || "/placeholder.svg"}
@@ -88,6 +91,14 @@ export default function DomainsPage() {
               </div>
             </div>
           ))}
+          {/* Hide scrollbar for Chrome/Safari/Opera */}
+          <style jsx>{`
+            div[ref='scrollRef']::-webkit-scrollbar {
+              display: none !important;
+              width: 0px !important;
+              background: transparent !important;
+            }
+          `}</style>
         </div>
 
         {/* Pagination Dots (Visible on all screen sizes) */}

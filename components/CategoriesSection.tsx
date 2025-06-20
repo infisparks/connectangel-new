@@ -3,14 +3,15 @@
 import { ArrowUpRightIcon } from "lucide-react"
 import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
-import { useRouter } from "next/navigation" // Import useRouter
-import { categories } from "@/lib/data" // Import from shared data
+import { useRouter } from "next/navigation"
+import { categories } from "@/lib/data"
 
 export default function CategoriesSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]
+  )
   const [activeIndex, setActiveIndex] = useState(0)
-  const router = useRouter() // Initialize useRouter
+  const router = useRouter()
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -30,7 +31,7 @@ export default function CategoriesSection() {
       {
         root: scrollElement,
         rootMargin: "0px",
-        threshold: 0.7, // 70% of the item must be visible to be considered "active"
+        threshold: 0.7,
       },
     )
 
@@ -55,7 +56,7 @@ export default function CategoriesSection() {
   }
 
   const handleExploreClick = () => {
-    router.push("/categories") // Navigate to the new categories page
+    router.push("/categories")
   }
 
   return (
@@ -67,10 +68,9 @@ export default function CategoriesSection() {
             <h2 className="font-poppins font-semibold text-white text-2xl md:text-3xl lg:text-4xl">
               Explore by Categories
             </h2>
-
             <div
               className="flex w-12 h-12 md:w-16 md:h-16 items-center justify-center glass-effect rounded-full border-2 border-white hover-lift cursor-pointer transition-all duration-300 hover:scale-110"
-              onClick={handleExploreClick} // Add onClick handler
+              onClick={handleExploreClick}
               role="button"
               tabIndex={0}
               aria-label="Explore all categories"
@@ -82,20 +82,23 @@ export default function CategoriesSection() {
           {/* Categories Scrollable Container */}
           <div
             ref={scrollRef}
-            className="flex overflow-x-auto gap-4 md:gap-6 pb-4 scrollbar-hide
-                       scroll-snap-x-mandatory scroll-smooth"
+            className="flex overflow-x-auto gap-4 md:gap-6 pb-4 scroll-snap-x-mandatory scroll-smooth"
+            style={{
+              scrollbarWidth: "none", // Firefox
+              msOverflowStyle: "none", // IE/Edge
+            }}
           >
             {categories.map(({ title, image, description }, index) => (
               <div
                 key={index}
                 ref={(el) => (cardRefs.current[index] = el)}
                 className="group relative flex-shrink-0
-                           w-full                                 /* Mobile: 1 card at a time */
-                           sm:w-[calc((100%-theme(spacing.4))/2)] /* Small screens: 2 cards */
-                           md:w-[calc((100%-theme(spacing.6)*2)/3)] /* Medium screens: 3 cards */
-                           lg:w-[calc((100%-theme(spacing.6)*3)/4)] /* Large screens: 4 cards */
-                           overflow-hidden rounded-xl hover-lift transition-all duration-300 hover:scale-105
-                           scroll-snap-align-center"
+                  w-full
+                  sm:w-[calc((100%-theme(spacing.4))/2)]
+                  md:w-[calc((100%-theme(spacing.6)*2)/3)]
+                  lg:w-[calc((100%-theme(spacing.6)*3)/4)]
+                  overflow-hidden rounded-xl hover-lift transition-all duration-300 hover:scale-105
+                  scroll-snap-align-center"
               >
                 <div className="relative h-48 md:h-52 lg:h-56">
                   <Image
@@ -112,9 +115,17 @@ export default function CategoriesSection() {
                 </div>
               </div>
             ))}
+            {/* Hide scrollbar for Chrome/Safari/Opera */}
+            <style jsx>{`
+              div[ref='scrollRef']::-webkit-scrollbar {
+                display: none !important;
+                width: 0px !important;
+                background: transparent !important;
+              }
+            `}</style>
           </div>
 
-          {/* Pagination Dots (Visible on all screen sizes) */}
+          {/* Pagination Dots */}
           <div className="flex justify-center gap-2 mt-4">
             {categories.map((_, index) => (
               <button

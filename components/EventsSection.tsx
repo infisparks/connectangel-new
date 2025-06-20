@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
-import { useRouter } from "next/navigation" // Import useRouter
-import { events } from "@/lib/data" // Import from shared data
+import { useRouter } from "next/navigation"
+import { events } from "@/lib/data"
 
 export default function EventsSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
-  const router = useRouter() // Initialize useRouter
+  const router = useRouter()
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -32,7 +32,7 @@ export default function EventsSection() {
       {
         root: scrollElement,
         rootMargin: "0px",
-        threshold: 0.7, // 70% of the item must be visible to be considered "active"
+        threshold: 0.7,
       },
     )
 
@@ -57,7 +57,7 @@ export default function EventsSection() {
   }
 
   const handleExploreClick = () => {
-    router.push("/events") // Navigate to the new events page
+    router.push("/events")
   }
 
   return (
@@ -67,11 +67,10 @@ export default function EventsSection() {
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <h2 className="font-poppins font-medium text-white text-2xl md:text-3xl lg:text-4xl">Events</h2>
-
             <Button
               variant="link"
               className="text-white flex items-center gap-3 font-inter text-lg md:text-xl hover:text-purple-400 transition-colors duration-200 self-start sm:self-center"
-              onClick={handleExploreClick} // Add onClick handler
+              onClick={handleExploreClick}
             >
               Explore More
               <ArrowRightIcon className="w-6 h-6 md:w-8 md:h-8" />
@@ -81,27 +80,29 @@ export default function EventsSection() {
           {/* Events Scrollable Container */}
           <div
             ref={scrollRef}
-            className="flex overflow-x-auto gap-6 pb-4 scrollbar-hide
-                       scroll-snap-x-mandatory scroll-smooth"
+            className="flex overflow-x-auto gap-6 pb-4 scroll-snap-x-mandatory scroll-smooth"
+            style={{
+              scrollbarWidth: "none", // Firefox
+              msOverflowStyle: "none", // IE/Edge
+            }}
           >
             {events.map((event, index) => (
               <Card
                 key={index}
                 ref={(el) => (cardRefs.current[index] = el)}
                 className="flex-shrink-0
-                           w-full                                 /* Mobile: 1 card at a time */
-                           sm:w-[calc((100%-theme(spacing.6))/2)] /* Small screens: 2 cards */
-                           md:w-[calc((100%-theme(spacing.6)*2)/3)] /* Medium screens: 3 cards */
-                           lg:w-[calc((100%-theme(spacing.6)*2)/3)] /* Large screens: 3 cards */
-                           glass-effect hover-lift transition-all duration-300 hover:scale-105 border border-white/20
-                           scroll-snap-align-center"
+                  w-full
+                  sm:w-[calc((100%-theme(spacing.6))/2)]
+                  md:w-[calc((100%-theme(spacing.6)*2)/3)]
+                  lg:w-[calc((100%-theme(spacing.6)*2)/3)]
+                  glass-effect hover-lift transition-all duration-300 hover:scale-105 border border-white/20
+                  scroll-snap-align-center"
               >
                 <CardContent className="flex flex-col space-y-6 p-6 md:p-8">
                   <div className="flex flex-col space-y-4">
                     <h3 className="font-poppins font-medium text-white text-lg md:text-xl leading-tight">
                       {event.title}
                     </h3>
-
                     <div className="flex items-center gap-3">
                       <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden">
                         <Image
@@ -115,22 +116,32 @@ export default function EventsSection() {
                         {event.organizer}
                       </span>
                     </div>
-
                     <div className="flex items-center gap-2">
                       <MapPinIcon className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                      <span className="font-poppins font-medium text-white text-sm md:text-base">{event.location}</span>
+                      <span className="font-poppins font-medium text-white text-sm md:text-base">
+                        {event.location}
+                      </span>
                     </div>
                   </div>
-
                   <div className="flex items-center justify-between">
                     <Button className="h-10 md:h-12 px-4 md:px-6 py-2 bg-[#8700ff] rounded-full font-poppins text-sm md:text-base hover:bg-[#7300dd] transition-all duration-200">
                       Register
                     </Button>
-                    <span className="font-inter font-medium text-white/80 text-xs md:text-sm">{event.timeAgo}</span>
+                    <span className="font-inter font-medium text-white/80 text-xs md:text-sm">
+                      {event.timeAgo}
+                    </span>
                   </div>
                 </CardContent>
               </Card>
             ))}
+            {/* Hide scrollbar for Chrome/Safari/Opera */}
+            <style jsx>{`
+              div[ref='scrollRef']::-webkit-scrollbar {
+                display: none !important;
+                width: 0px !important;
+                background: transparent !important;
+              }
+            `}</style>
           </div>
 
           {/* Pagination Dots (Visible on all screen sizes) */}
