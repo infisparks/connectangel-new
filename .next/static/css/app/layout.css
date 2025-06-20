@@ -668,6 +668,9 @@ html {
 .w-full{
   width: 100%;
 }
+.w-\[calc\(\(100\%-theme\(spacing\.6\)\*2\)\/3\)\]{
+  width: calc((100% - 1.5rem * 2) / 3);
+}
 .max-w-2xl{
   max-width: 42rem;
 }
@@ -1261,6 +1264,9 @@ html {
   .sm\:w-32{
     width: 8rem;
   }
+  .sm\:w-\[calc\(\(100\%-theme\(spacing\.6\)\*2\)\/3\)\]{
+    width: calc((100% - 1.5rem * 2) / 3);
+  }
   .sm\:grid-cols-2{
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1361,6 +1367,9 @@ html {
   }
   .md\:w-\[70px\]{
     width: 70px;
+  }
+  .md\:w-36{
+    width: 9rem;
   }
   .md\:grid-cols-2{
     grid-template-columns: repeat(2, minmax(0, 1fr));

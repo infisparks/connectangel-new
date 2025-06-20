@@ -31,12 +31,13 @@ export default function CountriesSection() {
         <div className="flex flex-col items-center space-y-8 md:space-y-12">
           {/* Countries Grid */}
           <div className="w-full">
-            {/* Desktop & Mobile: Horizontal scroll */}
+            {/* Horizontal scroll for all screen sizes */}
             <div className="flex items-center gap-6 overflow-x-auto pb-4 scrollbar-hide">
               {countries.map(({ name, image }, idx) => (
                 <Card
                   key={idx}
-                  className="flex-shrink-0 w-36 lg:w-40 glass-effect hover-lift transition-all duration-300 hover:scale-105"
+                  // Mobile: Adjust width to show 3 cards, Desktop: fixed width
+                  className="flex-shrink-0 w-[calc((100%-theme(spacing.6)*2)/3)] sm:w-[calc((100%-theme(spacing.6)*2)/3)] md:w-36 lg:w-40 glass-effect hover-lift transition-all duration-300 hover:scale-105"
                 >
                   <CardContent className="flex flex-col items-center gap-4 p-4">
                     <div className="relative w-20 h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden">
