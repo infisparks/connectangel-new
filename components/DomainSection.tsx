@@ -2,12 +2,25 @@
 
 import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
-import { domains } from "@/lib/data"
+import { motion } from "framer-motion" // Import motion for animations
+import { domains } from "@/lib/data" // Assuming this path is correct
 
 export default function DomainsPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
+
+  // Animation variants for title
+  const titleVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
+  }
+
+  // Animation variants for cards
+  const cardVariants = {
+    hidden: { opacity: 0, y: 50, scale: 0.95 },
+    visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.7, ease: "easeOut" } },
+  }
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -27,7 +40,7 @@ export default function DomainsPage() {
       {
         root: scrollElement,
         rootMargin: "0px",
-        threshold: 0.7,
+        threshold: 0.7, // Adjust threshold to trigger when more of the card is visible
       },
     )
 
@@ -52,23 +65,32 @@ export default function DomainsPage() {
   }
 
   return (
-    <main className="py-8 md:py-16 min-h-screen bg-gray-900 text-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="font-poppins font-semibold text-3xl md:text-4xl lg:text-5xl mb-8 md:mb-12 text-center">
+    <main className="py-2 md:py-16 bg-[#000A18] text-white pb-2 md:pb-1">
+      {" "}
+      {/* py-2 md:py-16 provides top and bottom padding, pb-2 md:pb-1 for a little extra space */}
+      <div className="container mx-auto px-1 sm:px-1 lg:px-1">
+        <motion.h1
+          className="font-semibold text-3xl md:text-4xl lg:text-5xl mb-8 md:mb-12 text-center"
+          style={{ fontFamily: "Poppins, sans-serif" }} // Inline font style
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.5 }} // Animate when 50% in view
+          variants={titleVariants}
+        >
           All Domains
-        </h1>
+        </motion.h1>
 
         {/* Domains Scrollable Container */}
         <div
           ref={scrollRef}
-          className="flex overflow-x-auto gap-4 md:gap-6 pb-4 scroll-snap-x-mandatory scroll-smooth"
+          className="flex overflow-x-auto gap-4 md:gap-6 pb-1 scroll-snap-x-mandatory scroll-smooth"
           style={{
             scrollbarWidth: "none", // Firefox
             msOverflowStyle: "none", // IE/Edge
           }}
         >
           {domains.map(({ title, image }, index) => (
-            <div
+            <motion.div
               key={index}
               ref={(el) => (cardRefs.current[index] = el)}
               className="group relative flex-shrink-0
@@ -76,8 +98,14 @@ export default function DomainsPage() {
                 sm:w-[calc((100%-theme(spacing.4))/2)]
                 md:w-[calc((100%-theme(spacing.6)*2)/3)]
                 lg:w-[calc((100%-theme(spacing.6)*3)/4)]
-                h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden glass-effect hover-lift transition-all duration-300 hover:scale-105
+                h-64 md:h-80 lg:h-96 rounded-xl overflow-hidden
+                backdrop-blur-md bg-white/5 border border-white/10 {/* glass-effect */}
+                transition-all duration-300 hover:scale-105 {/* hover-lift */}
                 scroll-snap-align-center"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }} // Animate when 30% in view
+              variants={cardVariants}
             >
               <Image
                 src={image || "/placeholder.svg"}
@@ -87,9 +115,14 @@ export default function DomainsPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6">
-                <h3 className="font-poppins font-semibold text-lg md:text-xl lg:text-2xl leading-tight">{title}</h3>
+                <h3
+                  className="font-semibold text-lg md:text-xl lg:text-2xl leading-tight"
+                  style={{ fontFamily: "Poppins, sans-serif" }} // Inline font style
+                >
+                  {title}
+                </h3>
               </div>
-            </div>
+            </motion.div>
           ))}
           {/* Hide scrollbar for Chrome/Safari/Opera */}
           <style jsx>{`
