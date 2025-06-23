@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { GlobeIcon, MenuIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Image from 'next/image'
 import logo from "@/public/img/logo.png"
+
 const navigationItems = [
   { label: "Home", href: "#home" },
   { label: "Events", href: "#events" },
@@ -15,6 +17,7 @@ const navigationItems = [
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,7 +38,7 @@ export default function Navigation() {
 
   return (
     <>
-      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-[#000A18] ${
         isScrolled ? 'bg-[#000a18]/95 backdrop-blur-md border-b border-white/10' : 'bg-transparent'
       }`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -77,6 +80,7 @@ export default function Navigation() {
                 <Button
                   variant="outline"
                   className="h-10 lg:h-12 px-4 lg:px-8 rounded-full bg-white/20 border border-white text-white font-poppins font-normal text-sm lg:text-base hover:bg-white/30 transition-all duration-200"
+                  onClick={() => router.push('/register')}
                 >
                   Login
                 </Button>
@@ -136,7 +140,7 @@ export default function Navigation() {
                 <Button
                   variant="outline"
                   className="h-12 w-full rounded-full bg-white/20 border border-white text-white font-poppins font-normal text-base hover:bg-white/30 transition-all duration-200"
-                  onClick={() => setIsMenuOpen(false)}
+                  onClick={() => { setIsMenuOpen(false); router.push('/register') }}
                 >
                   Login
                 </Button>

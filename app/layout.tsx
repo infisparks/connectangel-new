@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import logo from "@/public/img/logo.png"
+import Footer from '@/components/Footer'
+import Navigation from '@/components/Navigation'
 export const metadata: Metadata = {
   title: 'ConnectAngles - Fresh Minds, Fierce Missions',
   description: 'Submit your startup, find the right opportunities, and get discovered by the right people.',
@@ -51,7 +53,9 @@ export default function RootLayout({
         <link rel="icon" href="/img/whatsapp-thumbnail.png" />
       </head>
       <body className="font-poppins antialiased">
+        <Navigation/>
         {children}
+        <Footer/>
       </body>
     </html>
   )

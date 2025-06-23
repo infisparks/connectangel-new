@@ -10,7 +10,7 @@ import Footer from '@/components/Footer'
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#000a18] text-white overflow-x-hidden">
-      <Navigation />
+      
       <div className="space-y-8 md:space-y-16 lg:space-y-20">
         <HeroSection />
         <CountriesSection />
@@ -19,7 +19,7 @@ export default function Home() {
         <EventsSection />
         <TrainingSection />
       </div>
-      <Footer />
+      
     </main>
   )
 }
