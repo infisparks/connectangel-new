@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#000a18] text-white overflow-x-hidden">
       
-      <div className="space-y-8 md:space-y-16 lg:space-y-20">
+      <div className="">
         <HeroSection />
         <CountriesSection />
         <CategoriesSection />

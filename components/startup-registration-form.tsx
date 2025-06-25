@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import Cropper from "react-easy-crop"
 import { Plus, CloudUpload, Eye, Play, ImageIcon } from "lucide-react"
 import { supabase } from "@/lib/supabaselib"
+import { countryCodes } from "@/lib/country-codes" // Import countryCodes
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +17,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 
 const SUPABASE_VIDEO_BUCKET = "pitch-videos"
 const SUPABASE_THUMBNAIL_BUCKET = "thumbnails"
+
+// WhatsApp API details
+const WHATSAPP_API_URL = "https://wa.medblisss.com/send-text"
+const WHATSAPP_API_TOKEN = "9958399157" // As provided by the user
 
 // Updated getCroppedImg to use croppedAreaPixels directly
 function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> {
@@ -116,7 +121,8 @@ const ThumbnailCropper = ({
 
 // Main component
 export function StartupFormAndPreview() {
-  const [founderNames, setFounderNames] = useState([""])
+  // Updated founderNames state to include phoneNumber and countryCode, with +91 default
+  const [founderNames, setFounderNames] = useState([{ name: "", phoneNumber: "", countryCode: "+91" }])
   const [startupType, setStartupType] = useState("")
   const [startupName, setStartupName] = useState("")
   const [description, setDescription] = useState("")
@@ -133,17 +139,19 @@ export function StartupFormAndPreview() {
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null)
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
   const router = useRouter()
-  // Removed showFullscreenThumbnailPreview state
 
   // Video refs for generating a thumbnail
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const addFounderField = () => setFounderNames([...founderNames, ""])
-  const handleFounderNameChange = (idx: number, val: string) => {
-    const arr = [...founderNames]
-    arr[idx] = val
-    setFounderNames(arr)
+  // Add a new founder field set with default country code
+  const addFounderField = () => setFounderNames([...founderNames, { name: "", phoneNumber: "", countryCode: "+91" }])
+
+  // Handle changes for founder name, phone number, or country code
+  const handleFounderFieldChange = (idx: number, field: "name" | "phoneNumber" | "countryCode", value: string) => {
+    const updatedFounders = [...founderNames]
+    updatedFounders[idx] = { ...updatedFounders[idx], [field]: value }
+    setFounderNames(updatedFounders)
   }
 
   // Helper for filename truncation
@@ -222,7 +230,33 @@ export function StartupFormAndPreview() {
     const croppedFile = new File([blob], "cropped_thumbnail.png", { type: "image/png", lastModified: Date.now() })
     setSelectedCustomThumbnailFile(croppedFile)
     setPreviewThumbnailUrl(URL.createObjectURL(croppedFile))
-    // Removed setShowFullscreenThumbnailPreview(true)
+  }
+
+  // Function to send WhatsApp message
+  const sendWhatsAppMessage = async (number: string, message: string) => {
+    try {
+      const response = await fetch(WHATSAPP_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: WHATSAPP_API_TOKEN,
+          number: number,
+          message: message,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("WhatsApp API Error:", errorData)
+        throw new Error(`Failed to send WhatsApp message: ${errorData.message || response.statusText}`)
+      }
+      console.log(`WhatsApp message sent successfully to ${number}`)
+    } catch (error) {
+      console.error(`Error sending WhatsApp message to ${number}:`, error)
+      // Do not re-throw, allow main submission to proceed
+    }
   }
 
   // Main submit
@@ -230,6 +264,24 @@ export function StartupFormAndPreview() {
     e.preventDefault()
     setIsSubmitting(true)
     setSubmissionError(null)
+
+    // Basic client-side validation for required fields
+    const hasEmptyFounderFields = founderNames.some(
+      (founder) => founder.name.trim() === "" || founder.phoneNumber.trim() === "" || founder.countryCode.trim() === "",
+    )
+
+    if (hasEmptyFounderFields) {
+      setSubmissionError("Please fill in all required founder name, country code, and phone number fields.")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!startupType || !startupName || !description || !location || !language || !domain) {
+      setSubmissionError("Please fill in all required startup details.")
+      setIsSubmitting(false)
+      return
+    }
+
     try {
       const {
         data: { user },
@@ -267,6 +319,20 @@ export function StartupFormAndPreview() {
       if (thumbError) throw new Error(`Thumbnail upload failed: ${thumbError.message}`)
       thumbnailUrl = supabase.storage.from(SUPABASE_THUMBNAIL_BUCKET).getPublicUrl(thumbPath).data?.publicUrl
 
+      // Filter out empty founder entries and prepare for DB insertion
+      // Now that fields are required, this filter ensures only fully-filled entries are processed
+      const filteredFounders = founderNames.filter(
+        (founder) =>
+          founder.name.trim() !== "" && founder.phoneNumber.trim() !== "" && founder.countryCode.trim() !== "",
+      )
+
+      // Prepare founder data for Supabase (remove '+' from countryCode for DB storage)
+      const foundersToSave = filteredFounders.map((founder) => ({
+        name: founder.name,
+        phoneNumber: founder.phoneNumber,
+        countryCode: founder.countryCode.replace("+", ""), // Remove '+' for DB storage
+      }))
+
       // Insert data in DB
       const { error: insertError } = await supabase.from("creator_approval").insert([
         {
@@ -277,12 +343,23 @@ export function StartupFormAndPreview() {
           location,
           language,
           domain,
-          founder_names: founderNames.filter((n) => n.trim() !== ""),
+          founder_names: foundersToSave, // Use the prepared array
           pitch_video_url: pitchVideoUrl,
           thumbnail_url: thumbnailUrl,
         },
       ])
       if (insertError) throw new Error(insertError.message)
+
+      // Send WhatsApp messages to all founders
+      for (const founder of filteredFounders) {
+        if (founder.phoneNumber && founder.countryCode) {
+          // Ensure the number sent to WhatsApp API includes the country code without '+'
+          const fullPhoneNumber = `${founder.countryCode.replace("+", "")}${founder.phoneNumber}`
+          const whatsappMessage = `Dear *${founder.name}*,\n\nCongratulations! Your startup *${startupName}* has been successfully registered. We appreciate your submission and will review your details shortly.\n\nThank you for choosing our platform.\n\nBest regards,\nThe Vercel AI Team`
+          await sendWhatsAppMessage(fullPhoneNumber, whatsappMessage)
+        }
+      }
+
       setShowSuccessDialog(true)
       setTimeout(() => router.push("/"), 1800) // 1.8s redirect
     } catch (err: any) {
@@ -323,15 +400,24 @@ export function StartupFormAndPreview() {
         )}
         <h3 className="text-3xl font-bold text-white">{startupName || "Startup Name"}</h3>
         <div className="flex flex-wrap gap-2">
-          {founderNames.filter(Boolean).map((name, idx) => (
-            <span
-              key={idx}
-              className={`inline-block ${idx === 0 ? "bg-purple-700" : "border border-gray-700"} text-white text-sm px-4 py-2 rounded-full font-medium`}
-            >
-              {name}
-            </span>
-          ))}
-          {founderNames.filter(Boolean).length === 0 && (
+          {founderNames
+            .filter(
+              (founder) =>
+                founder.name.trim() !== "" || founder.phoneNumber.trim() !== "" || founder.countryCode.trim() !== "",
+            )
+            .map((founder, idx) => (
+              <span
+                key={idx}
+                className={`inline-block ${idx === 0 ? "bg-purple-700" : "border border-gray-700"} text-white text-sm px-4 py-2 rounded-full font-medium`}
+              >
+                {founder.name}{" "}
+                {founder.phoneNumber && founder.countryCode && `(${founder.countryCode}${founder.phoneNumber})`}
+              </span>
+            ))}
+          {founderNames.filter(
+            (founder) =>
+              founder.name.trim() !== "" || founder.phoneNumber.trim() !== "" || founder.countryCode.trim() !== "",
+          ).length === 0 && (
             <span className="inline-block border border-gray-700 text-gray-300 text-sm px-4 py-2 rounded-full font-medium">
               Founder Name
             </span>
@@ -374,15 +460,40 @@ export function StartupFormAndPreview() {
                 value={startupName}
                 onChange={(e) => setStartupName(e.target.value)}
                 className="bg-gray-800 border-gray-700 text-gray-50 placeholder:text-gray-400 h-12 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                required
               />
             </div>
-            {founderNames.map((name, idx) => (
-              <div key={idx} className="flex items-center gap-2">
+            {founderNames.map((founder, idx) => (
+              <div key={idx} className="flex flex-col md:flex-row items-center gap-2">
                 <Input
-                  placeholder="Founder & Team Name"
-                  value={name}
-                  onChange={(e) => handleFounderNameChange(idx, e.target.value)}
+                  placeholder="Founder Name"
+                  value={founder.name}
+                  onChange={(e) => handleFounderFieldChange(idx, "name", e.target.value)}
                   className="flex-grow bg-gray-800 border-gray-700 text-gray-50 placeholder:text-gray-400 h-12 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                  required
+                />
+                <Select
+                  value={founder.countryCode}
+                  onValueChange={(value) => handleFounderFieldChange(idx, "countryCode", value)}
+                >
+                  <SelectTrigger className="w-32 bg-gray-800 border-gray-700 text-gray-50 placeholder:text-gray-400 h-12 rounded-lg focus:ring-purple-500 focus:border-purple-500">
+                    <SelectValue placeholder="Code" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-gray-800 text-gray-50 border-gray-700 max-h-60 overflow-y-auto">
+                    {countryCodes.map((cc) => (
+                      <SelectItem key={cc.code} value={cc.code}>
+                        {cc.code} ({cc.name})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  placeholder="Phone Number"
+                  type="tel"
+                  value={founder.phoneNumber}
+                  onChange={(e) => handleFounderFieldChange(idx, "phoneNumber", e.target.value)}
+                  className="flex-grow bg-gray-800 border-gray-700 text-gray-50 placeholder:text-gray-400 h-12 rounded-lg focus:ring-purple-500 focus:border-purple-500"
+                  required
                 />
                 {idx === founderNames.length - 1 && (
                   <Button
@@ -390,7 +501,7 @@ export function StartupFormAndPreview() {
                     variant="ghost"
                     size="icon"
                     onClick={addFounderField}
-                    className="bg-purple-600 text-white rounded-lg h-12 w-12 hover:bg-purple-700 transition-colors"
+                    className="bg-purple-600 text-white rounded-lg h-12 w-12 hover:bg-purple-700 transition-colors flex-shrink-0"
                   >
                     <Plus className="h-6 w-6" />
                   </Button>
@@ -402,6 +513,7 @@ export function StartupFormAndPreview() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="bg-gray-800 border-gray-700 text-gray-50 placeholder:text-gray-400 min-h-[120px] rounded-lg focus:ring-purple-500 focus:border-purple-500"
+              required
             />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select value={location} onValueChange={setLocation}>

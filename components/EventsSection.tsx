@@ -7,12 +7,21 @@ import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { events } from "@/lib/data"
+import { motion, useScroll, useTransform } from "framer-motion" // Import motion and scroll hooks
 
 export default function EventsSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const router = useRouter()
+  const sectionRef = useRef<HTMLElement>(null) // Ref for the section to track scroll
+
+  // Scroll animation for the floating object
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start end", "end start"], // Animate as the section enters/leaves viewport
+  })
+  const yObject = useTransform(scrollYProgress, [0, 1], ["-50%", "150%"]) // Moves from top to bottom of its container
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -61,8 +70,14 @@ export default function EventsSection() {
   }
 
   return (
-    <section id="events" className="py-8 md:py-16">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+    <section ref={sectionRef} id="events" className="relative py-8 md:py-16 bg-[#000A18] overflow-hidden">
+      {/* Animated object */}
+      <motion.div
+        style={{ y: yObject }}
+        className="absolute top-0 left-3/4 w-32 h-32 rounded-full bg-pink-500/30 blur-xl z-0"
+      />
+
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col space-y-8">
           {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -118,24 +133,20 @@ export default function EventsSection() {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPinIcon className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                      <span className="font-poppins font-medium text-white text-sm md:text-base">
-                        {event.location}
-                      </span>
+                      <span className="font-poppins font-medium text-white text-sm md:text-base">{event.location}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <Button className="h-10 md:h-12 px-4 md:px-6 py-2 bg-[#8700ff] rounded-full font-poppins text-sm md:text-base hover:bg-[#7300dd] transition-all duration-200">
                       Register
                     </Button>
-                    <span className="font-inter font-medium text-white/80 text-xs md:text-sm">
-                      {event.timeAgo}
-                    </span>
+                    <span className="font-inter font-medium text-white/80 text-xs md:text-sm">{event.timeAgo}</span>
                   </div>
                 </CardContent>
               </Card>
             ))}
             {/* Hide scrollbar for Chrome/Safari/Opera */}
-            <style jsx>{`
+            <style>{`
               div[ref='scrollRef']::-webkit-scrollbar {
                 display: none !important;
                 width: 0px !important;
