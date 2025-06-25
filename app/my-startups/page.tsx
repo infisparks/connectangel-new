@@ -9,7 +9,8 @@ import { UserStartupCard } from "@/components/user-startup-card"
 import { Loader2 } from "lucide-react"
 
 // Define interfaces for both approved and pending startups
-export interface ApprovedStartup {
+export interface CreatorApproval {
+  id: string
   user_id: string
   startup_type: string
   startup_name: string
@@ -20,9 +21,12 @@ export interface ApprovedStartup {
   founder_names: string[]
   pitch_video_url: string
   thumbnail_url: string
+  status: string
   created_at: string
-  approved_at: string
+  updated_at: string
+  approved_at?: string // Only for approved
 }
+
 
 export interface PendingApproval {
   id: string
@@ -42,9 +46,9 @@ export interface PendingApproval {
 }
 
 export default function MyStartupsPage() {
-  const [approvedStartups, setApprovedStartups] = useState<ApprovedStartup[]>([])
-  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([])
-  const [loading, setLoading] = useState(true)
+  const [approvedStartups, setApprovedStartups] = useState<CreatorApproval[]>([])
+  const [pendingApprovals, setPendingApprovals] = useState<CreatorApproval[]>([])
+   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
 
@@ -75,7 +79,7 @@ export default function MyStartupsPage() {
       if (approvedError) {
         setError("Error loading approved startups: " + approvedError.message)
       } else {
-        setApprovedStartups(approvedData as ApprovedStartup[])
+        setApprovedStartups(approvedData as CreatorApproval[])
       }
 
       // Fetch pending approvals from 'creator_approval' table

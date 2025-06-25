@@ -1,3 +1,10 @@
 {
-  "/page": "app/page.js"
+  "/_not-found": "app/_not-found.js",
+  "/admin/approvals/page": "app/admin/approvals/page.js",
+  "/my-startups/page": "app/my-startups/page.js",
+  "/login/page": "app/login/page.js",
+  "/page": "app/page.js",
+  "/register/page": "app/register/page.js",
+  "/role/page": "app/role/page.js",
+  "/startup-registration/page": "app/startup-registration/page.js"
 }

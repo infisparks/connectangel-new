@@ -4,10 +4,10 @@ import Image from "next/image"
 import { Play } from "lucide-react"
 import { useState } from "react"
 import { VideoPlayerModal } from "./video-player-modal"
-import type { ApprovedStartup, PendingApproval } from "@/app/admin/approvals/page" // Import types
+import type { CreatorApproval } from "@/app/admin/approvals/page" // Use your main type
 
 interface UserStartupCardProps {
-  startup: ApprovedStartup | PendingApproval
+  startup: CreatorApproval
   type: "approved" | "pending"
 }
 
@@ -15,7 +15,7 @@ export function UserStartupCard({ startup, type }: UserStartupCardProps) {
   const [showVideoModal, setShowVideoModal] = useState(false)
 
   const isApproved = type === "approved"
-  const statusText = isApproved ? "Approved" : (startup as PendingApproval).status || "Pending"
+  const statusText = isApproved ? "Approved" : startup.status || "Pending"
   const statusColor = isApproved ? "bg-green-600" : "bg-yellow-600"
 
   return (
@@ -57,7 +57,7 @@ export function UserStartupCard({ startup, type }: UserStartupCardProps) {
         </p>
         <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">{startup.description}</p>
         <div className="flex flex-wrap gap-2 mt-2">
-          {startup.founder_names?.filter(Boolean).map((name, idx) => (
+          {startup.founder_names?.filter(Boolean).map((name: string, idx: number) => (
             <span
               key={idx}
               className="inline-block bg-purple-700 text-purple-100 text-xs px-3 py-1 rounded-full font-medium"
