@@ -94,3 +94,22 @@
     transform: translateY(-2px);
   }
 }
+
+/* Animated gradient background (no lag) */
+.animated-gradient-bg {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  background: linear-gradient(270deg, #8700ff, #b35dff, #8700ff 80%);
+  background-size: 400% 400%;
+  animation: gradientMove 12s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

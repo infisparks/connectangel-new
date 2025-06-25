@@ -152,26 +152,7 @@ export default function CountriesSection() {
   return (
     <section ref={sectionRef} className="relative py-8 md:py-16 bg-[#000A18] overflow-hidden">
       {/* Embedded CSS for shine effect */}
-      <style>{`
-        @keyframes shine {
-          0% {
-            background-position: 200% 0;
-          }
-          100% {
-            background-position: -200% 0;
-          }
-        }
-
-        .shine-text {
-          background: linear-gradient(90deg, #8700ff, #b35dff, #8700ff);
-          background-size: 200% 100%;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          color: transparent; /* Fallback for browsers that don't support text-fill-color */
-          animation: shine 3s linear infinite;
-        }
-      `}</style>
+      
 
       {/* AI Particle Effect */}
       <ParticleEffect />
