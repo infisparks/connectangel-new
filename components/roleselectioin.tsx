@@ -1,19 +1,8 @@
-// app/role/page.tsx (or wherever your UserRoleSelection component is located)
-
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation" // Import useSearchParams
-import {
-  Video,
-  UserPlus,
-  ArrowLeft,
-  ArrowRight,
-  Rocket,
-  Lightbulb,
-  DollarSign,
-  Briefcase,
-} from "lucide-react"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { Video, UserPlus, ArrowLeft, ArrowRight, Rocket, Lightbulb, DollarSign, Briefcase } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { supabase } from "@/lib/supabaselib"
@@ -29,32 +18,36 @@ export function UserRoleSelection() {
   const [error, setError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
   const [initialLoadComplete, setInitialLoadComplete] = useState(false)
+  const [cameFromParam, setCameFromParam] = useState(false) // Track if we skipped to step 2
 
   const router = useRouter()
-  const searchParams = useSearchParams() // Initialize useSearchParams
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const fetchUserAndCheckParams = async () => {
       setLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) {
         router.replace("/")
         return
       }
       setUserId(user.id)
 
-      const roleParam = searchParams.get('role'); // Get the 'role' parameter
+      const roleParam = searchParams.get("role")
 
-      if (roleParam === 'creator') {
-        setSelectedPrimaryRole("creator");
-        setStep(2); // Directly go to step 2 if role is creator
+      if (roleParam === "creator") {
+        setSelectedPrimaryRole("creator")
+        setStep(2) // Directly go to step 2 if role is creator
+        setCameFromParam(true) // Mark that we came from a URL parameter
       }
 
       setLoading(false)
       setInitialLoadComplete(true)
     }
     fetchUserAndCheckParams()
-  }, [router, searchParams]) // Add searchParams to dependencies
+  }, [router, searchParams])
 
   const handleContinue = async () => {
     if (step === 1) {
@@ -67,10 +60,7 @@ export function UserRoleSelection() {
         setLoading(true)
         setError(null)
         try {
-          const { error: updateError } = await supabase
-            .from("users")
-            .update({ role: "viewer" })
-            .eq("id", userId)
+          const { error: updateError } = await supabase.from("users").update({ role: "viewer" }).eq("id", userId)
           if (updateError) throw updateError
           router.push("/")
         } catch (err: any) {
@@ -79,8 +69,8 @@ export function UserRoleSelection() {
           setLoading(false)
         }
       } else if (selectedPrimaryRole === "creator") {
-        setStep(2) // Move to the next step
-        setError(null) // Clear any previous errors
+        setStep(2)
+        setError(null)
       }
     } else if (step === 2) {
       if (!selectedSecondaryRole || !userId) {
@@ -103,15 +93,12 @@ export function UserRoleSelection() {
             router.push("/startup-registration")
             break
           case "incubation":
-            // Corrected path for Incubation registration
             router.push("/incubation-registration")
             break
           case "investor":
-            // Corrected path for Investor registration
             router.push("/investor-registration")
             break
           case "mentor":
-            // Corrected path for Mentor registration
             router.push("/mentor-registration")
             break
           default:
@@ -127,13 +114,15 @@ export function UserRoleSelection() {
   }
 
   const handleBack = () => {
-    // If we're on step 2 and came from a 'creator' param, going back should go to home or previous page, not step 1 of role selection.
-    // However, if the user explicitly clicked 'creator' on step 1, then back should go to step 1.
-    // For simplicity, let's keep the existing behavior of going back to step 1 unless we add more complex state to track if param was used.
     if (step > 1) {
-      setStep(step - 1)
-      setSelectedSecondaryRole(null) // Clear selection when going back
-      setError(null)
+      // If we came directly to step 2 from a param, "Back" should go to the previous page
+      if (cameFromParam) {
+        router.back()
+      } else {
+        setStep(step - 1)
+        setSelectedSecondaryRole(null) // Clear selection when going back
+        setError(null)
+      }
     } else {
       router.back()
     }
@@ -147,17 +136,14 @@ export function UserRoleSelection() {
     )
   }
 
-  // Determine if primary roles should be shown (only if step is 1 and we didn't get a 'creator' param)
-  // Or, if we got a 'creator' param, `showPrimaryRoles` would be false
-  const showPrimaryRoles = step === 1 && selectedPrimaryRole !== "creator";
-  const showSecondaryRoles = step === 2 || selectedPrimaryRole === "creator";
-
+  // --- FIX ---
+  // The logic to show/hide sections is now based only on the current 'step'.
+  // This is simpler, bug-free, and resolves the TypeScript error.
+  const showPrimaryRoles = step === 1
+  const showSecondaryRoles = step === 2
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-between py-8 px-4"
-      style={{ backgroundColor: "#0A0A23" }}
-    >
+    <div className="min-h-screen flex flex-col items-center justify-between py-8 px-4" style={{ backgroundColor: "#0A0A23" }}>
       <div className="flex flex-col items-center justify-center flex-grow text-center py-12">
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
           {showPrimaryRoles ? "Who You Are" : "Tell Us Where You Belong"}
@@ -170,22 +156,26 @@ export function UserRoleSelection() {
 
         {error && <div className="text-red-500 mb-4">{error}</div>}
 
-        {showPrimaryRoles && ( // Only render primary roles if `showPrimaryRoles` is true
+        {showPrimaryRoles && (
           <div className="flex flex-col md:flex-row gap-6 md:gap-10">
             <div
-              className={`flex flex-col items-center justify-center p-8 rounded-2xl cursor-pointer transition-all duration-300 w-64 h-64 md:w-72 md:h-72
-                ${selectedPrimaryRole === "viewer" ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40" : "bg-gray-800 border-2 border-gray-700"}
-              `}
+              className={`flex flex-col items-center justify-center p-8 rounded-2xl cursor-pointer transition-all duration-300 w-64 h-64 md:w-72 md:h-72 ${
+                selectedPrimaryRole === "viewer"
+                  ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40"
+                  : "bg-gray-800 border-2 border-gray-700"
+              }`}
               onClick={() => setSelectedPrimaryRole("viewer")}
             >
               <Video className="h-24 w-24 text-white mb-4" />
               <span className="text-white text-2xl font-semibold">Viewer</span>
             </div>
             <div
-              className={`flex flex-col items-center justify-center p-8 rounded-2xl cursor-pointer transition-all duration-300 w-64 h-64 md:w-72 md:h-72
-                ${selectedPrimaryRole === "creator" ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40" : "bg-gray-800 border-2 border-gray-700"}
-              `}
-              onClick={() => setSelectedPrimaryRole("creator" as any)}
+              className={`flex flex-col items-center justify-center p-8 rounded-2xl cursor-pointer transition-all duration-300 w-64 h-64 md:w-72 md:h-72 ${
+                selectedPrimaryRole === "creator"
+                  ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40"
+                  : "bg-gray-800 border-2 border-gray-700"
+              }`}
+              onClick={() => setSelectedPrimaryRole("creator")} // Removed 'as any'
             >
               <UserPlus className="h-24 w-24 text-white mb-4" />
               <span className="text-white text-2xl font-semibold">Creator</span>
@@ -193,39 +183,47 @@ export function UserRoleSelection() {
           </div>
         )}
 
-        {showSecondaryRoles && ( // Only render secondary roles if `showSecondaryRoles` is true
+        {showSecondaryRoles && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 max-w-5xl mx-auto">
             <div
-              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px]
-                ${selectedSecondaryRole === "startup" ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40" : "bg-gray-800 border-2 border-gray-700"}
-              `}
+              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px] ${
+                selectedSecondaryRole === "startup"
+                  ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40"
+                  : "bg-gray-800 border-2 border-gray-700"
+              }`}
               onClick={() => setSelectedSecondaryRole("startup")}
             >
               <Rocket className="h-16 w-16 md:h-24 md:w-24 text-white mb-2 md:mb-4" />
               <span className="text-white text-lg md:text-xl font-semibold">Startup</span>
             </div>
             <div
-              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px]
-                ${selectedSecondaryRole === "incubation" ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40" : "bg-gray-800 border-2 border-gray-700"}
-              `}
+              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px] ${
+                selectedSecondaryRole === "incubation"
+                  ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40"
+                  : "bg-gray-800 border-2 border-gray-700"
+              }`}
               onClick={() => setSelectedSecondaryRole("incubation")}
             >
               <Lightbulb className="h-16 w-16 md:h-24 md:w-24 text-white mb-2 md:mb-4" />
               <span className="text-white text-lg md:text-xl font-semibold">Incubation</span>
             </div>
             <div
-              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px]
-                ${selectedSecondaryRole === "investor" ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40" : "bg-gray-800 border-2 border-gray-700"}
-              `}
+              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px] ${
+                selectedSecondaryRole === "investor"
+                  ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40"
+                  : "bg-gray-800 border-2 border-gray-700"
+              }`}
               onClick={() => setSelectedSecondaryRole("investor")}
             >
               <DollarSign className="h-16 w-16 md:h-24 md:w-24 text-white mb-2 md:mb-4" />
               <span className="text-white text-lg md:text-xl font-semibold">Investor</span>
             </div>
             <div
-              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px]
-                ${selectedSecondaryRole === "mentor" ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40" : "bg-gray-800 border-2 border-gray-700"}
-              `}
+              className={`flex flex-col items-center justify-center p-6 md:p-8 rounded-2xl cursor-pointer transition-all duration-300 min-w-[150px] min-h-[150px] ${
+                selectedSecondaryRole === "mentor"
+                  ? "bg-[#8B00FF] shadow-lg shadow-[#8B00FF]/40"
+                  : "bg-gray-800 border-2 border-gray-700"
+              }`}
               onClick={() => setSelectedSecondaryRole("mentor")}
             >
               <Briefcase className="h-16 w-16 md:h-24 md:w-24 text-white mb-2 md:mb-4" />
@@ -236,17 +234,17 @@ export function UserRoleSelection() {
       </div>
 
       <div className="w-full flex justify-between items-center max-w-7xl mx-auto mt-auto pt-8">
-        {/* Only show "Back" if not on the initial "Who You Are" page due to the param */}
-        {!(step === 1 && selectedPrimaryRole === "creator") && (
-            <Button
-                variant="ghost"
-                className="text-gray-300 hover:text-white text-lg font-semibold"
-                onClick={handleBack}
-            >
-                <ArrowLeft className="h-5 w-5 mr-2" />
-                Back
-            </Button>
-        )}
+        {/* --- FIX --- */}
+        {/* This logic ensures the Back button is always shown, which is more intuitive. */}
+        {/* The handleBack function now correctly handles where to navigate. */}
+        <Button
+          variant="ghost"
+          className="text-gray-300 hover:text-white text-lg font-semibold"
+          onClick={handleBack}
+        >
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Back
+        </Button>
 
         <Button
           className="bg-[#8B00FF] text-white h-12 px-8 rounded-full text-lg font-semibold hover:bg-purple-700 transition-colors"

@@ -2,13 +2,12 @@
 
 import { ArrowRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { CardContent } from "@/components/ui/card"
 import Image from "next/image"
-import { useRef, useState, useEffect, useCallback } from "react" // Added useCallback
+import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { countries } from "@/lib/data"
-import ParticleEffect from "./particle-effect"
+import { countries } from "@/lib/data" // Assuming you have this data file
+import ParticleEffect from "./particle-effect" // Assuming you have this component
 
 export default function CountriesSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -20,8 +19,8 @@ export default function CountriesSection() {
 
   // Auto-scroll specific refs and state
   const animationFrameId = useRef<number | null>(null)
-  const scrollSpeed = 1 // Increased from 0.5 to 1 for faster scroll
-  const isScrollingPaused = useRef(false) // To manage pause/resume on hover
+  const scrollSpeed = 1 // Controls scroll speed
+  const isScrollingPaused = useRef(false)
 
   // Mouse move effect for the "fog"
   useEffect(() => {
@@ -62,7 +61,6 @@ export default function CountriesSection() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Find the index of the original country, not the duplicated one
             const originalIndex = cardRefs.current.findIndex(
               (ref) => ref === entry.target && ref?.dataset.originalIndex !== undefined,
             )
@@ -88,7 +86,8 @@ export default function CountriesSection() {
         if (ref) observer.unobserve(ref)
       })
     }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [countries.length])
 
   const handleExploreClick = () => {
     router.push("/countries")
@@ -99,15 +98,11 @@ export default function CountriesSection() {
     if (scrollRef.current && !isScrollingPaused.current) {
       scrollRef.current.scrollLeft += scrollSpeed
 
-      // Check if we've scrolled past the original content length
-      // The total scrollable width is roughly twice the original content width
       const scrollWidth = scrollRef.current.scrollWidth
-      const clientWidth = scrollRef.current.clientWidth
-      const originalContentWidth = scrollWidth / 2 // Assuming content is duplicated once
+      const originalContentWidth = scrollWidth / 2
 
       if (scrollRef.current.scrollLeft >= originalContentWidth) {
-        // Jump back to the start of the duplicated content
-        scrollRef.current.scrollLeft = 0 // Or scrollRef.current.scrollLeft - originalContentWidth;
+        scrollRef.current.scrollLeft = scrollRef.current.scrollLeft - originalContentWidth
       }
     }
     animationFrameId.current = requestAnimationFrame(animateScroll)
@@ -139,21 +134,19 @@ export default function CountriesSection() {
 
   const scrollToCard = (index: number) => {
     if (cardRefs.current[index]) {
-      stopAutoScroll() // Stop auto-scroll for manual navigation
+      stopAutoScroll()
       cardRefs.current[index]?.scrollIntoView({
         behavior: "smooth",
         inline: "center",
+        block: "nearest",
       })
-      // Optionally, restart auto-scroll after a delay
-      setTimeout(startAutoScroll, 2000)
+      // Restart auto-scroll after a delay
+      setTimeout(startAutoScroll, 3000)
     }
   }
 
   return (
-    <section ref={sectionRef} className="relative py-8 md:py-16 bg-[#000A18] overflow-hidden">
-      {/* Embedded CSS for shine effect */}
-      
-
+    <section ref={sectionRef} className="relative py-12 md:py-20 bg-[#000A18] overflow-hidden">
       {/* AI Particle Effect */}
       <ParticleEffect />
 
@@ -163,103 +156,91 @@ export default function CountriesSection() {
         style={{
           background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(135, 0, 255, 0.15) 0%, transparent 50%)`,
           filter: "blur(50px)",
-          opacity: mousePosition.x === -9999 ? 0 : 1, // Hide when mouse leaves
+          opacity: mousePosition.x === -9999 ? 0 : 1,
           transition: "opacity 0.3s ease-out",
         }}
       />
 
       <div className="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center space-y-8 md:space-y-12">
-          {/* Section Title */}
-          <motion.h2
-            className="font-semibold text-3xl md:text-4xl lg:text-5xl text-white text-center shine-text" // Added shine-text
-            style={{ fontFamily: "Poppins, sans-serif" }}
-            initial={{ opacity: 1, y: 0 }} // Removed whileInView, set initial to visible
-          >
-            Explore Countries
-          </motion.h2>
+        <div className="flex flex-col space-y-8">
+          {/* Section Header */}
+          <div className="flex justify-between items-center">
+            <motion.h2
+              className="font-semibold text-3xl md:text-4xl text-white"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+              initial={{ opacity: 1, y: 0 }}
+            >
+              Explore by Countries
+            </motion.h2>
+            <Button
+              variant="link"
+              className="text-white flex items-center gap-2 text-base md:text-lg hover:text-purple-400 transition-colors duration-200"
+              onClick={handleExploreClick}
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Explore More
+              <ArrowRightIcon className="h-5 w-5" />
+            </Button>
+          </div>
 
-          {/* Countries Grid */}
+          {/* Countries Scroller */}
           <div className="w-full">
             <div
               ref={scrollRef}
-              className="flex overflow-x-auto gap-6 pb-4 scroll-smooth" // Removed scroll-snap-x-mandatory
+              className="flex overflow-x-auto gap-[15px] pb-4 scroll-smooth"
               style={{
                 scrollbarWidth: "none", // Firefox
                 msOverflowStyle: "none", // IE/Edge
               }}
-              onMouseEnter={stopAutoScroll} // Pause on hover
-              onMouseLeave={startAutoScroll} // Resume on leave
+              onMouseEnter={stopAutoScroll}
+              onMouseLeave={startAutoScroll}
             >
               {loopedCountries.map(({ name, image }, idx) => (
                 <motion.div
-                  key={`${name}-${idx}`} // Unique key for duplicated items
+                  key={`${name}-${idx}`}
                   ref={(el) => (cardRefs.current[idx] = el)}
-                  data-original-index={idx % countries.length} // Store original index for pagination
-                  className="flex-shrink-0
-                    w-[calc((100%-theme(spacing.6)*2)/3)]
-                    md:w-36 lg:w-40
-                    backdrop-blur-md bg-white/5 border border-white/10 {/* glass-effect */}
-                    rounded-xl overflow-hidden"
-                  initial={{ opacity: 1, y: 0, scale: 1 }}
-                  whileHover={{ scale: 1.03, y: -5, boxShadow: "0 10px 20px rgba(0,0,0,0.2)" }}
-                  transition={{ duration: 0.3 }}
+                  data-original-index={idx % countries.length}
+                  // 👇 **BORDER STYLE UPDATED HERE**
+                  className="flex-shrink-0 flex items-center box-border w-[180px] h-[67px] pt-[10px] pb-[10px] pl-[15.2px] pr-[15.2px] rounded-[13.01px] border-[2.13px] border-[#FFFFFF] cursor-pointer bg-[#DDDDDD33]"
+                  whileHover={{
+                    scale: 1.05,
+                    borderColor: "rgba(255, 255, 255, 0.6)",
+                  }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <CardContent className="flex flex-col items-center gap-4 p-4">
-                    <div className="relative w-20 h-20 lg:w-24 lg:h-24 rounded-full overflow-hidden">
-                      <Image src={image || "/placeholder.svg"} alt={name} fill className="object-cover" />
-                    </div>
-                    <span
-                      className="font-normal text-white text-lg lg:text-xl text-center"
-                      style={{ fontFamily: "Poppins, sans-serif" }}
-                    >
-                      {name}
-                    </span>
-                  </CardContent>
+                  <div className="relative w-[46.45px] h-[47px] rounded-full overflow-hidden flex-shrink-0">
+                    <Image src={image || "/placeholder.svg"} alt={name} fill className="object-cover" />
+                  </div>
+                  <span
+                    className="font-semibold text-white text-base whitespace-nowrap inline-flex items-center justify-center w-[128px] h-[63px] ml-[15.15px]"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
+                    {name}
+                  </span>
                 </motion.div>
               ))}
-              {/* Inline style for Chrome, Safari, Opera scrollbar hide */}
+              {/* Inline style to hide scrollbar in WebKit browsers */}
               <style jsx>{`
                 div[ref="scrollRef"]::-webkit-scrollbar {
-                  display: none !important;
-                  width: 0px !important;
-                  background: transparent !important;
+                  display: none;
                 }
               `}</style>
             </div>
           </div>
 
           {/* Pagination Dots */}
-          <div className="flex justify-center gap-2 mt-4">
-            {countries.map(
-              (
-                _,
-                index, // Use original countries array for dots
-              ) => (
-                <button
-                  key={index}
-                  onClick={() => scrollToCard(index)}
-                  className={`h-2 w-2 rounded-full transition-colors duration-200 ${
-                    index === activeIndex ? "bg-white" : "bg-white/40"
-                  }`}
-                  aria-label={`Go to country ${index + 1}`}
-                />
-              ),
-            )}
+          <div className="flex justify-center gap-2 pt-4">
+            {countries.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => scrollToCard(index)}
+                className={`h-2 w-2 rounded-full transition-colors duration-200 ${
+                  index === activeIndex ? "bg-white" : "bg-white/40 hover:bg-white/60"
+                }`}
+                aria-label={`Go to country ${index + 1}`}
+              />
+            ))}
           </div>
-
-          {/* Explore More Button */}
-          <motion.div initial={{ opacity: 1, y: 0 }}>
-            <Button
-              variant="link"
-              className="text-white flex items-center gap-3 text-base md:text-lg hover:text-purple-400 transition-colors duration-200"
-              onClick={handleExploreClick}
-              style={{ fontFamily: "Inter, sans-serif" }}
-            >
-              Explore More
-              <ArrowRightIcon className="h-5 w-5 md:h-6 md:w-6" />
-            </Button>
-          </motion.div>
         </div>
       </div>
     </section>

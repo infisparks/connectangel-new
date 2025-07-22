@@ -1,29 +1,31 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { ArrowRight, CheckCircle2 } from "lucide-react"
-import { countryCodes } from "@/lib/country-codes" // Assuming this path is correct
-import { Button } from "@/components/ui/button" // Assuming this path is correct
-import { Input } from "@/components/ui/input" // Assuming this path is correct
-import { Textarea } from "@/components/ui/textarea" // Assuming this path is correct
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Assuming this path is correct
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog" // Assuming this path is correct
-import { Checkbox } from "@/components/ui/checkbox" // Assuming this path is correct
-import { Label } from "@/components/ui/label" // Assuming this path is correct
-import { toast } from "sonner" // Assuming this path is correct
-import { cn } from "@/lib/utils" // Assuming this path is correct
-import { CountryCodeSelect } from "@/components/country-code-select" // Assuming this path is correct
-import { supabase } from "@/lib/supabaselib" // Assuming this path is correct
+import type React from "react";
+import { useState, useCallback, useEffect } from "react"; // Import useEffect
+import { useRouter } from "next/navigation";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { countryCodes } from "@/lib/country-codes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { CountryCodeSelect } from "@/components/country-code-select";
+import { supabase } from "@/lib/supabaselib";
+import { InvestorProfile } from "@/app/my-startups/page"; // Ensure InvestorProfile is imported
 
 type InvestorMultiStepFormProps = {
   userId: string;
-}
+  initialData?: InvestorProfile | null;
+};
 
-export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
-  const router = useRouter()
-  const [step, setStep] = useState(1)
+export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStepFormProps) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Personal Details
     fullName: "",
@@ -58,21 +60,77 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
     // Step 5: Consent & Submission
     consentContact: false,
     consentTermsPrivacy: false,
-  })
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  // --- useEffect to pre-fill form data when initialData prop is received ---
+  useEffect(() => {
+    if (initialData) {
+      // Helper to parse phone number (e.g., "+911234567890" -> "+91", "1234567890")
+      // Your InvestorProfile has separate phoneCountryCode and localPhoneNumber, so just use them directly
+      const fullPhoneNumber = initialData.phone_country_code + initialData.local_phone_number;
+      const phoneMatch = fullPhoneNumber.match(/^(\+\d+)(.*)$/);
+      const parsedPhoneCountryCode = phoneMatch ? phoneMatch[1] : "+91";
+      const parsedLocalPhoneNumber = phoneMatch ? phoneMatch[2] : "";
+
+
+      setFormData({
+        fullName: initialData.full_name || "",
+        emailAddress: initialData.email_address || "",
+        phoneCountryCode: initialData.phone_country_code || "+91",
+        localPhoneNumber: initialData.local_phone_number || "",
+        country: initialData.country || "",
+        city: initialData.city || "",
+        linkedInProfile: initialData.linkedin_profile || "",
+
+        investorType: initialData.investor_type || "",
+        typicalInvestmentRange: initialData.typical_investment_range || "",
+        investmentStagePreference: initialData.investment_stage_preference || [],
+        preferredSectorsIndustries: initialData.preferred_sectors_industries || [],
+        otherSectorIndustry: initialData.other_sector_industry || "",
+
+        hasInvestedBefore: initialData.has_invested_before ? "Yes" : "No", // Convert boolean to "Yes"/"No"
+        numberOfStartupsInvested: String(initialData.number_of_startups_invested || ""), // Convert number to string
+        exampleStartups: initialData.example_startups || "",
+        averageTicketSize: initialData.average_ticket_size || "",
+        lookingForNewOpportunities: initialData.looking_for_new_opportunities ? "Yes" : "No", // Convert boolean to "Yes"/"No"
+        investmentCriteria: initialData.investment_criteria || "",
+
+        supportOfferedApartFromFunding: initialData.support_offered_apart_from_funding || [],
+        otherSupportType: initialData.other_support_type || "",
+        requireSpecificCountryRegion: initialData.require_specific_country_region ? "Yes" : "No", // Convert boolean to "Yes"/"No"
+        specificCountryRegion: initialData.specific_country_region || "",
+
+        consentContact: false, // User should always re-consent
+        consentTermsPrivacy: false, // User should always re-consent
+      });
+      setStep(1); // Reset to first step when initialData loads for editing
+    } else {
+      // Reset form for new submission if initialData is null
+      setFormData({
+        fullName: "", emailAddress: "", phoneCountryCode: "+91", localPhoneNumber: "", country: "", city: "", linkedInProfile: "",
+        investorType: "", typicalInvestmentRange: "", investmentStagePreference: [], preferredSectorsIndustries: [], otherSectorIndustry: "",
+        hasInvestedBefore: "", numberOfStartupsInvested: "", exampleStartups: "", averageTicketSize: "",
+        lookingForNewOpportunities: "", investmentCriteria: "",
+        supportOfferedApartFromFunding: [], otherSupportType: "", requireSpecificCountryRegion: "", specificCountryRegion: "",
+        consentContact: false, consentTermsPrivacy: false,
+      });
+      setStep(1); // Ensure new form starts at step 1
+    }
+  }, [initialData]); // Depend on initialData prop
 
   // Handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
-  }
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData({ ...formData, [name]: value })
-  }
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleMultipleChoiceChange = (name: keyof typeof formData, value: string) => {
     const currentArray = formData[name] as string[];
@@ -83,26 +141,26 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
   };
 
   const handleNext = async () => {
-    let isValid = true
-    let errorMessage = ""
+    let isValid = true;
+    let errorMessage = "";
 
     switch (step) {
       case 1: // Personal Details
         if (!formData.fullName || !formData.emailAddress || !formData.localPhoneNumber || !formData.country || !formData.city) {
-          isValid = false
-          errorMessage = "Please fill in all required personal details."
+          isValid = false;
+          errorMessage = "Please fill in all required personal details.";
         }
-        break
+        break;
       case 2: // Investor Profile
         if (!formData.investorType || !formData.typicalInvestmentRange || formData.investmentStagePreference.length === 0 || formData.preferredSectorsIndustries.length === 0) {
-          isValid = false
-          errorMessage = "Please fill in all required investor profile details."
+          isValid = false;
+          errorMessage = "Please fill in all required investor profile details.";
         }
         if (formData.preferredSectorsIndustries.includes("Other") && !formData.otherSectorIndustry) {
-          isValid = false
-          errorMessage = "Please specify the other sector/industry."
+          isValid = false;
+          errorMessage = "Please specify the other sector/industry.";
         }
-        break
+        break;
       case 3: // Past Deals & Interests
         if (!formData.hasInvestedBefore) {
           isValid = false;
@@ -121,7 +179,7 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
           isValid = false;
           errorMessage = "Please describe what you look for in a startup.";
         }
-        break
+        break;
       case 4: // Engagement Criteria
         if (formData.supportOfferedApartFromFunding.length === 0) {
           isValid = false;
@@ -138,73 +196,97 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
           isValid = false;
           errorMessage = "Please specify the required country or region.";
         }
-        break
+        break;
       default:
-        break
+        break;
     }
 
     if (isValid) {
-      setStep(step + 1)
-      setSubmissionError(null)
+      setStep(step + 1);
+      setSubmissionError(null);
     } else {
-      setSubmissionError(errorMessage)
-      toast.error(errorMessage)
+      setSubmissionError(errorMessage);
+      toast.error(errorMessage);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!formData.consentContact || !formData.consentTermsPrivacy) {
-      setSubmissionError("You must agree to all consent policies before submitting.")
-      toast.error("You must agree to all consent policies before submitting.")
-      return
+      setSubmissionError("You must agree to all consent policies before submitting.");
+      toast.error("You must agree to all consent policies before submitting.");
+      return;
     }
-    setIsSubmitting(true)
-    setSubmissionError(null)
+    setIsSubmitting(true);
+    setSubmissionError(null);
 
     try {
-      const { data, error } = await supabase.from("investor_approval").insert([
-        {
-          user_id: userId,
-          full_name: formData.fullName,
-          email_address: formData.emailAddress,
-          phone_country_code: formData.phoneCountryCode,
-          local_phone_number: formData.localPhoneNumber,
-          country: formData.country,
-          city: formData.city,
-          linkedin_profile: formData.linkedInProfile,
-          investor_type: formData.investorType,
-          typical_investment_range: formData.typicalInvestmentRange,
-          investment_stage_preference: formData.investmentStagePreference,
-          preferred_sectors_industries: formData.preferredSectorsIndustries,
-          other_sector_industry: formData.otherSectorIndustry,
-          has_invested_before: formData.hasInvestedBefore === "Yes", // Convert to boolean
-          number_of_startups_invested: formData.hasInvestedBefore === "Yes" ? parseInt(formData.numberOfStartupsInvested, 10) : null,
-          example_startups: formData.hasInvestedBefore === "Yes" ? formData.exampleStartups : null,
-          average_ticket_size: formData.hasInvestedBefore === "Yes" ? formData.averageTicketSize : null,
-          looking_for_new_opportunities: formData.lookingForNewOpportunities === "Yes", // Convert to boolean
-          investment_criteria: formData.investmentCriteria,
-          support_offered_apart_from_funding: formData.supportOfferedApartFromFunding,
-          other_support_type: formData.otherSupportType,
-          require_specific_country_region: formData.requireSpecificCountryRegion === "Yes", // Convert to boolean
-          specific_country_region: formData.requireSpecificCountryRegion === "Yes" ? formData.specificCountryRegion : null,
-          status: "pending", // Default status
-        },
-      ])
+      const submissionPayload = {
+        user_id: userId,
+        full_name: formData.fullName,
+        email_address: formData.emailAddress,
+        phone_country_code: formData.phoneCountryCode,
+        local_phone_number: formData.localPhoneNumber,
+        country: formData.country,
+        city: formData.city,
+        linkedin_profile: formData.linkedInProfile,
+        investor_type: formData.investorType,
+        typical_investment_range: formData.typicalInvestmentRange,
+        investment_stage_preference: formData.investmentStagePreference,
+        preferred_sectors_industries: formData.preferredSectorsIndustries,
+        other_sector_industry: formData.otherSectorIndustry,
+        has_invested_before: formData.hasInvestedBefore === "Yes", // Convert to boolean
+        number_of_startups_invested: formData.hasInvestedBefore === "Yes" ? parseInt(formData.numberOfStartupsInvested, 10) : null,
+        example_startups: formData.hasInvestedBefore === "Yes" ? formData.exampleStartups : null,
+        average_ticket_size: formData.hasInvestedBefore === "Yes" ? formData.averageTicketSize : null,
+        looking_for_new_opportunities: formData.lookingForNewOpportunities === "Yes", // Convert to boolean
+        investment_criteria: formData.investmentCriteria,
+        support_offered_apart_from_funding: formData.supportOfferedApartFromFunding,
+        other_support_type: formData.otherSupportType,
+        require_specific_country_region: formData.requireSpecificCountryRegion === "Yes", // Convert to boolean
+        specific_country_region: formData.requireSpecificCountryRegion === "Yes" ? formData.specificCountryRegion : null,
+        status: "pending", // Always set to pending for re-approval/initial submission
+      };
 
-      if (error) throw error
+      let dbOperationError = null;
 
-      setShowSuccessDialog(true)
-      toast.success("Investor Profile submitted successfully! Waiting for approval.")
-      setTimeout(() => router.push("/"), 3000)
+      if (initialData?.id) {
+        // --- UPDATE Existing Profile ---
+        console.log("Updating existing Investor profile with ID:", initialData.id);
+        const { error: updateError } = await supabase
+          .from("investor_approval")
+          .update({
+            ...submissionPayload,
+            updated_at: new Date().toISOString(), // Update timestamp
+          })
+          .eq("id", initialData.id); // Target the specific record by its ID
+        dbOperationError = updateError;
+      } else {
+        // --- INSERT New Profile ---
+        console.log("Submitting new Investor profile.");
+        const { error: insertError } = await supabase
+          .from("investor_approval")
+          .insert({
+            ...submissionPayload,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        dbOperationError = insertError;
+      }
+
+      if (dbOperationError) throw dbOperationError;
+
+      setShowSuccessDialog(true);
+      toast.success(initialData ? "Investor Profile updated successfully!" : "Investor Profile submitted successfully! Waiting for approval.");
+      setTimeout(() => router.push("/my-startups"), 3000); // Redirect to My Profiles
     } catch (err: any) {
-      console.error("Submission error:", err)
-      setSubmissionError(err?.message || "Submission failed. Please try again.")
-      toast.error(err?.message || "Submission failed. Please try again.")
+      console.error("Submission error:", err);
+      setSubmissionError(err?.message || "Submission failed. Please try again.");
+      toast.error(err?.message || "Submission failed. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const renderStepContent = () => {
     switch (step) {
@@ -279,7 +361,7 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
               />
             </div>
           </div>
-        )
+        );
       case 2:
         return (
           <div className="space-y-6">
@@ -368,7 +450,7 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
               />
             )}
           </div>
-        )
+        );
       case 3:
         return (
           <div className="space-y-6">
@@ -468,7 +550,7 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
               required
             />
           </div>
-        )
+        );
       case 4:
         return (
           <div className="space-y-6">
@@ -541,7 +623,7 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
               />
             )}
           </div>
-        )
+        );
       case 5: // Consent & Submission
         return (
           <div className="space-y-6">
@@ -572,11 +654,11 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
             </div>
             {submissionError && <p className="text-red-500 text-sm mt-4">{submissionError}</p>}
           </div>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const steps = [
     "Personal Details",
@@ -584,7 +666,7 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
     "Past Deals & Interests",
     "Engagement Criteria",
     "Consent & Submission",
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-[#0E0617] py-8">
@@ -593,7 +675,9 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
           {/* Optional: Add a logo or title here */}
         </header>
 
-        <div className="max-w-3xl mx-auto"> {/* Centered form container */}
+        <div className="max-w-3xl mx-auto">
+          {" "}
+          {/* Centered form container */}
           <div className="p-6 lg:p-8 space-y-8 bg-[#0E0616] rounded-xl shadow-lg border border-[rgba(255,255,255,0.6)]">
             {/* Professional Progress Bar */}
             <div className="relative flex justify-between items-center w-full mb-8 text-xs">
@@ -644,8 +728,8 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
 
             <form
               onSubmit={(e) => {
-                e.preventDefault()
-                if (step === steps.length) handleSubmit(e)
+                e.preventDefault();
+                if (step === steps.length) handleSubmit(e);
               }}
               className="mt-8"
             >
@@ -672,7 +756,7 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
                     className="bg-purple-600 text-white hover:bg-purple-700"
                     disabled={isSubmitting || !formData.consentContact || !formData.consentTermsPrivacy}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit for Review"}
+                    {isSubmitting ? "Submitting..." : (initialData ? "Update Profile" : "Submit for Review")}
                   </Button>
                 )}
               </div>
@@ -693,11 +777,11 @@ export function InvestorMultiStepForm({ userId }: InvestorMultiStepFormProps) {
           </div>
           <div className="flex justify-center">
             <Button className="bg-purple-600 text-white" disabled>
-              Redirecting to Home...
+              Redirecting to My Profiles...
             </Button>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

@@ -1,45 +1,51 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useRef, useCallback, useEffect } from "react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import Cropper from "react-easy-crop"
-import { Plus, Play, ImageIcon, ArrowRight, MessageSquareText, CheckCircle2 } from "lucide-react"
-import { countryCodes } from "@/lib/country-codes" // Assuming this path is correct
-import { Button } from "@/components/ui/button" // Assuming this path is correct
-import { Input } from "@/components/ui/input" // Assuming this path is correct
-import { Textarea } from "@/components/ui/textarea" // Assuming this path is correct
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Assuming this path is correct
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog" // Assuming this path is correct
-import { Checkbox } from "@/components/ui/checkbox" // Assuming this path is correct
-import { Label } from "@/components/ui/label" // Assuming this path is correct
-import { toast } from "sonner" // Assuming this path is correct
-import { cn } from "@/lib/utils" // Assuming this path is correct
-import { CountryCodeSelect } from "@/components/country-code-select" // Assuming this path is correct
-import { supabase } from "@/lib/supabaselib" // Assuming this path is correct
+import type React from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import Image from "next/image"; // Keep if you use Image component, even if not directly for thumbnails in this form
+import { useRouter } from "next/navigation";
+import Cropper from "react-easy-crop"; // Keep if you use Cropper, even if not directly for thumbnails in this form
+import { Plus, Play, ImageIcon, ArrowRight, CheckCircle2 } from "lucide-react";
+import { countryCodes } from "@/lib/country-codes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { CountryCodeSelect } from "@/components/country-code-select";
+import { supabase } from "@/lib/supabaselib";
+
+// Import IncubationProfile type from its source (assuming it's in my-startups/page.tsx)
+import { IncubationProfile } from "@/app/my-startups/page";
 
 // Supabase storage bucket names (not directly used in this form but kept for context)
-const SUPABASE_VIDEO_BUCKET = "pitch-videos"
-const SUPABASE_THUMBNAIL_BUCKET = "thumbnails"
+const SUPABASE_VIDEO_BUCKET = "pitch-videos"; // Not used in Incubation form
+const SUPABASE_THUMBNAIL_BUCKET = "thumbnails"; // Not used in Incubation form
 
 type IncubationMultiStepFormProps = {
   userId: string;
-}
+  initialData?: IncubationProfile | null;
+};
 
 // Utility function to get cropped image - assumed to be globally available or imported
+// This function and ThumbnailCropper component are generally for image uploads.
+// If your Incubation form doesn't involve image uploads, these can be removed.
 function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> {
   return new Promise(async (resolve) => {
-    const image = new window.Image()
-    image.crossOrigin = "anonymous"
-    image.src = imageSrc
+    const image = new window.Image();
+    image.crossOrigin = "anonymous";
+    image.src = imageSrc;
     image.onload = () => {
-      const canvas = document.createElement("canvas")
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-      canvas.width = 400
-      canvas.height = 225
+      canvas.width = 400;
+      canvas.height = 225;
 
       ctx.drawImage(
         image,
@@ -50,42 +56,41 @@ function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> 
         0,
         0,
         400,
-        225,
-      )
+        225
+      );
 
       canvas.toBlob((blob) => {
-        if (blob) resolve(blob)
-      }, "image/png")
-    }
-  })
+        if (blob) resolve(blob);
+      }, "image/png");
+    };
+  });
 }
 
-// Re-using ThumbnailCropper as it's a generic image cropper (can be removed if no image upload)
 const ThumbnailCropper = ({
   imageUrl,
   onCropComplete,
   onClose,
 }: {
-  imageUrl: string
-  onCropComplete: (croppedBlob: Blob) => void
-  onClose: () => void
+  imageUrl: string;
+  onCropComplete: (croppedBlob: Blob) => void;
+  onClose: () => void;
 }) => {
-  const [crop, setCrop] = useState({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels)
-  }, [])
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
   const handleApply = async () => {
-    setLoading(true)
-    const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels)
-    setLoading(false)
-    onCropComplete(croppedBlob)
-    onClose()
-  }
+    setLoading(true);
+    const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels);
+    setLoading(false);
+    onCropComplete(croppedBlob);
+    onClose();
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -120,13 +125,12 @@ const ThumbnailCropper = ({
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-
-export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps) {
-  const router = useRouter()
-  const [step, setStep] = useState(1)
+export function IncubationMultiStepForm({ userId, initialData }: IncubationMultiStepFormProps) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Personal Details
     fullName: "",
@@ -171,21 +175,93 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
 
     // Step 6: Consent & Submission
     consentAgreed: false,
-  })
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  // --- useEffect to pre-fill form data when initialData prop is received ---
+  useEffect(() => {
+    if (initialData) {
+      // Helper to parse phone number (e.g., "+911234567890" -> "+91", "1234567890")
+      const parsePhoneNumber = (fullNumber: string | undefined | null) => {
+        if (!fullNumber) return { code: "+91", number: "" };
+        const match = fullNumber.match(/^(\+\d+)(.*)$/);
+        if (match) {
+          return { code: match[1], number: match[2] };
+        }
+        return { code: "+91", number: fullNumber }; // Fallback if format is unexpected
+      };
+
+      const { code: phoneCountryCode, number: localPhoneNumber } = parsePhoneNumber(initialData.phone_country_code + initialData.local_phone_number);
+
+      setFormData({
+        fullName: initialData.full_name || "",
+        emailAddress: initialData.email_address || "",
+        phoneCountryCode: initialData.phone_country_code || "+91", // Use the explicit country code if available
+        localPhoneNumber: initialData.local_phone_number || "", // Use the explicit local number if available
+        country: initialData.country || "",
+        city: initialData.city || "",
+
+        incubatorAcceleratorName: initialData.incubator_accelerator_name || "",
+        typeOfIncubator: initialData.type_of_incubator || "",
+        yearEstablished: String(initialData.year_established || ""),
+        website: initialData.website || "",
+        linkedInProfile: initialData.linkedin_profile || "",
+        physicalAddress: initialData.physical_address || "",
+        affiliatedOrganizationUniversity: initialData.affiliated_organization_university || "",
+        registrationNumber: initialData.registration_number || "",
+
+        primaryFocusAreas: initialData.primary_focus_areas || [],
+        specifyOtherFocusArea: initialData.specify_other_focus_area || "",
+
+        servicesOfferedToStartups: initialData.services_offered_to_startups || [],
+        specifyOtherServices: initialData.specify_other_services || "",
+        eligibilityCriteria: initialData.eligibility_criteria || "",
+        totalFundingRaisedByAlumni: initialData.total_funding_raised_by_alumni || "",
+        percentageStartupsOperationalAfter3Yrs: String(initialData.percentage_startups_operational_after_3_yrs || ""),
+        notableAlumniStartups: initialData.notable_alumni_startups || [],
+
+        uniqueValueProposition: initialData.unique_value_proposition || "",
+        problemGapsSolvedInEcosystem: initialData.problem_gaps_solved_in_ecosystem || "",
+        preferredStartupStages: initialData.preferred_startup_stages || [],
+        interestedInCrossBorderCollaborations: initialData.interested_in_cross_border_collaborations || "",
+        plannedExpansions: initialData.planned_expansions || "",
+        keyChallengesYouFace: initialData.key_challenges_you_face || "",
+        firstGoalNext12Months: initialData.first_goal_next_12_months || "",
+        secondGoal: initialData.second_goal || "",
+        thirdGoal: initialData.third_goal || "",
+
+        consentAgreed: false, // User should always re-consent for submission/update
+      });
+      setStep(1); // Reset to first step when initialData loads for editing
+    } else {
+      // Reset form for new submission if initialData is null
+      setFormData({
+        fullName: "", emailAddress: "", phoneCountryCode: "+91", localPhoneNumber: "", country: "", city: "",
+        incubatorAcceleratorName: "", typeOfIncubator: "", yearEstablished: "", website: "",
+        linkedInProfile: "", physicalAddress: "", affiliatedOrganizationUniversity: "", registrationNumber: "",
+        primaryFocusAreas: [], specifyOtherFocusArea: "", servicesOfferedToStartups: [],
+        specifyOtherServices: "", eligibilityCriteria: "", totalFundingRaisedByAlumni: "",
+        percentageStartupsOperationalAfter3Yrs: "", notableAlumniStartups: [],
+        uniqueValueProposition: "", problemGapsSolvedInEcosystem: "", preferredStartupStages: [],
+        interestedInCrossBorderCollaborations: "", plannedExpansions: "", keyChallengesYouFace: "",
+        firstGoalNext12Months: "", secondGoal: "", thirdGoal: "", consentAgreed: false,
+      });
+      setStep(1); // Ensure new form starts at step 1
+    }
+  }, [initialData]);
 
   // Handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
-  }
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData({ ...formData, [name]: value })
-  }
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleMultipleChoiceChange = (name: keyof typeof formData, value: string) => {
     const currentArray = formData[name] as string[];
@@ -202,6 +278,9 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
         notableAlumniStartups: [...prev.notableAlumniStartups, { startupName, websiteUrl }],
       }));
       toast.success("Notable alumni startup added!");
+      // Clear the input fields after adding
+      (document.getElementById("newAlumniStartupName") as HTMLInputElement).value = '';
+      (document.getElementById("newAlumniWebsiteUrl") as HTMLInputElement).value = '';
     } else {
       toast.error("Please fill in both startup name and website URL.");
     }
@@ -216,125 +295,148 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
   };
 
   const handleNext = async () => {
-    let isValid = true
-    let errorMessage = ""
+    let isValid = true;
+    let errorMessage = "";
 
     switch (step) {
       case 1: // Personal Details
         if (!formData.fullName || !formData.emailAddress || !formData.localPhoneNumber || !formData.country || !formData.city) {
-          isValid = false
-          errorMessage = "Please fill in all personal and contact details."
+          isValid = false;
+          errorMessage = "Please fill in all personal and contact details.";
         }
-        break
+        break;
       case 2: // Incubation Overview
         if (!formData.incubatorAcceleratorName || !formData.typeOfIncubator || !formData.yearEstablished || !formData.website || !formData.physicalAddress) {
-          isValid = false
-          errorMessage = "Please fill in all required incubation overview details."
+          isValid = false;
+          errorMessage = "Please fill in all required incubation overview details.";
         }
-        break
+        break;
       case 3: // Focus Areas
         if (formData.primaryFocusAreas.length === 0) {
-          isValid = false
-          errorMessage = "Please select at least one primary focus area."
+          isValid = false;
+          errorMessage = "Please select at least one primary focus area.";
         }
         if (formData.primaryFocusAreas.includes("Other") && !formData.specifyOtherFocusArea) {
-          isValid = false
-          errorMessage = "Please specify the other focus area."
+          isValid = false;
+          errorMessage = "Please specify the other focus area.";
         }
-        break
+        break;
       case 4: // Services & Track Record
         if (formData.servicesOfferedToStartups.length === 0 || !formData.eligibilityCriteria || !formData.totalFundingRaisedByAlumni || !formData.percentageStartupsOperationalAfter3Yrs) {
-          isValid = false
-          errorMessage = "Please fill in all required services and track record details."
+          isValid = false;
+          errorMessage = "Please fill in all required services and track record details.";
         }
         if (formData.servicesOfferedToStartups.includes("Other") && !formData.specifyOtherServices) {
-          isValid = false
-          errorMessage = "Please specify the other services offered."
+          isValid = false;
+          errorMessage = "Please specify the other services offered.";
         }
-        break
+        break;
       case 5: // Vision & Ecosystem Fit
         if (!formData.uniqueValueProposition || !formData.problemGapsSolvedInEcosystem || formData.preferredStartupStages.length === 0 || !formData.interestedInCrossBorderCollaborations || !formData.plannedExpansions || !formData.keyChallengesYouFace || !formData.firstGoalNext12Months) {
-          isValid = false
-          errorMessage = "Please fill in all required vision and ecosystem fit details."
+          isValid = false;
+          errorMessage = "Please fill in all required vision and ecosystem fit details.";
         }
-        break
+        break;
       default:
-        break
+        break;
     }
 
     if (isValid) {
-      setStep(step + 1)
-      setSubmissionError(null)
+      setStep(step + 1);
+      setSubmissionError(null);
     } else {
-      setSubmissionError(errorMessage)
-      toast.error(errorMessage)
+      setSubmissionError(errorMessage);
+      toast.error(errorMessage);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!formData.consentAgreed) {
-      setSubmissionError("You must agree to the privacy policy before submitting.")
-      toast.error("You must agree to the privacy policy before submitting.")
-      return
+      setSubmissionError("You must agree to the privacy policy before submitting.");
+      toast.error("You must agree to the privacy policy before submitting.");
+      return;
     }
-    setIsSubmitting(true)
-    setSubmissionError(null)
+    setIsSubmitting(true);
+    setSubmissionError(null);
 
     try {
-      // Corrected table name to 'incubation_approval'
-      // Added type conversions for 'year_established' and 'percentage_startups_operational_after_3_yrs'
-      const { data, error } = await supabase.from("incubation_approval").insert([
-        {
-          user_id: userId,
-          full_name: formData.fullName,
-          email_address: formData.emailAddress,
-          phone_country_code: formData.phoneCountryCode,
-          local_phone_number: formData.localPhoneNumber,
-          country: formData.country,
-          city: formData.city,
-          incubator_accelerator_name: formData.incubatorAcceleratorName,
-          type_of_incubator: formData.typeOfIncubator,
-          year_established: parseInt(formData.yearEstablished, 10), // Convert to integer
-          website: formData.website,
-          linkedin_profile: formData.linkedInProfile,
-          physical_address: formData.physicalAddress,
-          affiliated_organization_university: formData.affiliatedOrganizationUniversity,
-          registration_number: formData.registrationNumber,
-          primary_focus_areas: formData.primaryFocusAreas,
-          specify_other_focus_area: formData.specifyOtherFocusArea,
-          services_offered_to_startups: formData.servicesOfferedToStartups,
-          specify_other_services: formData.specifyOtherServices,
-          eligibility_criteria: formData.eligibilityCriteria,
-          total_funding_raised_by_alumni: formData.totalFundingRaisedByAlumni,
-          percentage_startups_operational_after_3_yrs: parseFloat(formData.percentageStartupsOperationalAfter3Yrs), // Convert to float
-          notable_alumni_startups: formData.notableAlumniStartups, // Stored as JSONB
-          unique_value_proposition: formData.uniqueValueProposition,
-          problem_gaps_solved_in_ecosystem: formData.problemGapsSolvedInEcosystem,
-          preferred_startup_stages: formData.preferredStartupStages,
-          interested_in_cross_border_collaborations: formData.interestedInCrossBorderCollaborations,
-          planned_expansions: formData.plannedExpansions,
-          key_challenges_you_face: formData.keyChallengesYouFace,
-          first_goal_next_12_months: formData.firstGoalNext12Months,
-          second_goal: formData.secondGoal,
-          third_goal: formData.thirdGoal,
-          status: "pending", // Default status
-        },
-      ])
+      // Prepare the data payload, converting types as necessary
+      const submissionPayload = {
+        user_id: userId,
+        full_name: formData.fullName,
+        email_address: formData.emailAddress,
+        phone_country_code: formData.phoneCountryCode,
+        local_phone_number: formData.localPhoneNumber,
+        country: formData.country,
+        city: formData.city,
+        incubator_accelerator_name: formData.incubatorAcceleratorName,
+        type_of_incubator: formData.typeOfIncubator,
+        year_established: parseInt(formData.yearEstablished, 10), // Convert to integer
+        website: formData.website,
+        linkedin_profile: formData.linkedInProfile,
+        physical_address: formData.physicalAddress,
+        affiliated_organization_university: formData.affiliatedOrganizationUniversity,
+        registration_number: formData.registrationNumber,
+        primary_focus_areas: formData.primaryFocusAreas,
+        specify_other_focus_area: formData.specifyOtherFocusArea,
+        services_offered_to_startups: formData.servicesOfferedToStartups,
+        specify_other_services: formData.specifyOtherServices,
+        eligibility_criteria: formData.eligibilityCriteria,
+        total_funding_raised_by_alumni: formData.totalFundingRaisedByAlumni,
+        percentage_startups_operational_after_3_yrs: parseFloat(formData.percentageStartupsOperationalAfter3Yrs), // Convert to float
+        notable_alumni_startups: formData.notableAlumniStartups, // Stored as JSONB
+        unique_value_proposition: formData.uniqueValueProposition,
+        problem_gaps_solved_in_ecosystem: formData.problemGapsSolvedInEcosystem,
+        preferred_startup_stages: formData.preferredStartupStages,
+        interested_in_cross_border_collaborations: formData.interestedInCrossBorderCollaborations,
+        planned_expansions: formData.plannedExpansions,
+        key_challenges_you_face: formData.keyChallengesYouFace,
+        first_goal_next_12_months: formData.firstGoalNext12Months,
+        second_goal: formData.secondGoal,
+        third_goal: formData.thirdGoal,
+        status: "pending", // Always set to pending for re-approval/initial submission
+      };
 
-      if (error) throw error
+      let dbOperationError = null;
 
-      setShowSuccessDialog(true)
-      toast.success("Incubation Profile submitted successfully! Waiting for approval.")
-      setTimeout(() => router.push("/"), 3000)
+      if (initialData?.id) {
+        // --- UPDATE Existing Profile ---
+        console.log("Updating existing Incubation profile with ID:", initialData.id);
+        const { error: updateError } = await supabase
+          .from("incubation_approval")
+          .update({
+            ...submissionPayload,
+            updated_at: new Date().toISOString(), // Update timestamp
+          })
+          .eq("id", initialData.id); // Target the specific record by its ID
+        dbOperationError = updateError;
+      } else {
+        // --- INSERT New Profile ---
+        console.log("Submitting new Incubation profile.");
+        const { error: insertError } = await supabase
+          .from("incubation_approval")
+          .insert({
+            ...submissionPayload,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        dbOperationError = insertError;
+      }
+
+      if (dbOperationError) throw dbOperationError;
+
+      setShowSuccessDialog(true);
+      toast.success(initialData ? "Incubation Profile updated successfully!" : "Incubation Profile submitted successfully! Waiting for approval.");
+      setTimeout(() => router.push("/my-startups"), 3000); // Redirect to My Profiles after submission/update
     } catch (err: any) {
-      console.error("Submission error:", err)
-      setSubmissionError(err?.message || "Submission failed. Please try again.")
-      toast.error(err?.message || "Submission failed. Please try again.")
+      console.error("Submission error:", err);
+      setSubmissionError(err?.message || "Submission failed. Please try again.");
+      toast.error(err?.message || "Submission failed. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const renderStepContent = () => {
     switch (step) {
@@ -401,7 +503,7 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
               />
             </div>
           </div>
-        )
+        );
       case 2:
         return (
           <div className="space-y-6">
@@ -480,7 +582,7 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
               />
             </div>
           </div>
-        )
+        );
       case 3:
         return (
           <div className="space-y-6">
@@ -518,7 +620,7 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
               />
             )}
           </div>
-        )
+        );
       case 4:
         return (
           <div className="space-y-6">
@@ -631,7 +733,7 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
               </div>
             </div>
           </div>
-        )
+        );
       case 5:
         return (
           <div className="space-y-6">
@@ -737,7 +839,7 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
               className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
             />
           </div>
-        )
+        );
       case 6: // Consent & Submission
         return (
           <div className="space-y-6">
@@ -755,11 +857,11 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
             </div>
             {submissionError && <p className="text-red-500 text-sm mt-4">{submissionError}</p>}
           </div>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const steps = [
     "Personal Details",
@@ -768,14 +870,13 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
     "Services & Track Record",
     "Vision & Ecosystem Fit",
     "Consent & Submission",
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-[#0E0617] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <header className="flex items-center mt-32 justify-between mb-10">
           {/* You can add a logo or title here */}
-          {/* <MessageSquareText className="h-[30px] w-[30px] text-white cursor-pointer hover:text-purple-400 transition-colors" /> */}
         </header>
 
         {/* Changed this div to take full width and be centered */}
@@ -830,8 +931,8 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
 
             <form
               onSubmit={(e) => {
-                e.preventDefault()
-                if (step === steps.length) handleSubmit(e)
+                e.preventDefault();
+                if (step === steps.length) handleSubmit(e);
               }}
               className="mt-8"
             >
@@ -858,7 +959,7 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
                     className="bg-purple-600 text-white hover:bg-purple-700"
                     disabled={isSubmitting || !formData.consentAgreed}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit for Review"}
+                    {isSubmitting ? "Submitting..." : (initialData ? "Update Profile" : "Submit for Review")}
                   </Button>
                 )}
               </div>
@@ -879,7 +980,7 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
           </div>
           <div className="flex justify-center">
             <Button className="bg-purple-600 text-white" disabled>
-              Redirecting to Home...
+              Redirecting to My Profiles...
             </Button>
           </div>
         </DialogContent>
@@ -888,5 +989,5 @@ export function IncubationMultiStepForm({ userId }: IncubationMultiStepFormProps
       {/* <video ref={videoRef} style={{ display: "none" }} muted preload="metadata" />
       <canvas ref={canvasRef} style={{ display: "none" }} /> */}
     </div>
-  )
+  );
 }

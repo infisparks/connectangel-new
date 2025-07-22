@@ -1,30 +1,84 @@
-"use client"
+// components/user-profile-card.tsx
+"use client";
 
-import Image from "next/image"
-import { Play } from "lucide-react"
-import { useState } from "react"
-import { VideoPlayerModal } from "./video-player-modal" // Assuming this path is correct
+import Image from "next/image";
+import { Play } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter
+import { VideoPlayerModal } from "./video-player-modal"; // Assuming this path is correct
+import { Button } from "@/components/ui/button"; // Import Button component
+
 // Import all types directly from the page file
-import type { ProfileData, ProfileRoleType, ApprovedStartup, PendingStartup, IncubationProfile, InvestorProfile, MentorProfile } from "@/app/my-startups/page"
+import type {
+  ProfileData,
+  ProfileRoleType,
+  ApprovedStartup,
+  PendingStartup,
+  IncubationProfile,
+  InvestorProfile,
+  MentorProfile,
+} from "@/app/my-startups/page";
+import { ProfileDetailModal } from "@/components/profile-detail-model"; // Import the new modal component
 
 interface UserProfileCardProps {
-  profile: ProfileData
-  roleType: ProfileRoleType
+  profile: ProfileData;
+  roleType: ProfileRoleType;
 }
 
 export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
-  const [showVideoModal, setShowVideoModal] = useState(false)
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for the new detail modal
+  const router = useRouter(); // Initialize useRouter
 
-  const statusText = profile.status || "Pending"
-  const statusColor = profile.status === "approved" ? "bg-green-600" : "bg-yellow-600"
+  const statusText = profile.status || "Pending";
+  // Updated statusColor to handle 'needs_update'
+  const statusColor =
+    profile.status === "approved"
+      ? "bg-green-600"
+      : profile.status === "pending"
+      ? "bg-yellow-600"
+      : profile.status === "needs_update" // Explicitly handle needs_update
+      ? "bg-blue-600"
+      : "bg-red-600"; // Assuming red for 'rejected' or other states
 
   // Determine if it's a startup profile for video/thumbnail logic
   const isStartupProfile = roleType === "startup";
   const startupProfile = profile as ApprovedStartup | PendingStartup; // Cast for specific startup properties
 
   // Conditional fullThumbnailUrl and fullVideoUrl based on isStartupProfile
-  const fullThumbnailUrl = isStartupProfile ? (startupProfile.thumbnail_url || "/placeholder.svg") : "/placeholder.svg";
-  const fullVideoUrl = isStartupProfile ? (startupProfile.pitch_video_url || null) : null;
+  const fullThumbnailUrl = isStartupProfile
+    ? startupProfile.thumbnail_url || "/placeholder.svg"
+    : "/placeholder.svg";
+  const fullVideoUrl = isStartupProfile
+    ? startupProfile.pitch_video_url || null
+    : null;
+
+  // Determine if Edit button should be shown
+  const showEditButton =
+    profile.status === "pending" || profile.status === "needs_update";
+
+  // Function to handle edit button click
+  const handleEditClick = () => {
+    let editPath = "";
+    switch (roleType) {
+      case "startup":
+        editPath = `/startup-registration/${profile.id}`;
+        break;
+      case "incubation":
+        editPath = `/incubation-registration/${profile.id}`;
+        break;
+      case "investor":
+        editPath = `/investor-registration/${profile.id}`;
+        break;
+      case "mentor":
+        editPath = `/mentor-registration/${profile.id}`;
+        break;
+      default:
+        console.warn("Unknown roleType for edit:", roleType);
+        return;
+    }
+    router.push(editPath);
+  };
 
   const renderProfileDetails = () => {
     switch (roleType) {
@@ -32,16 +86,30 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         const startup = profile as ApprovedStartup | PendingStartup;
         return (
           <>
-            <h3 className="text-lg font-semibold text-gray-100">{startup.startup_name}</h3>
-            <p className="text-sm text-gray-300">{startup.startup_type} • {startup.domain}</p>
-            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">{startup.description}</p>
+            <h3 className="text-lg font-semibold text-gray-100">
+              {startup.startup_name}
+            </h3>
+            <p className="text-sm text-gray-300">
+              {startup.startup_type} • {startup.domain}
+            </p>
+            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+              {startup.description}
+            </p>
             <div className="flex flex-wrap gap-2 mt-2">
-              {startup.founder_names?.filter(Boolean).map((name: string, idx: number) => (
-                <span key={idx} className="inline-block bg-purple-700 text-purple-100 text-xs px-3 py-1 rounded-full font-medium">{name}</span>
-              ))}
+              {startup.founder_names
+                ?.filter(Boolean)
+                .map((name: string, idx: number) => (
+                  <span
+                    key={idx}
+                    className="inline-block bg-purple-700 text-purple-100 text-xs px-3 py-1 rounded-full font-medium"
+                  >
+                    {name}
+                  </span>
+                ))}
             </div>
             <div className="text-gray-500 text-xs mt-1">
-              <span>Location: {startup.location}</span> • <span>Language: {startup.language}</span> •{" "}
+              <span>Location: {startup.location}</span> •{" "}
+              <span>Language: {startup.language}</span> •{" "}
               <span>Submitted: {new Date(startup.created_at).toLocaleDateString()}</span>
             </div>
           </>
@@ -50,17 +118,33 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         const incubation = profile as IncubationProfile;
         return (
           <>
-            <h3 className="text-lg font-semibold text-gray-100">{incubation.incubator_accelerator_name}</h3>
-            <p className="text-sm text-gray-300">{incubation.type_of_incubator} • {incubation.city}, {incubation.country}</p>
-            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-              **Unique Value Proposition:** {incubation.unique_value_proposition}
+            <h3 className="text-lg font-semibold text-gray-100">
+              {incubation.incubator_accelerator_name}
+            </h3>
+            <p className="text-sm text-gray-300">
+              {incubation.type_of_incubator} • {incubation.city},{" "}
+              {incubation.country}
             </p>
             <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-              **Focus Areas:** {incubation.primary_focus_areas.join(', ')}
+              <strong>Unique Value Proposition:</strong>{" "}
+              {incubation.unique_value_proposition}
+            </p>
+            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+              <strong>Focus Areas:</strong> {incubation.primary_focus_areas.join(", ")}
             </p>
             <div className="text-gray-500 text-xs mt-1">
               <span>Established: {incubation.year_established}</span> •{" "}
-              <span>Website: <a href={incubation.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">{incubation.website}</a></span>
+              <span>
+                Website:{" "}
+                <a
+                  href={incubation.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:underline"
+                >
+                  {incubation.website}
+                </a>
+              </span>
             </div>
           </>
         );
@@ -68,17 +152,28 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         const investor = profile as InvestorProfile;
         return (
           <>
-            <h3 className="text-lg font-semibold text-gray-100">{investor.full_name}</h3>
-            <p className="text-sm text-gray-300">{investor.investor_type} • {investor.typical_investment_range}</p>
-            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-              **Investment Criteria:** {investor.investment_criteria}
+            <h3 className="text-lg font-semibold text-gray-100">
+              {investor.full_name}
+            </h3>
+            <p className="text-sm text-gray-300">
+              {investor.investor_type} • {investor.typical_investment_range}
             </p>
             <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-              **Preferred Stages:** {investor.investment_stage_preference.join(', ')}
+              <strong>Investment Criteria:</strong> {investor.investment_criteria}
+            </p>
+            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+              <strong>Preferred Stages:</strong>{" "}
+              {investor.investment_stage_preference.join(", ")}
             </p>
             <div className="text-gray-500 text-xs mt-1">
-              <span>Location: {investor.city}, {investor.country}</span> •{" "}
-              <span>Looking for new opportunities: {investor.looking_for_new_opportunities ? "Yes" : "No"}</span>
+              <span>
+                Location: {investor.city}, {investor.country}
+              </span>{" "}
+              •{" "}
+              <span>
+                Looking for new opportunities:{" "}
+                {investor.looking_for_new_opportunities ? "Yes" : "No"}
+              </span>
             </div>
           </>
         );
@@ -86,31 +181,42 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         const mentor = profile as MentorProfile;
         return (
           <>
-            <h3 className="text-lg font-semibold text-gray-100">{mentor.full_name}</h3>
-            <p className="text-sm text-gray-300">{mentor.current_position_title} at {mentor.organization_company}</p>
-            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-              **Why Mentor:** {mentor.why_mentor_startups}
+            <h3 className="text-lg font-semibold text-gray-100">
+              {mentor.full_name}
+            </h3>
+            <p className="text-sm text-gray-300">
+              {mentor.current_position_title} at {mentor.organization_company}
             </p>
             <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-              **Expertise:** {mentor.key_areas_of_expertise.join(', ')}
+              <strong>Why Mentor:</strong> {mentor.why_mentor_startups}
+            </p>
+            <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
+              <strong>Expertise:</strong> {mentor.key_areas_of_expertise.join(", ")}
             </p>
             <div className="text-gray-500 text-xs mt-1">
               <span>Experience: {mentor.years_of_experience} years</span> •{" "}
               <span>Availability: {mentor.weekly_availability}</span> •{" "}
-              <span>Languages: {mentor.languages_spoken.join(', ')}</span>
+              <span>Languages: {mentor.languages_spoken.join(", ")}</span>
             </div>
           </>
         );
       default:
-        return <p className="text-gray-400">No details available for this profile type.</p>;
+        return (
+          <p className="text-gray-400">
+            No details available for this profile type.
+          </p>
+        );
     }
   };
 
   return (
     <div className="relative flex flex-col md:flex-row items-start p-4 gap-4 border rounded-lg shadow-sm bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
       {/* Role Tag */}
-      <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold w-fit ${statusColor} text-white`}>
-        {roleType.charAt(0).toUpperCase() + roleType.slice(1)} Profile: {statusText.charAt(0).toUpperCase() + statusText.slice(1)}
+      <div
+        className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold w-fit ${statusColor} text-white`}
+      >
+        {roleType.charAt(0).toUpperCase() + roleType.slice(1)} Profile:{" "}
+        {statusText.charAt(0).toUpperCase() + statusText.slice(1)}
       </div>
 
       {isStartupProfile && (
@@ -120,7 +226,7 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         >
           <Image
             src={fullThumbnailUrl}
-            alt={`${(profile as ApprovedStartup).startup_name || 'Profile'} Thumbnail`}
+            alt={`${(profile as ApprovedStartup).startup_name || "Profile"} Thumbnail`}
             fill
             style={{ objectFit: "cover" }}
             className="transition-transform duration-300 group-hover:scale-105"
@@ -134,8 +240,27 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
       )}
 
       {/* Content Area */}
-      <div className="flex-1 flex flex-col gap-2 pt-8 md:pt-0"> {/* Added padding to top for role tag */}
+      <div className="flex-1 flex flex-col gap-2 pt-8 md:pt-0">
+        {" "}
+        {/* Added padding to top for role tag */}
         {renderProfileDetails()}
+        {/* New: Buttons for Professional View and Edit */}
+        <div className="flex gap-3 mt-4">
+          <Button
+            className="bg-purple-600 text-white hover:bg-purple-700"
+            onClick={() => setIsModalOpen(true)}
+          >
+            View {/* Changed button text */}
+          </Button>
+          {showEditButton && (
+            <Button
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              onClick={handleEditClick} // Call the new handler
+            >
+              Edit
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Video Player Modal */}
@@ -144,9 +269,19 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
           isOpen={showVideoModal}
           onClose={() => setShowVideoModal(false)}
           videoUrl={fullVideoUrl}
-          title={(profile as ApprovedStartup).startup_name || "Video Playback"}
+          title={
+            (profile as ApprovedStartup).startup_name || "Video Playback"
+          }
         />
       )}
+
+      {/* Professional Detail Modal (New) */}
+      <ProfileDetailModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        profile={profile}
+        roleType={roleType}
+      />
     </div>
-  )
+  );
 }

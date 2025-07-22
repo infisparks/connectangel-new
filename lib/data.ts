@@ -18,6 +18,8 @@ import BlockchainWeb3Img from "@/public/img/domain/IT.png"
 import FinTechSolutionsImg from "@/public/img/domain/drone-tech.png"
 import HealthTechInnovationImg from "@/public/img/domain/agriculture.png"
 
+
+
 export const countries = [
   { name: "India", image: IndiaImg },
   { name: "Pakistan", image: PakistanImg },
@@ -33,47 +35,16 @@ export const countries = [
 ]
 
 export const categories = [
-  {
-    title: "Startups",
-    image: StartupsImg,
-    description: "Innovative startup ideas",
-  },
-  {
-    title: "Technology",
-    image: TechnologyImg,
-    description: "Latest tech trends",
-  },
-  {
-    title: "Business",
-    image: BusinessImg,
-    description: "Business development",
-  },
-  {
-    title: "Innovation",
-    image: InnovationImg,
-    description: "Creative solutions",
-  },
-  // Add more categories here if needed
-  {
-    title: "Finance",
-    image: StartupsImg,
-    description: "Financial insights and trends",
-  },
-  {
-    title: "Healthcare",
-    image: TechnologyImg,
-    description: "Advancements in health tech",
-  },
-  {
-    title: "Education",
-    image: BusinessImg,
-    description: "Learning and development",
-  },
-  {
-    title: "Environment",
-    image: InnovationImg,
-    description: "Sustainable solutions",
-  },
+  { name: "Startups", image: StartupsImg },
+  { name: "Technology", image: TechnologyImg },
+  { name: "Business", image: BusinessImg },
+  { name: "Innovation", image: InnovationImg },
+   // Add more categories here if needed
+  { name: "Finance", image: StartupsImg },
+  { name: "Healthcare", image: TechnologyImg },
+  { name: "Education", image: BusinessImg },
+  { name: "Environment", image: InnovationImg },
+  
 ]
 
 export const domains = [

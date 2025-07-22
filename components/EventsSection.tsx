@@ -2,26 +2,69 @@
 
 import { ArrowRightIcon, MapPinIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { events } from "@/lib/data"
-import { motion, useScroll, useTransform } from "framer-motion" // Import motion and scroll hooks
+import { motion } from "framer-motion"
+
+// New dummy data with 6 events to match the request
+const events = [
+  {
+    title: "CodeSprint '25: Dev Edition",
+    organizer: "NovaCode Labs",
+    organizerImage: "https://placehold.co/40x40/ffffff/8700ff?text=N",
+    location: "Bengaluru, India",
+    timeAgo: "23 hrs ago",
+    eventImage: "https://placehold.co/347x200/2d3748/ffffff?text=Event+1",
+  },
+  {
+    title: "AI & The Future of Design",
+    organizer: "Pixel Perfect Inc.",
+    organizerImage: "https://placehold.co/40x40/ffffff/8700ff?text=P",
+    location: "San Francisco, USA",
+    timeAgo: "1 day ago",
+    eventImage: "https://placehold.co/347x200/4a5568/ffffff?text=Event+2",
+  },
+  {
+    title: "Web3 Innovators Summit",
+    organizer: "CryptoChain Co.",
+    organizerImage: "https://placehold.co/40x40/ffffff/8700ff?text=C",
+    location: "Dubai, UAE",
+    timeAgo: "2 days ago",
+    eventImage: "https://placehold.co/347x200/718096/ffffff?text=Event+3",
+  },
+  {
+    title: "The UX/UI Masterclass",
+    organizer: "Creative Minds",
+    organizerImage: "https://placehold.co/40x40/ffffff/8700ff?text=C",
+    location: "London, UK",
+    timeAgo: "3 days ago",
+    eventImage: "https://placehold.co/347x200/a0aec0/ffffff?text=Event+4",
+  },
+  {
+    title: "Startup Pitch Night",
+    organizer: "Venture Hub",
+    organizerImage: "https://placehold.co/40x40/ffffff/8700ff?text=V",
+    location: "Online",
+    timeAgo: "5 days ago",
+    eventImage: "https://placehold.co/347x200/cbd5e0/ffffff?text=Event+5",
+  },
+  {
+    title: "Cloud Computing Expo",
+    organizer: "Serverless Solutions",
+    organizerImage: "https://placehold.co/40x40/ffffff/8700ff?text=S",
+    location: "Berlin, Germany",
+    timeAgo: "1 week ago",
+    eventImage: "https://placehold.co/347x200/e2e8f0/000000?text=Event+6",
+  },
+];
+
 
 export default function EventsSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const router = useRouter()
-  const sectionRef = useRef<HTMLElement>(null) // Ref for the section to track scroll
-
-  // Scroll animation for the floating object
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start end", "end start"], // Animate as the section enters/leaves viewport
-  })
-  const yObject = useTransform(scrollYProgress, [0, 1], ["-50%", "150%"]) // Moves from top to bottom of its container
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -41,7 +84,7 @@ export default function EventsSection() {
       {
         root: scrollElement,
         rootMargin: "0px",
-        threshold: 0.7,
+        threshold: 0.7, // Card is considered active when 70% visible
       },
     )
 
@@ -61,6 +104,7 @@ export default function EventsSection() {
       cardRefs.current[index]?.scrollIntoView({
         behavior: "smooth",
         inline: "center",
+        block: "nearest",
       })
     }
   }
@@ -70,104 +114,140 @@ export default function EventsSection() {
   }
 
   return (
-    <section ref={sectionRef} id="events" className="relative py-8 md:py-16 bg-[#000A18] overflow-hidden">
-      {/* Animated object */}
-      <motion.div
-        style={{ y: yObject }}
-        className="absolute top-0 left-3/4 w-32 h-32 rounded-full bg-pink-500/30 blur-xl z-0"
-      />
-
-      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col space-y-8">
-          {/* Section Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <h2 className="font-poppins font-medium text-white text-2xl md:text-3xl lg:text-4xl">Events</h2>
-            <Button
-              variant="link"
-              className="text-white flex items-center gap-3 font-inter text-lg md:text-xl hover:text-purple-400 transition-colors duration-200 self-start sm:self-center"
-              onClick={handleExploreClick}
-            >
-              Explore More
-              <ArrowRightIcon className="w-6 h-6 md:w-8 md:h-8" />
-            </Button>
-          </div>
-
-          {/* Events Scrollable Container */}
-          <div
-            ref={scrollRef}
-            className="flex overflow-x-auto gap-6 pb-4 scroll-snap-x-mandatory scroll-smooth"
-            style={{
-              scrollbarWidth: "none", // Firefox
-              msOverflowStyle: "none", // IE/Edge
-            }}
+    <section 
+      id="events" 
+      className="relative w-full bg-[#1B0E2B] overflow-hidden font-sans"
+      style={{
+        paddingTop: '40px',
+        paddingBottom: '40px',
+      }}
+    >
+      <div 
+        className="relative z-10 mx-auto flex flex-col"
+        style={{
+          maxWidth: '1438px',
+          paddingLeft: '41px',
+          paddingRight: '41px',
+          gap: '30px'
+        }}
+      >
+        {/* Section Header */}
+        <div className="flex flex-row items-center justify-between">
+          <h2 className="font-bold text-white text-4xl">Latest Events</h2>
+          <Button
+            variant="link"
+            className="text-white flex items-center gap-3 text-lg hover:text-purple-400 transition-colors duration-200"
+            onClick={handleExploreClick}
           >
-            {events.map((event, index) => (
-              <Card
-                key={index}
-                ref={(el) => (cardRefs.current[index] = el)}
-                className="flex-shrink-0
-                  w-full
-                  sm:w-[calc((100%-theme(spacing.6))/2)]
-                  md:w-[calc((100%-theme(spacing.6)*2)/3)]
-                  lg:w-[calc((100%-theme(spacing.6)*2)/3)]
-                  glass-effect hover-lift transition-all duration-300 hover:scale-105 border border-white/20
-                  scroll-snap-align-center"
-              >
-                <CardContent className="flex flex-col space-y-6 p-6 md:p-8">
-                  <div className="flex flex-col space-y-4">
-                    <h3 className="font-poppins font-medium text-white text-lg md:text-xl leading-tight">
-                      {event.title}
-                    </h3>
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden">
-                        <Image
-                          src={event.organizerImage || "/placeholder.svg"}
-                          alt={event.organizer}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <span className="font-poppins font-medium text-white text-sm md:text-base">
-                        {event.organizer}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <MapPinIcon className="w-4 h-4 md:w-5 md:h-5 text-white" />
-                      <span className="font-poppins font-medium text-white text-sm md:text-base">{event.location}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <Button className="h-10 md:h-12 px-4 md:px-6 py-2 bg-[#8700ff] rounded-full font-poppins text-sm md:text-base hover:bg-[#7300dd] transition-all duration-200">
-                      Register
-                    </Button>
-                    <span className="font-inter font-medium text-white/80 text-xs md:text-sm">{event.timeAgo}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {/* Hide scrollbar for Chrome/Safari/Opera */}
-            <style>{`
-              div[ref='scrollRef']::-webkit-scrollbar {
-                display: none !important;
-                width: 0px !important;
-                background: transparent !important;
-              }
-            `}</style>
-          </div>
+            Explore More
+            <ArrowRightIcon className="w-6 h-6" />
+          </Button>
+        </div>
 
-          {/* Pagination Dots (Visible on all screen sizes) */}
-          <div className="flex justify-center gap-2 mt-4">
-            {events.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => scrollToCard(index)}
-                className={`h-2 w-2 rounded-full transition-colors duration-200 ${
-                  index === activeIndex ? "bg-white" : "bg-white/40"
-                }`}
-                aria-label={`Go to event ${index + 1}`}
-              />
-            ))}
-          </div>
+        {/* Events Scrollable Container */}
+        <div
+          ref={scrollRef}
+          className="flex overflow-x-auto pb-4 scroll-snap-x-mandatory scroll-smooth"
+          style={{
+            gap: '30px', // Gap between cards
+            scrollbarWidth: "none", // Firefox
+            msOverflowStyle: "none", // IE/Edge
+          }}
+        >
+          {events.map((event, index) => (
+            <div
+              key={index}
+              ref={(el) => (cardRefs.current[index] = el)}
+              className="group flex-shrink-0 transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/30"
+              style={{
+                width: '367px',
+                height: '435.45px',
+                backgroundColor: '#FFFFFF1A',
+                borderRadius: '22.58px',
+                border: '1.13px solid #FFFFFF', // Using 1.13px as requested, can be changed to 2.13px if preferred
+                padding: '19px 10px 31.61px 10px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '18px',
+                scrollSnapAlign: 'center',
+              }}
+            >
+              {/* Event Image */}
+              <div className="relative w-full h-[200px] rounded-lg overflow-hidden">
+                 <Image
+                    src={event.eventImage}
+                    alt={event.title}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+              </div>
+
+              {/* Event Title */}
+              <h3 
+                className="font-semibold text-white text-2xl leading-tight"
+                style={{
+                  width: '347px',
+                  height: '34px',
+                }}
+              >
+                {event.title}
+              </h3>
+
+              {/* Organizer Info */}
+              <div className="flex items-center gap-3">
+                <div 
+                  className="relative overflow-hidden"
+                  style={{
+                    width: '38.23px',
+                    height: '39.14px',
+                    borderRadius: '142.23px',
+                  }}
+                >
+                  <Image
+                    src={event.organizerImage}
+                    alt={event.organizer}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-medium text-white text-base">{event.organizer}</span>
+                  <div className="flex items-center gap-1.5 text-gray-400">
+                     <MapPinIcon className="w-4 h-4" />
+                     <span className="text-sm">{event.location}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action and Time */}
+              <div className="flex items-center justify-between mt-auto">
+                <Button className="h-12 px-8 bg-[#8700ff] rounded-full font-bold text-base transition-all duration-300 hover:bg-[#7300dd] hover:scale-105">
+                  Register
+                </Button>
+                <span className="font-medium text-white/70 text-sm">{event.timeAgo}</span>
+              </div>
+            </div>
+          ))}
+           {/* Hide scrollbar for Chrome/Safari/Opera */}
+          <style>{`
+            div[ref='scrollRef']::-webkit-scrollbar {
+              display: none;
+            }
+          `}</style>
+        </div>
+
+        {/* Pagination Dots */}
+        <div className="flex justify-center gap-2.5 mt-4">
+          {events.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => scrollToCard(index)}
+              className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                index === activeIndex ? "w-6 bg-white" : "bg-white/40 hover:bg-white/70"
+              }`}
+              aria-label={`Go to event ${index + 1}`}
+            />
+          ))}
         </div>
       </div>
     </section>

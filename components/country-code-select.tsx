@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { countryCodes } from "@/lib/country-codes"
-import { SupabaseClient } from "@supabase/supabase-js"
+// Note: The unused 'SupabaseClient' import has been removed.
+
 interface CountryCodeSelectProps {
   value: string
   onValueChange: (value: string) => void
@@ -48,7 +49,10 @@ export function CountryCodeSelect({ value, onValueChange, placeholder, className
                   key={country.code}
                   value={`${country.name} ${country.dialCode}`}
                   onSelect={() => {
-                    onValueChange(country.dialCode)
+                    // FIX: Check if country.dialCode exists before calling onValueChange
+                    if (country.dialCode) {
+                      onValueChange(country.dialCode)
+                    }
                     setOpen(false)
                   }}
                   className="cursor-pointer hover:bg-purple-700 hover:text-white data-[state=selected]:bg-purple-700 data-[state=selected]:text-white"

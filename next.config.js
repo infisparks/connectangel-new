@@ -7,7 +7,7 @@ const nextConfig = {
     unoptimized: true, // Keep unoptimized if you are serving directly from Supabase CDN without Next.js optimization
   },
   trailingSlash: true,
-  output: 'export'
+  // output: 'export'
 }
 
 module.exports = nextConfig

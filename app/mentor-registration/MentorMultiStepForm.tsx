@@ -1,29 +1,31 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { ArrowRight, CheckCircle2 } from "lucide-react"
-import { countryCodes } from "@/lib/country-codes" // Assuming this path is correct
-import { Button } from "@/components/ui/button" // Assuming this path is correct
-import { Input } from "@/components/ui/input" // Assuming this path is correct
-import { Textarea } from "@/components/ui/textarea" // Assuming this path is correct
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select" // Assuming this path is correct
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog" // Assuming this path is correct
-import { Checkbox } from "@/components/ui/checkbox" // Assuming this path is correct
-import { Label } from "@/components/ui/label" // Assuming this path is correct
-import { toast } from "sonner" // Assuming this path is correct
-import { cn } from "@/lib/utils" // Assuming this path is correct
-import { CountryCodeSelect } from "@/components/country-code-select" // Assuming this path is correct
-import { supabase } from "@/lib/supabaselib" // Assuming this path is correct
+import type React from "react";
+import { useState, useCallback, useEffect } from "react"; // Import useEffect
+import { useRouter } from "next/navigation";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
+import { countryCodes } from "@/lib/country-codes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { CountryCodeSelect } from "@/components/country-code-select";
+import { supabase } from "@/lib/supabaselib";
+import { MentorProfile } from "@/app/my-startups/page"; // Ensure MentorProfile is imported
 
 type MentorMultiStepFormProps = {
   userId: string;
-}
+  initialData?: MentorProfile | null;
+};
 
-export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
-  const router = useRouter()
-  const [step, setStep] = useState(1)
+export function MentorMultiStepForm({ userId, initialData }: MentorMultiStepFormProps) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     // Step 1: Personal Details
     fullName: "",
@@ -62,21 +64,88 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
 
     // Step 6: Submit for Review
     consentTermsPrivacy: false,
-  })
+  });
 
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+
+  // --- useEffect to pre-fill form data when initialData prop is received ---
+  useEffect(() => {
+    if (initialData) {
+      // Helper to parse phone number (e.g., "+911234567890" -> "+91", "1234567890")
+      const parsePhoneNumber = (fullNumber: string | undefined | null) => {
+        if (!fullNumber) return { code: "+91", number: "" };
+        const match = fullNumber.match(/^(\+\d+)(.*)$/);
+        if (match) {
+          return { code: match[1], number: match[2] };
+        }
+        return { code: "+91", number: fullNumber }; // Fallback if format is unexpected
+      };
+
+      const { code: phoneCountryCode, number: localPhoneNumber } = parsePhoneNumber(initialData.phone_number);
+
+      setFormData({
+        fullName: initialData.full_name || "",
+        emailAddress: initialData.email_address || "",
+        phoneCountryCode: phoneCountryCode,
+        localPhoneNumber: localPhoneNumber,
+        gender: initialData.gender || "",
+        linkedInProfile: initialData.linkedin_profile || "",
+        city: initialData.city || "",
+        personalWebsite: initialData.personal_website || "",
+        country: initialData.country || "",
+
+        currentPositionTitle: initialData.current_position_title || "",
+        organizationCompany: initialData.organization_company || "",
+        yearsOfExperience: String(initialData.years_of_experience || ""), // Convert number to string
+        keyAreasOfExpertise: initialData.key_areas_of_expertise || [],
+        otherExpertiseArea: initialData.other_expertise_area || "",
+
+        mentorshipDomains: initialData.mentorship_domains || [],
+        otherMentorshipDomain: initialData.other_mentorship_domain || "",
+
+        preferredStartupStage: initialData.preferred_startup_stage || "",
+        mentorshipMode: initialData.mentorship_mode || "",
+        weeklyAvailability: initialData.weekly_availability || "",
+        languagesSpoken: initialData.languages_spoken || [],
+        whyMentorStartups: initialData.why_mentor_startups || "",
+        proudMentoringExperience: initialData.proud_mentoring_experience || "",
+        industriesMostExcitedToMentor: initialData.industries_most_excited_to_mentor || "",
+
+        openToOtherContributions: initialData.open_to_other_contributions || [],
+        otherContributionType: initialData.other_contribution_type || "",
+
+        consentTermsPrivacy: false, // User should always re-consent
+      });
+      setStep(1); // Reset to first step when initialData loads for editing
+    } else {
+      // Reset form for new submission if initialData is null
+      setFormData({
+        fullName: "", emailAddress: "", phoneCountryCode: "+91", localPhoneNumber: "", gender: "",
+        linkedInProfile: "", city: "", personalWebsite: "", country: "",
+        currentPositionTitle: "", organizationCompany: "", yearsOfExperience: "",
+        keyAreasOfExpertise: [], otherExpertiseArea: "",
+        mentorshipDomains: [], otherMentorshipDomain: "",
+        preferredStartupStage: "", mentorshipMode: "", weeklyAvailability: "",
+        languagesSpoken: [], whyMentorStartups: "", proudMentoringExperience: "",
+        industriesMostExcitedToMentor: "",
+        openToOtherContributions: [], otherContributionType: "",
+        consentTermsPrivacy: false,
+      });
+      setStep(1); // Ensure new form starts at step 1
+    }
+  }, [initialData]);
 
   // Handlers
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData({ ...formData, [name]: value })
-  }
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData({ ...formData, [name]: value })
-  }
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleMultipleChoiceChange = (name: keyof typeof formData, value: string) => {
     const currentArray = formData[name] as string[];
@@ -87,118 +156,141 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
   };
 
   const handleNext = async () => {
-    let isValid = true
-    let errorMessage = ""
+    let isValid = true;
+    let errorMessage = "";
 
     switch (step) {
       case 1: // Personal Details
         if (!formData.fullName || !formData.emailAddress || !formData.localPhoneNumber || !formData.country || !formData.city || !formData.gender) {
-          isValid = false
-          errorMessage = "Please fill in all required personal details."
+          isValid = false;
+          errorMessage = "Please fill in all required personal details.";
         }
-        break
+        break;
       case 2: // Professional Experience
         if (!formData.currentPositionTitle || !formData.organizationCompany || !formData.yearsOfExperience || formData.keyAreasOfExpertise.length === 0) {
-          isValid = false
-          errorMessage = "Please fill in all required professional experience details."
+          isValid = false;
+          errorMessage = "Please fill in all required professional experience details.";
         }
         if (formData.keyAreasOfExpertise.includes("Other") && !formData.otherExpertiseArea) {
-          isValid = false
-          errorMessage = "Please specify your other area of expertise."
+          isValid = false;
+          errorMessage = "Please specify your other area of expertise.";
         }
-        break
+        break;
       case 3: // Mentorship Domains
         if (formData.mentorshipDomains.length === 0) {
-          isValid = false
-          errorMessage = "Please select at least one mentorship domain."
+          isValid = false;
+          errorMessage = "Please select at least one mentorship domain.";
         }
         if (formData.mentorshipDomains.includes("Other") && !formData.otherMentorshipDomain) {
-          isValid = false
-          errorMessage = "Please specify your other mentorship domain."
+          isValid = false;
+          errorMessage = "Please specify your other mentorship domain.";
         }
-        break
+        break;
       case 4: // Mentorship Persona
         if (!formData.preferredStartupStage || !formData.mentorshipMode || !formData.weeklyAvailability || formData.languagesSpoken.length === 0 || !formData.whyMentorStartups || !formData.proudMentoringExperience || !formData.industriesMostExcitedToMentor) {
-          isValid = false
-          errorMessage = "Please fill in all required mentorship persona details."
+          isValid = false;
+          errorMessage = "Please fill in all required mentorship persona details.";
         }
-        break
+        break;
       case 5: // Additional Contributions
         // This step is optional, but if "Other" is selected, the field needs to be filled.
         if (formData.openToOtherContributions.includes("Other") && !formData.otherContributionType) {
-          isValid = false
-          errorMessage = "Please specify your other contribution type."
+          isValid = false;
+          errorMessage = "Please specify your other contribution type.";
         }
-        break
+        break;
       default:
-        break
+        break;
     }
 
     if (isValid) {
-      setStep(step + 1)
-      setSubmissionError(null)
+      setStep(step + 1);
+      setSubmissionError(null);
     } else {
-      setSubmissionError(errorMessage)
-      toast.error(errorMessage)
+      setSubmissionError(errorMessage);
+      toast.error(errorMessage);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!formData.consentTermsPrivacy) {
-      setSubmissionError("You must agree to the platform's terms & privacy policy before submitting.")
-      toast.error("You must agree to the platform's terms & privacy policy before submitting.")
-      return
+      setSubmissionError("You must agree to the platform's terms & privacy policy before submitting.");
+      toast.error("You must agree to the platform's terms & privacy policy before submitting.");
+      return;
     }
-    setIsSubmitting(true)
-    setSubmissionError(null)
+    setIsSubmitting(true);
+    setSubmissionError(null);
 
     try {
-      // Renamed table to 'mentor_approval'
-      const { data, error } = await supabase.from("mentor_approval").insert([
-        {
-          user_id: userId,
-          full_name: formData.fullName,
-          email_address: formData.emailAddress,
-          phone_number: `${formData.phoneCountryCode}${formData.localPhoneNumber}`,
-          gender: formData.gender,
-          linkedin_profile: formData.linkedInProfile,
-          city: formData.city,
-          personal_website: formData.personalWebsite,
-          country: formData.country,
-          current_position_title: formData.currentPositionTitle,
-          organization_company: formData.organizationCompany,
-          years_of_experience: parseInt(formData.yearsOfExperience, 10),
-          key_areas_of_expertise: formData.keyAreasOfExpertise,
-          other_expertise_area: formData.otherExpertiseArea,
-          mentorship_domains: formData.mentorshipDomains,
-          other_mentorship_domain: formData.otherMentorshipDomain,
-          preferred_startup_stage: formData.preferredStartupStage,
-          mentorship_mode: formData.mentorshipMode,
-          weekly_availability: formData.weeklyAvailability,
-          languages_spoken: formData.languagesSpoken,
-          why_mentor_startups: formData.whyMentorStartups,
-          proud_mentoring_experience: formData.proudMentoringExperience,
-          industries_most_excited_to_mentor: formData.industriesMostExcitedToMentor,
-          open_to_other_contributions: formData.openToOtherContributions,
-          other_contribution_type: formData.otherContributionType,
-          status: "pending", // Default status
-        },
-      ])
+      const submissionPayload = {
+        user_id: userId,
+        full_name: formData.fullName,
+        email_address: formData.emailAddress,
+        phone_number: `${formData.phoneCountryCode}${formData.localPhoneNumber}`,
+        gender: formData.gender,
+        linkedin_profile: formData.linkedInProfile,
+        city: formData.city,
+        personal_website: formData.personalWebsite,
+        country: formData.country,
+        current_position_title: formData.currentPositionTitle,
+        organization_company: formData.organizationCompany,
+        years_of_experience: parseInt(formData.yearsOfExperience, 10), // Convert to number
+        key_areas_of_expertise: formData.keyAreasOfExpertise,
+        other_expertise_area: formData.otherExpertiseArea,
+        mentorship_domains: formData.mentorshipDomains,
+        other_mentorship_domain: formData.otherMentorshipDomain,
+        preferred_startup_stage: formData.preferredStartupStage,
+        mentorship_mode: formData.mentorshipMode,
+        weekly_availability: formData.weeklyAvailability,
+        languages_spoken: formData.languagesSpoken,
+        why_mentor_startups: formData.whyMentorStartups,
+        proud_mentoring_experience: formData.proudMentoringExperience,
+        industries_most_excited_to_mentor: formData.industriesMostExcitedToMentor,
+        open_to_other_contributions: formData.openToOtherContributions,
+        other_contribution_type: formData.otherContributionType,
+        status: "pending", // Always set to pending for re-approval/initial submission
+      };
 
-      if (error) throw error
+      let dbOperationError = null;
 
-      setShowSuccessDialog(true)
-      toast.success("Mentor Profile submitted successfully! Waiting for approval.")
-      setTimeout(() => router.push("/"), 3000)
+      if (initialData?.id) {
+        // --- UPDATE Existing Profile ---
+        console.log("Updating existing Mentor profile with ID:", initialData.id);
+        const { error: updateError } = await supabase
+          .from("mentor_approval")
+          .update({
+            ...submissionPayload,
+            updated_at: new Date().toISOString(), // Update timestamp
+          })
+          .eq("id", initialData.id); // Target the specific record by its ID
+        dbOperationError = updateError;
+      } else {
+        // --- INSERT New Profile ---
+        console.log("Submitting new Mentor profile.");
+        const { error: insertError } = await supabase
+          .from("mentor_approval")
+          .insert({
+            ...submissionPayload,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        dbOperationError = insertError;
+      }
+
+      if (dbOperationError) throw dbOperationError;
+
+      setShowSuccessDialog(true);
+      toast.success(initialData ? "Mentor Profile updated successfully!" : "Mentor Profile submitted successfully! Waiting for approval.");
+      setTimeout(() => router.push("/my-startups"), 3000); // Redirect to My Profiles
     } catch (err: any) {
-      console.error("Submission error:", err)
-      setSubmissionError(err?.message || "Submission failed. Please try again.")
-      toast.error(err?.message || "Submission failed. Please try again.")
+      console.error("Submission error:", err);
+      setSubmissionError(err?.message || "Submission failed. Please try again.");
+      toast.error(err?.message || "Submission failed. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const steps = [
     "Personal Details",
@@ -207,7 +299,7 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
     "Mentorship Persona",
     "Additional Contributions",
     "Submit for Review",
-  ]
+  ];
 
   const renderStepContent = () => {
     switch (step) {
@@ -305,7 +397,7 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
               />
             </div>
           </div>
-        )
+        );
       case 2:
         return (
           <div className="space-y-6">
@@ -370,7 +462,7 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
               />
             )}
           </div>
-        )
+        );
       case 3:
         return (
           <div className="space-y-6">
@@ -412,7 +504,7 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
               />
             )}
           </div>
-        )
+        );
       case 4:
         return (
           <div className="space-y-6">
@@ -515,7 +607,7 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
               required
             />
           </div>
-        )
+        );
       case 5:
         return (
           <div className="space-y-6">
@@ -553,7 +645,7 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
               />
             )}
           </div>
-        )
+        );
       case 6: // Submit for Review
         return (
           <div className="space-y-6">
@@ -571,11 +663,11 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
             </div>
             {submissionError && <p className="text-red-500 text-sm mt-4">{submissionError}</p>}
           </div>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-[#0E0617] py-8">
@@ -584,7 +676,9 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
           {/* Optional: Add a logo or title here */}
         </header>
 
-        <div className="max-w-3xl mx-auto"> {/* Centered form container */}
+        <div className="max-w-3xl mx-auto">
+          {" "}
+          {/* Centered form container */}
           <div className="p-6 lg:p-8 space-y-8 bg-[#0E0616] rounded-xl shadow-lg border border-[rgba(255,255,255,0.6)]">
             {/* Professional Progress Bar */}
             <div className="relative flex justify-between items-center w-full mb-8 text-xs">
@@ -635,8 +729,8 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
 
             <form
               onSubmit={(e) => {
-                e.preventDefault()
-                if (step === steps.length) handleSubmit(e)
+                e.preventDefault();
+                if (step === steps.length) handleSubmit(e);
               }}
               className="mt-8"
             >
@@ -663,7 +757,7 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
                     className="bg-purple-600 text-white hover:bg-purple-700"
                     disabled={isSubmitting || !formData.consentTermsPrivacy}
                   >
-                    {isSubmitting ? "Submitting..." : "Submit for Review"}
+                    {isSubmitting ? "Submitting..." : (initialData ? "Update Profile" : "Submit for Review")}
                   </Button>
                 )}
               </div>
@@ -684,11 +778,11 @@ export function MentorMultiStepForm({ userId }: MentorMultiStepFormProps) {
           </div>
           <div className="flex justify-center">
             <Button className="bg-purple-600 text-white" disabled>
-              Redirecting to Home...
+              Redirecting to My Profiles...
             </Button>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

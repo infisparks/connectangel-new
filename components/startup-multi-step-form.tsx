@@ -1,44 +1,46 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState, useRef, useCallback, useEffect } from "react"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import Cropper from "react-easy-crop"
-import { Plus, Play, ImageIcon, ArrowRight, MessageSquareText, CheckCircle2 } from "lucide-react"
-import { countryCodes } from "@/lib/country-codes"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { toast } from "sonner"
-import { cn } from "@/lib/utils"
-import { CountryCodeSelect } from "@/components/country-code-select"
-import { supabase } from "@/lib/supabaselib"
+import type React from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import Cropper from "react-easy-crop";
+import { Plus, Play, ImageIcon, ArrowRight, CheckCircle2 } from "lucide-react";
+import { countryCodes } from "@/lib/country-codes";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { CountryCodeSelect } from "@/components/country-code-select";
+import { supabase } from "@/lib/supabaselib";
+import { ApprovedStartup, PendingStartup } from "@/app/my-startups/page"; // Ensure these types are correctly imported
 
 // Supabase storage bucket names (define these if not already in a config)
-const SUPABASE_VIDEO_BUCKET = "pitch-videos"
-const SUPABASE_THUMBNAIL_BUCKET = "thumbnails"
+const SUPABASE_VIDEO_BUCKET = "pitch-videos";
+const SUPABASE_THUMBNAIL_BUCKET = "thumbnails";
 
 type StartupMultiStepFormProps = {
   userId: string;
-}
+  initialData?: ApprovedStartup | PendingStartup | null;
+};
 
 function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> {
   return new Promise(async (resolve) => {
-    const image = new window.Image()
-    image.crossOrigin = "anonymous"
-    image.src = imageSrc
+    const image = new window.Image();
+    image.crossOrigin = "anonymous";
+    image.src = imageSrc;
     image.onload = () => {
-      const canvas = document.createElement("canvas")
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
 
-      canvas.width = 400
-      canvas.height = 225
+      canvas.width = 400;
+      canvas.height = 225;
 
       ctx.drawImage(
         image,
@@ -49,14 +51,14 @@ function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> 
         0,
         0,
         400,
-        225,
-      )
+        225
+      );
 
       canvas.toBlob((blob) => {
-        if (blob) resolve(blob)
-      }, "image/png")
-    }
-  })
+        if (blob) resolve(blob);
+      }, "image/png");
+    };
+  });
 }
 
 const ThumbnailCropper = ({
@@ -64,26 +66,26 @@ const ThumbnailCropper = ({
   onCropComplete,
   onClose,
 }: {
-  imageUrl: string
-  onCropComplete: (croppedBlob: Blob) => void
-  onClose: () => void
+  imageUrl: string;
+  onCropComplete: (croppedBlob: Blob) => void;
+  onClose: () => void;
 }) => {
-  const [crop, setCrop] = useState({ x: 0, y: 0 })
-  const [zoom, setZoom] = useState(1)
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null)
-  const [loading, setLoading] = useState(false)
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
-    setCroppedAreaPixels(croppedAreaPixels)
-  }, [])
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
   const handleApply = async () => {
-    setLoading(true)
-    const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels)
-    setLoading(false)
-    onCropComplete(croppedBlob)
-    onClose()
-  }
+    setLoading(true);
+    const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels);
+    setLoading(false);
+    onCropComplete(croppedBlob);
+    onClose();
+  };
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -118,8 +120,8 @@ const ThumbnailCropper = ({
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
 // Separate component for adding team members in a pop-up
 const AddTeamMembersDialog = ({
@@ -128,27 +130,27 @@ const AddTeamMembersDialog = ({
   teamMembers,
   setTeamMembers,
 }: {
-  isOpen: boolean
-  onClose: () => void
-  teamMembers: any[]
-  setTeamMembers: (members: any[]) => void
+  isOpen: boolean;
+  onClose: () => void;
+  teamMembers: any[];
+  setTeamMembers: (members: any[]) => void;
 }) => {
   const [newMember, setNewMember] = useState({
     name: "",
     designation: "",
     phoneCountryCode: "+91",
     localPhoneNumber: "",
-  })
+  });
 
   const handleAddMember = () => {
     if (newMember.name && newMember.designation && newMember.localPhoneNumber && newMember.phoneCountryCode) {
-      setTeamMembers([...teamMembers, newMember])
-      setNewMember({ name: "", designation: "", phoneCountryCode: "+91", localPhoneNumber: "" })
-      toast.success("Team member added!")
+      setTeamMembers([...teamMembers, newMember]);
+      setNewMember({ name: "", designation: "", phoneCountryCode: "+91", localPhoneNumber: "" });
+      toast.success("Team member added!");
     } else {
-      toast.error("Please fill all member details.")
+      toast.error("Please fill all member details.");
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -233,12 +235,12 @@ const AddTeamMembersDialog = ({
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
-  const router = useRouter()
-  const [step, setStep] = useState(1)
+export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFormProps) {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     fullName: "",
     emailAddress: "",
@@ -260,48 +262,93 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
     websiteUrl: "",
     teamMembers: [] as { name: string; designation: string; phoneCountryCode: string; localPhoneNumber: string }[],
     supportNeeded: [] as string[],
-    otherSupportNeed: "",
+    otherSupportNeed: "", // Not used in current form but good to keep
     majorChallenges: "",
-    oneSentenceDescription: "",
+    oneSentenceDescription: "", // maps to description in DB
     problemBeingSolved: "",
     futurePlans: "",
     consentAgreed: false,
     selectedVideoFile: null as File | null,
     selectedCustomThumbnailFile: null as File | null,
-  })
-  const [previewThumbnailUrl, setPreviewThumbnailUrl] = useState<string | null>("/img/login.png") // Default thumbnail
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
-  const [showThumbnailCropModal, setShowThumbnailCropModal] = useState(false)
-  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null)
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false)
-  const [showAddMemberDialog, setShowAddMemberDialog] = useState(false)
+    // Store original URLs if editing to avoid re-uploading if files aren't changed
+    originalVideoUrl: initialData?.pitch_video_url || null as string | null,
+    originalThumbnailUrl: initialData?.thumbnail_url || null as string | null,
+  });
+  const [previewThumbnailUrl, setPreviewThumbnailUrl] = useState<string | null>(
+    initialData?.thumbnail_url || "/img/login.png" // Use initialData's thumbnail if available
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [showThumbnailCropModal, setShowThumbnailCropModal] = useState(false);
+  const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // FIX: Properly type the event for HTMLInputElement and HTMLTextAreaElement
+  // --- useEffect to pre-fill form data when initialData prop is received ---
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        fullName: initialData.full_name || "",
+        emailAddress: initialData.email_address || "",
+        // Split phone number into country code and local number if needed, assuming the format is +CODE_NUMBER
+        phoneCountryCode: initialData.phone_number?.match(/^\+(\d+)/)?.[0] || "+91", // Extract country code
+        localPhoneNumber: initialData.phone_number?.replace(/^\+\d+/, '') || "", // Extract local number
+        country: initialData.location?.split(", ")[1] || "", // Assuming format "City, Country"
+        city: initialData.location?.split(", ")[0] || "",
+        startupName: initialData.startup_name || "",
+        industry: initialData.startup_type || "", // Maps to startup_type in DB
+        yearOfEstablishment: initialData.establishment_year || "",
+        numberOfEmployees: initialData.employee_count || "",
+        domain: initialData.domain || "",
+        language: initialData.language || "",
+        startupStage: initialData.startup_stage || "",
+        revenueModel: initialData.revenue_model || "",
+        fundingStage: initialData.funding_stage || "",
+        instagramUrl: initialData.instagram_url || "",
+        linkedinUrl: initialData.linkedin_url || "",
+        websiteUrl: initialData.website_url || "",
+        teamMembers: initialData.team_members || [],
+        supportNeeded: initialData.support_needed || [],
+        otherSupportNeed: "", // Not directly in initialData
+        majorChallenges: initialData.major_challenges || "",
+        oneSentenceDescription: initialData.description || "", // Maps to description in DB
+        problemBeingSolved: initialData.problem_being_solved || "",
+        futurePlans: initialData.future_plans || "",
+        consentAgreed: false, // User should re-consent on edit/resubmit
+        selectedVideoFile: null, // No file selected initially for edit
+        selectedCustomThumbnailFile: null, // No file selected initially for edit
+        originalVideoUrl: initialData.pitch_video_url || null, // Store original URLs
+        originalThumbnailUrl: initialData.thumbnail_url || null,
+      });
+      // Set preview thumbnail URL
+      setPreviewThumbnailUrl(initialData.thumbnail_url || "/img/login.png");
+      setStep(1); // Reset to first step when initialData loads for editing
+    }
+  }, [initialData]); // Depend on initialData prop
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-
   const handleSelectChange = (name: string, value: string) => {
-    setFormData({ ...formData, [name]: value })
-  }
+    setFormData({ ...formData, [name]: value });
+  };
 
   const handleSupportNeededChange = (supportType: string) => {
     const newSupportNeeded = formData.supportNeeded.includes(supportType)
       ? formData.supportNeeded.filter((s) => s !== supportType)
-      : [...formData.supportNeeded, supportType]
-    setFormData({ ...formData, supportNeeded: newSupportNeeded })
-  }
+      : [...formData.supportNeeded, supportType];
+    setFormData({ ...formData, supportNeeded: newSupportNeeded });
+  };
 
   const generateThumbnailFromVideo = useCallback(async (videoFile: File): Promise<File | null> => {
     return new Promise((resolve) => {
-      const video = videoRef.current
-      const canvas = canvasRef.current
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
       if (video && canvas) {
         video.src = URL.createObjectURL(videoFile);
         video.load();
@@ -309,67 +356,67 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
           video.currentTime = Math.min(1, video.duration / 2); // Try to get a frame at 1s or middle if video is shorter
         };
         video.onseeked = () => {
-          const ctx = canvas.getContext("2d")
+          const ctx = canvas.getContext("2d");
           if (!ctx) {
-            resolve(null)
-            return
+            resolve(null);
+            return;
           }
-          const aspect = video.videoWidth / video.videoHeight
-          const w = 400
-          const h = w / aspect
-          canvas.width = 400
-          canvas.height = h
-          ctx.drawImage(video, 0, 0, w, h)
+          const aspect = video.videoWidth / video.videoHeight;
+          const w = 400;
+          const h = w / aspect;
+          canvas.width = 400;
+          canvas.height = h;
+          ctx.drawImage(video, 0, 0, w, h);
           canvas.toBlob((blob) => {
             if (blob) {
-              const thumbnailFile = new File([blob], `${videoFile.name}_thumbnail.png`, { type: "image/png" })
+              const thumbnailFile = new File([blob], `${videoFile.name}_thumbnail.png`, { type: "image/png" });
               setPreviewThumbnailUrl(URL.createObjectURL(thumbnailFile));
-              resolve(thumbnailFile)
+              resolve(thumbnailFile);
             } else {
-              resolve(null)
+              resolve(null);
             }
-          }, "image/png")
-        }
+          }, "image/png");
+        };
         video.onerror = () => {
-          console.error("Error loading video for thumbnail generation.")
-          resolve(null)
-        }
+          console.error("Error loading video for thumbnail generation.");
+          resolve(null);
+        };
       } else {
-        resolve(null)
+        resolve(null);
       }
-    })
+    });
   }, []);
 
   function is16by9(file: File, cb: (result: boolean, url: string) => void) {
-    const img = new window.Image()
-    const url = URL.createObjectURL(file)
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
     img.onload = () => {
-      const aspect = img.width / img.height
-      cb(Math.abs(aspect - 16 / 9) < 0.05, url)
-    }
-    img.src = url
+      const aspect = img.width / img.height;
+      cb(Math.abs(aspect - 16 / 9) < 0.05, url);
+    };
+    img.src = url;
   }
 
   const handleCustomThumbnailFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
       is16by9(file, (isValid, url) => {
         if (isValid) {
-          setFormData((prev) => ({ ...prev, selectedCustomThumbnailFile: file }))
-          setPreviewThumbnailUrl(url)
+          setFormData((prev) => ({ ...prev, selectedCustomThumbnailFile: file }));
+          setPreviewThumbnailUrl(url);
         } else {
-          setCropImageUrl(url)
-          setShowThumbnailCropModal(true)
+          setCropImageUrl(url);
+          setShowThumbnailCropModal(true);
         }
-      })
+      });
     }
-  }
+  };
 
   const handleCroppedThumbnail = (blob: Blob) => {
-    const croppedFile = new File([blob], "cropped_thumbnail.png", { type: "image/png", lastModified: Date.now() })
-    setFormData((prev) => ({ ...prev, selectedCustomThumbnailFile: croppedFile }))
-    setPreviewThumbnailUrl(URL.createObjectURL(croppedFile))
-  }
+    const croppedFile = new File([blob], "cropped_thumbnail.png", { type: "image/png", lastModified: Date.now() });
+    setFormData((prev) => ({ ...prev, selectedCustomThumbnailFile: croppedFile }));
+    setPreviewThumbnailUrl(URL.createObjectURL(croppedFile));
+  };
 
   const handleVideoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -384,18 +431,19 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
       }
     } else {
       setFormData((prev) => ({ ...prev, selectedVideoFile: null, selectedCustomThumbnailFile: null }));
-      setPreviewThumbnailUrl("/login.png");
+      // If no valid file selected, revert to original thumbnail or default
+      setPreviewThumbnailUrl(formData.originalThumbnailUrl || "/img/login.png");
       toast.error("Please select a valid video file.");
     }
   };
 
-
   const handleNext = async () => {
-    let isValid = true
-    let errorMessage = ""
+    let isValid = true;
+    let errorMessage = "";
 
     if (step === 1) {
-      if (!formData.selectedVideoFile) {
+      // For step 1, either a new video file must be selected OR an original video URL must exist (if editing)
+      if (!formData.selectedVideoFile && !formData.originalVideoUrl) {
         isValid = false;
         errorMessage = "Please upload your pitch video.";
       }
@@ -408,8 +456,8 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
         !formData.country ||
         !formData.city
       ) {
-        isValid = false
-        errorMessage = "Please fill in all personal and contact details."
+        isValid = false;
+        errorMessage = "Please fill in all personal and contact details.";
       }
     } else if (step === 3) {
       if (
@@ -419,124 +467,152 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
         !formData.domain ||
         !formData.language
       ) {
-        isValid = false
-        errorMessage = "Please fill in all startup overview fields."
+        isValid = false;
+        errorMessage = "Please fill in all startup overview fields.";
       }
     } else if (step === 4) {
       if (formData.supportNeeded.length === 0 || !formData.majorChallenges) {
-        isValid = false
-        errorMessage = "Please select at least one support type and describe your challenges."
+        isValid = false;
+        errorMessage = "Please select at least one support type and describe your challenges.";
       }
     } else if (step === 5) {
       if (!formData.oneSentenceDescription || !formData.problemBeingSolved) {
-        isValid = false
-        errorMessage = "Please fill in both open-ended questions."
+        isValid = false;
+        errorMessage = "Please fill in both open-ended questions.";
       }
     } else if (step === 6) {
       if (!formData.futurePlans) {
-        isValid = false
-        errorMessage = "Please describe your future plans and vision."
+        isValid = false;
+        errorMessage = "Please describe your future plans and vision.";
       }
     }
 
     if (isValid) {
-      setStep(step + 1)
-      setSubmissionError(null)
+      setStep(step + 1);
+      setSubmissionError(null);
     } else {
-      setSubmissionError(errorMessage)
-      toast.error(errorMessage)
+      setSubmissionError(errorMessage);
+      toast.error(errorMessage);
     }
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!formData.consentAgreed) {
-      setSubmissionError("You must agree to the privacy policy before submitting.")
-      toast.error("You must agree to the privacy policy before submitting.")
-      return
+      setSubmissionError("You must agree to the privacy policy before submitting.");
+      toast.error("You must agree to the privacy policy before submitting.");
+      return;
     }
-    setIsSubmitting(true)
-    setSubmissionError(null)
+    setIsSubmitting(true);
+    setSubmissionError(null);
 
-    let videoUrl = null
-    let thumbnailUrl = null
+    let finalVideoUrl = formData.originalVideoUrl; // Start with existing URL
+    let finalThumbnailUrl = formData.originalThumbnailUrl; // Start with existing URL
 
     try {
-      // 1. Upload Video (if selectedVideoFile exists)
+      // 1. Upload new Video if selectedVideoFile exists
       if (formData.selectedVideoFile) {
-        const videoFileName = `${userId}/${Date.now()}_${formData.selectedVideoFile.name}`
+        const videoFileName = `${userId}/${Date.now()}_${formData.selectedVideoFile.name}`;
         const { data: videoUploadData, error: videoUploadError } = await supabase.storage
           .from(SUPABASE_VIDEO_BUCKET)
           .upload(videoFileName, formData.selectedVideoFile, {
             cacheControl: '3600',
             upsert: false,
-          })
+          });
 
-        if (videoUploadError) throw videoUploadError
-        videoUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SUPABASE_VIDEO_BUCKET}/${videoFileName}`
+        if (videoUploadError) throw videoUploadError;
+        finalVideoUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SUPABASE_VIDEO_BUCKET}/${videoFileName}`;
+      } else if (!finalVideoUrl) {
+        // If no new video and no original video, throw error
+        throw new Error("Pitch video is required.");
       }
 
-      // 2. Upload Custom Thumbnail (if selectedCustomThumbnailFile exists)
+      // 2. Upload new Custom Thumbnail if selectedCustomThumbnailFile exists
       if (formData.selectedCustomThumbnailFile) {
-        const thumbnailFileName = `${userId}/${Date.now()}_${formData.selectedCustomThumbnailFile.name}`
+        const thumbnailFileName = `${userId}/${Date.now()}_${formData.selectedCustomThumbnailFile.name}`;
         const { data: thumbnailUploadData, error: thumbnailUploadError } = await supabase.storage
           .from(SUPABASE_THUMBNAIL_BUCKET)
           .upload(thumbnailFileName, formData.selectedCustomThumbnailFile, {
             cacheControl: '3600',
             upsert: false,
-          })
+          });
 
-        if (thumbnailUploadError) throw thumbnailUploadError
-        thumbnailUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SUPABASE_THUMBNAIL_BUCKET}/${thumbnailFileName}`
+        if (thumbnailUploadError) throw thumbnailUploadError;
+        finalThumbnailUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SUPABASE_THUMBNAIL_BUCKET}/${thumbnailFileName}`;
+      } else if (!finalThumbnailUrl) {
+        // If no new thumbnail and no original, and it's a new submission, we might need a default
+        // For edits, this generally means the original is kept unless changed.
+        finalThumbnailUrl = "/img/login.png"; // Fallback for new submissions if no video/thumbnail given
       }
 
+      // Prepare data for Supabase
+      const submissionPayload = {
+        user_id: userId,
+        startup_type: formData.industry,
+        startup_name: formData.startupName,
+        description: formData.oneSentenceDescription,
+        location: `${formData.city}, ${formData.country}`,
+        language: formData.language,
+        domain: formData.domain,
+        founder_names: formData.teamMembers.map((member) => `${member.name} (${member.designation})`),
+        pitch_video_url: finalVideoUrl,
+        thumbnail_url: finalThumbnailUrl,
+        status: "pending", // Always set to pending for approval/re-approval
+        revenue_model: formData.revenueModel,
+        funding_stage: formData.fundingStage,
+        employee_count: formData.numberOfEmployees,
+        establishment_year: formData.yearOfEstablishment,
+        instagram_url: formData.instagramUrl,
+        linkedin_url: formData.linkedinUrl,
+        website_url: formData.websiteUrl,
+        support_needed: formData.supportNeeded,
+        major_challenges: formData.majorChallenges,
+        problem_being_solved: formData.problemBeingSolved,
+        future_plans: formData.futurePlans,
+        full_name: formData.fullName,
+        email_address: formData.emailAddress,
+        phone_number: `${formData.phoneCountryCode}${formData.localPhoneNumber}`,
+        startup_stage: formData.startupStage,
+        team_members: formData.teamMembers, // Store the full team members array as JSONB
+      };
 
-      // 3. Insert form data into creator_approval table
-      const { data, error } = await supabase.from("creator_approval").insert([
-        {
-          user_id: userId,
-          startup_type: formData.industry,
-          startup_name: formData.startupName,
-          description: formData.oneSentenceDescription,
-          location: `${formData.city}, ${formData.country}`,
-          language: formData.language,
-          domain: formData.domain,
-          founder_names: formData.teamMembers.map((member) => `${member.name} (${member.designation})`),
-          pitch_video_url: videoUrl,
-          thumbnail_url: thumbnailUrl,
-          status: "pending",
-          revenue_model: formData.revenueModel,
-          funding_stage: formData.fundingStage,
-          employee_count: formData.numberOfEmployees,
-          establishment_year: formData.yearOfEstablishment,
-          instagram_url: formData.instagramUrl,
-          linkedin_url: formData.linkedinUrl,
-          website_url: formData.websiteUrl,
-          support_needed: formData.supportNeeded,
-          major_challenges: formData.majorChallenges,
-          problem_being_solved: formData.problemBeingSolved,
-          future_plans: formData.futurePlans,
-          full_name: formData.fullName,
-          email_address: formData.emailAddress,
-          phone_number: `${formData.phoneCountryCode}${formData.localPhoneNumber}`,
-          startup_stage: formData.startupStage,
-          team_members: formData.teamMembers, // Store the full team members array as JSONB
-        },
-      ]);
+      let dbOperationError = null;
 
-      if (error) throw error
+      if (initialData?.id) {
+        // --- UPDATE Existing Profile ---
+        const { error: updateError } = await supabase
+          .from("creator_approval")
+          .update({
+            ...submissionPayload,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", initialData.id);
+        dbOperationError = updateError;
+      } else {
+        // --- INSERT New Profile ---
+        const { error: insertError } = await supabase
+          .from("creator_approval")
+          .insert({
+            ...submissionPayload,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        dbOperationError = insertError;
+      }
 
-      setShowSuccessDialog(true)
-      toast.success("Form submitted successfully! Waiting for approval.")
-      setTimeout(() => router.push("/"), 3000)
+      if (dbOperationError) throw dbOperationError;
+
+      setShowSuccessDialog(true);
+      toast.success("Form submitted successfully! Waiting for approval.");
+      setTimeout(() => router.push("/my-startups"), 3000); // Redirect to My Profiles
     } catch (err: any) {
-      console.error("Submission error:", err)
-      setSubmissionError(err?.message || "Submission failed. Please try again.")
-      toast.error(err?.message || "Submission failed. Please try again.")
+      console.error("Submission error:", err);
+      setSubmissionError(err?.message || "Submission failed. Please try again.");
+      toast.error(err?.message || "Submission failed. Please try again.");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const renderStep = () => {
     switch (step) {
@@ -560,14 +636,19 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
                 className="flex items-center justify-center gap-2 bg-neutral-800 border-neutral-700 text-neutral-50 hover:bg-neutral-700"
               >
                 <Play className="h-5 w-5" />
-                {formData.selectedVideoFile ? "Change Video" : "Upload Pitch Video"}
+                {formData.selectedVideoFile ? "Change Video" : formData.originalVideoUrl ? "Change Existing Video" : "Upload Pitch Video"}
               </Button>
               {formData.selectedVideoFile && (
                 <span className="text-sm text-neutral-400 truncate max-w-[150px]">
                   {formData.selectedVideoFile.name}
                 </span>
               )}
-              {formData.selectedVideoFile && (
+              {!formData.selectedVideoFile && formData.originalVideoUrl && (
+                <span className="text-sm text-neutral-400 truncate max-w-[150px]">
+                  Existing Video: <a href={formData.originalVideoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
+                </span>
+              )}
+              {(formData.selectedVideoFile || formData.originalVideoUrl) && (
                 <p className="text-sm text-neutral-400">
                   * Thumbnail will be automatically generated from your video. You can upload a custom one later.
                 </p>
@@ -581,7 +662,7 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
               Next <ArrowRight className="ml-2 h-6 w-6" />
             </Button>
           </div>
-        )
+        );
       case 2:
         return (
           <div className="space-y-6">
@@ -658,8 +739,8 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
               </Button>
             </div>
           </div>
-        )
-      case 3:
+        );
+      case 3: // This was step 3, now it becomes step 3 and next will be step 4
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Startup Overview</h3>
@@ -931,280 +1012,7 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
               </Button>
             </div>
           </div>
-        )
-      case 3:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Startup Overview</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                name="startupName"
-                placeholder="Startup Name"
-                value={formData.startupName}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-                required
-              />
-              <Select
-                name="industry"
-                value={formData.industry}
-                onValueChange={(val) => handleSelectChange("industry", val)}
-              >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Industry" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="Tech" className="focus:bg-purple-700 focus:text-white">
-                    Tech
-                  </SelectItem>
-                  <SelectItem value="SaaS" className="focus:bg-purple-700 focus:text-white">
-                    SaaS
-                  </SelectItem>
-                  <SelectItem value="Fintech" className="focus:bg-purple-700 focus:text-white">
-                    Fintech
-                  </SelectItem>
-                  <SelectItem value="Healthcare" className="focus:bg-purple-700 focus:text-white">
-                    Healthcare
-                  </SelectItem>
-                  <SelectItem value="EdTech" className="focus:bg-purple-700 focus:text-white">
-                    EdTech
-                  </SelectItem>
-                  <SelectItem value="AgriTech" className="focus:bg-purple-700 focus:text-white">
-                    AgriTech
-                  </SelectItem>
-                  <SelectItem value="E-commerce" className="focus:bg-purple-700 focus:text-white">
-                    E-commerce
-                  </SelectItem>
-                  <SelectItem value="AI/ML" className="focus:bg-purple-700 focus:text-white">
-                    AI/ML
-                  </SelectItem>
-                  <SelectItem value="Biotechnology" className="focus:bg-purple-700 focus:text-white">
-                    Biotechnology
-                  </SelectItem>
-                  <SelectItem value="Renewable Energy" className="focus:bg-purple-700 focus:text-white">
-                    Renewable Energy
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                name="yearOfEstablishment"
-                placeholder="Year of Establishment"
-                type="number"
-                value={formData.yearOfEstablishment}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-              />
-              <Select
-                name="numberOfEmployees"
-                value={formData.numberOfEmployees}
-                onValueChange={(val) => handleSelectChange("numberOfEmployees", val)}
-              >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="No. of Employees" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="1-10" className="focus:bg-purple-700 focus:text-white">
-                    1-10
-                  </SelectItem>
-                  <SelectItem value="11-50" className="focus:bg-purple-700 focus:text-white">
-                    11-50
-                  </SelectItem>
-                  <SelectItem value="51-200" className="focus:bg-purple-700 focus:text-white">
-                    51-200
-                  </SelectItem>
-                  <SelectItem value="200+" className="focus:bg-purple-700 focus:text-white">
-                    200+
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Select name="domain" value={formData.domain} onValueChange={(val) => handleSelectChange("domain", val)}>
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Domain" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="AI" className="focus:bg-purple-700 focus:text-white">
-                    AI
-                  </SelectItem>
-                  <SelectItem value="Healthcare" className="focus:bg-purple-700 focus:text-white">
-                    Healthcare
-                  </SelectItem>
-                  <SelectItem value="Education" className="focus:bg-purple-700 focus:text-white">
-                    Education
-                  </SelectItem>
-                  <SelectItem value="Fintech" className="focus:bg-purple-700 focus:text-white">
-                    Fintech
-                  </SelectItem>
-                  <SelectItem value="Software Development" className="focus:bg-purple-700 focus:text-white">
-                    Software Development
-                  </SelectItem>
-                  <SelectItem value="Marketing" className="focus:bg-purple-700 focus:text-white">
-                    Marketing
-                  </SelectItem>
-                  <SelectItem value="Consulting" className="focus:bg-purple-700 focus:text-white">
-                    Consulting
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                name="language"
-                value={formData.language}
-                onValueChange={(val) => handleSelectChange("language", val)}
-              >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Language" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="English" className="focus:bg-purple-700 focus:text-white">
-                    English
-                  </SelectItem>
-                  <SelectItem value="Hindi" className="focus:bg-purple-700 focus:text-white">
-                    Hindi
-                  </SelectItem>
-                  <SelectItem value="Spanish" className="focus:bg-purple-700 focus:text-white">
-                    Spanish
-                  </SelectItem>
-                  <SelectItem value="French" className="focus:bg-purple-700 focus:text-white">
-                    French
-                  </SelectItem>
-                  <SelectItem value="German" className="focus:bg-purple-700 focus:text-white">
-                    German
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                name="startupStage"
-                value={formData.startupStage}
-                onValueChange={(val) => handleSelectChange("startupStage", val)}
-              >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Startup Stage" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="Idea" className="focus:bg-purple-700 focus:text-white">
-                    Idea
-                  </SelectItem>
-                  <SelectItem value="Prototype" className="focus:bg-purple-700 focus:text-white">
-                    Prototype
-                  </SelectItem>
-                  <SelectItem value="Seed" className="focus:bg-purple-700 focus:text-white">
-                    Seed
-                  </SelectItem>
-                  <SelectItem value="Growth" className="focus:bg-purple-700 focus:text-white">
-                    Growth
-                  </SelectItem>
-                  <SelectItem value="Scale-up" className="focus:bg-purple-700 focus:text-white">
-                    Scale-up
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                name="revenueModel"
-                value={formData.revenueModel}
-                onValueChange={(val) => handleSelectChange("revenueModel", val)}
-              >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Revenue Model" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="B2B" className="focus:bg-purple-700 focus:text-white">
-                    B2B
-                  </SelectItem>
-                  <SelectItem value="B2C" className="focus:bg-purple-700 focus:text-white">
-                    B2C
-                  </SelectItem>
-                  <SelectItem value="B2B2C" className="focus:bg-purple-700 focus:text-white">
-                    B2B2C
-                  </SelectItem>
-                  <SelectItem value="Subscription" className="focus:bg-purple-700 focus:text-white">
-                    Subscription
-                  </SelectItem>
-                  <SelectItem value="Freemium" className="focus:bg-purple-700 focus:text-white">
-                    Freemium
-                  </SelectItem>
-                  <SelectItem value="Ad-based" className="focus:bg-purple-700 focus:text-white">
-                    Ad-based
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Select
-                name="fundingStage"
-                value={formData.fundingStage}
-                onValueChange={(val) => handleSelectChange("fundingStage", val)}
-              >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Funding Stage" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="Pre-Seed" className="focus:bg-purple-700 focus:text-white">
-                    Pre-Seed
-                  </SelectItem>
-                  <SelectItem value="Seed" className="focus:bg-purple-700 focus:text-white">
-                    Seed
-                  </SelectItem>
-                  <SelectItem value="Series A" className="focus:bg-purple-700 focus:text-white">
-                    Series A
-                  </SelectItem>
-                  <SelectItem value="Series B" className="focus:bg-purple-700 focus:text-white">
-                    Series B
-                  </SelectItem>
-                  <SelectItem value="Series C+" className="focus:bg-purple-700 focus:text-white">
-                    Series C+
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Input
-                name="instagramUrl"
-                placeholder="Instagram URL (Optional)"
-                value={formData.instagramUrl}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-              />
-              <Input
-                name="linkedinUrl"
-                placeholder="LinkedIn URL (Optional)"
-                value={formData.linkedinUrl}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-              />
-              <Input
-                name="websiteUrl"
-                placeholder="Website URL (Optional)"
-                value={formData.websiteUrl}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-              />
-            </div>
-            <div className="flex flex-col gap-3">
-              <Button
-                type="button"
-                onClick={() => setShowAddMemberDialog(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add Team Member
-              </Button>
-              <div className="flex flex-wrap gap-2">
-                {formData.teamMembers.map((member, idx) => (
-                  <span key={idx} className="bg-purple-700 text-white px-3 py-1 rounded-full text-xs font-medium">
-                    {member.name} ({member.designation})
-                  </span>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-between items-center pt-4">
-              <Button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                variant="outline"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
-              >
-                Back
-              </Button>
-              <Button type="button" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
-                Next <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )
+        );
       case 4:
         return (
           <div className="space-y-6">
@@ -1262,7 +1070,7 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
               </Button>
             </div>
           </div>
-        )
+        );
       case 5:
         return (
           <div className="space-y-6">
@@ -1305,7 +1113,7 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
               </Button>
             </div>
           </div>
-        )
+        );
       case 6:
         return (
           <div className="space-y-6">
@@ -1335,7 +1143,7 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
               </Button>
             </div>
           </div>
-        )
+        );
       case 7: // This will be the new "Review & Submit" step
         return (
           <div className="space-y-6">
@@ -1357,11 +1165,16 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
                   className="flex items-center justify-center gap-2 bg-neutral-800 border-neutral-700 text-neutral-50 hover:bg-neutral-700"
                 >
                   <ImageIcon className="h-5 w-5" />
-                  {formData.selectedCustomThumbnailFile ? "Change Thumbnail" : "Upload Custom Thumbnail"}
+                  {formData.selectedCustomThumbnailFile ? "Change Thumbnail" : formData.originalThumbnailUrl ? "Change Existing Thumbnail" : "Upload Custom Thumbnail"}
                 </Button>
                 {formData.selectedCustomThumbnailFile && (
                   <span className="text-sm text-neutral-400 truncate max-w-[150px]">
                     {formData.selectedCustomThumbnailFile.name}
+                  </span>
+                )}
+                {!formData.selectedCustomThumbnailFile && formData.originalThumbnailUrl && (
+                  <span className="text-sm text-neutral-400 truncate max-w-[150px]">
+                    Existing Thumbnail: <a href={formData.originalThumbnailUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
                   </span>
                 )}
               </div>
@@ -1395,21 +1208,21 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
                 className="bg-purple-600 text-white hover:bg-purple-700"
                 disabled={isSubmitting || !formData.consentAgreed}
               >
-                {isSubmitting ? "Submitting..." : "Submit for Review"}
+                {isSubmitting ? "Submitting..." : (initialData ? "Update Profile" : "Submit for Review")}
               </Button>
             </div>
           </div>
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   const renderPreviewContent = () => (
     <div className="p-6 lg:p-8 space-y-6 bg-[#1B0E2B] rounded-[8.95px] shadow-lg relative border border-[#4A0080] max-w-[441px] mx-auto lg:px-8 lg:pt-8">
       <div className="relative w-[369px] h-[218px] rounded-[15px] overflow-hidden bg-neutral-900 flex items-center justify-center border border-neutral-700">
         <Image
-          src={previewThumbnailUrl || "/login.png"} // Default to /login.png
+          src={previewThumbnailUrl || "/img/login.png"} // Default to /login.png
           alt="Video Thumbnail"
           fill
           style={{ objectFit: "cover" }}
@@ -1461,24 +1274,24 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
         )}
       </div>
     </div>
-  )
+  );
 
+  // Updated steps to match the new flow
   const steps = [
-    "Upload Video", // Step 1: Only video upload
-    "Personal Details", // New Step 2
-    "Startup Overview", // New Step 3
-    "Needs & Challenges", // New Step 4
-    "Open-Ended Questions", // New Step 5
-    "Future Plans", // New Step 6
-    "Review & Submit", // New Step 7
-  ]
+    "Upload Video", // Step 1
+    "Personal Details", // Step 2
+    "Startup Overview", // Step 3
+    "Needs & Challenges", // Step 4
+    "Open-Ended Questions", // Step 5
+    "Future Plans", // Step 6
+    "Review & Submit", // Step 7
+  ];
 
   return (
     <div className="min-h-screen bg-[#0E0617] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <header className="flex items-center mt-32 justify-between mb-10">
-         
-          {/* <MessageSquareText className="h-[30px] w-[30px] text-white cursor-pointer hover:text-purple-400 transition-colors" /> */}
+          {/* Removed MessageSquareText as it was commented out and likely not needed here */}
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
@@ -1532,8 +1345,8 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
 
             <form
               onSubmit={(e) => {
-                e.preventDefault()
-                if (step === steps.length) handleSubmit(e) // Changed from step === 6 to steps.length
+                e.preventDefault();
+                if (step === steps.length) handleSubmit(e);
               }}
               className="mt-8"
             >
@@ -1576,7 +1389,7 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
           </div>
           <div className="flex justify-center">
             <Button className="bg-purple-600 text-white" disabled>
-              Redirecting to Home...
+              Redirecting to My Profiles...
             </Button>
           </div>
         </DialogContent>
@@ -1585,5 +1398,5 @@ export function StartupMultiStepForm({ userId }: StartupMultiStepFormProps) {
       <video ref={videoRef} style={{ display: "none" }} muted preload="metadata" />
       <canvas ref={canvasRef} style={{ display: "none" }} />
     </div>
-  )
+  );
 }
