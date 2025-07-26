@@ -23,7 +23,7 @@ export interface ApprovedStartup {
   founder_names: string[];
   pitch_video_url: string;
   thumbnail_url: string;
-  status: string; // 'approved'
+  status: "approved"; // More specific type
   created_at: string;
   updated_at: string;
   approved_at?: string;
@@ -43,6 +43,7 @@ export interface ApprovedStartup {
   phone_number?: string; // Contact person's phone
   startup_stage?: string;
   team_members?: Array<{ name: string; designation: string; phoneCountryCode: string; localPhoneNumber: string }>;
+  rating?: number | null; // Added rating property
 }
 
 // For pending, rejected, or needs_update startup data (from 'creator_approval' table)
@@ -58,7 +59,7 @@ export interface PendingStartup {
   founder_names: string[];
   pitch_video_url: string;
   thumbnail_url: string;
-  status: string; // 'pending', 'needs_update', 'rejected'
+  status: "pending" | "needs_update" | "rejected"; // More specific type
   created_at: string;
   updated_at: string;
   reason?: string; // Reason for rejection or needs_update
@@ -78,6 +79,7 @@ export interface PendingStartup {
   phone_number?: string; // Contact person's phone
   startup_stage?: string;
   team_members?: Array<{ name: string; designation: string; phoneCountryCode: string; localPhoneNumber: string }>;
+  rating?: number | null; // Rating might also be present in pending if admin rated it before approval
 }
 
 // For Incubation data (from 'incubation' or 'incubation_approval' table)
@@ -117,8 +119,8 @@ export interface IncubationProfile {
   first_goal_next_12_months: string;
   second_goal?: string;
   third_goal?: string;
-  status: string; // 'pending', 'approved', 'rejected', 'needs_update'
-  reason?: string; // Added reason for consistency with approval flow
+  status: "pending" | "approved" | "rejected" | "needs_update"; // More specific type
+  reason?: string;
 }
 
 // For Investor data (from 'investor' or 'investor_approval' table)
@@ -149,8 +151,8 @@ export interface InvestorProfile {
   other_support_type?: string;
   require_specific_country_region: boolean;
   specific_country_region?: string;
-  status: string; // 'pending', 'approved', 'rejected', 'needs_update'
-  reason?: string; // Added reason for consistency with approval flow
+  status: "pending" | "approved" | "rejected" | "needs_update"; // More specific type
+  reason?: string;
 }
 
 // For Mentor data (from 'mentor' or 'mentor_approval' table)
@@ -183,8 +185,8 @@ export interface MentorProfile {
   industries_most_excited_to_mentor: string;
   open_to_other_contributions: string[];
   other_contribution_type?: string;
-  status: string; // 'pending', 'approved', 'rejected', 'needs_update'
-  reason?: string; // Added reason for consistency with approval flow
+  status: "pending" | "approved" | "rejected" | "needs_update"; // More specific type
+  reason?: string;
 }
 
 // Union type for all possible profile data that UserProfileCard can display
@@ -197,7 +199,6 @@ export type ProfileData =
 
 // Type for the role of the profile being displayed
 export type ProfileRoleType = "startup" | "incubation" | "investor" | "mentor";
-
 
 export default function MyProfilesPage() {
   // State for each profile type, separated by approved/pending/needs_update/rejected
@@ -309,7 +310,7 @@ export default function MyProfilesPage() {
       .eq("user_id", userId)
       .in("status", ["pending", "needs_update", "rejected"])
       .order("created_at", { ascending: false });
-    
+
     if (pendingNeedsUpdateRejectedIncubationData) {
       setPendingIncubations(pendingNeedsUpdateRejectedIncubationData.filter(p => p.status === 'pending') as IncubationProfile[]);
       setNeedsUpdateIncubations(pendingNeedsUpdateRejectedIncubationData.filter(p => p.status === 'needs_update') as IncubationProfile[]);
@@ -340,7 +341,7 @@ export default function MyProfilesPage() {
       .eq("user_id", userId)
       .in("status", ["pending", "needs_update", "rejected"])
       .order("created_at", { ascending: false });
-    
+
     if (pendingNeedsUpdateRejectedInvestorData) {
       setPendingInvestors(pendingNeedsUpdateRejectedInvestorData.filter(p => p.status === 'pending') as InvestorProfile[]);
       setNeedsUpdateInvestors(pendingNeedsUpdateRejectedInvestorData.filter(p => p.status === 'needs_update') as InvestorProfile[]);
@@ -371,7 +372,7 @@ export default function MyProfilesPage() {
       .eq("user_id", userId)
       .in("status", ["pending", "needs_update", "rejected"])
       .order("created_at", { ascending: false });
-    
+
     if (pendingNeedsUpdateRejectedMentorData) {
       setPendingMentors(pendingNeedsUpdateRejectedMentorData.filter(p => p.status === 'pending') as MentorProfile[]);
       setNeedsUpdateMentors(pendingNeedsUpdateRejectedMentorData.filter(p => p.status === 'needs_update') as MentorProfile[]);
@@ -425,7 +426,7 @@ export default function MyProfilesPage() {
   // Helper function to render profile lists for different sections
   const renderProfileList = (profiles: ProfileData[], type: "approved" | "pending" | "needs_update" | "rejected", roleType: ProfileRoleType) => {
     if (profiles.length === 0) {
-      return <div className="text-center text-gray-500 py-10">No {type} {roleType} profiles found.</div>;
+      return <div className="text-center text-gray-500 py-10">No {type.replace("_", " ")} {roleType} profiles found.</div>;
     }
     return (
       <div className="grid gap-6">

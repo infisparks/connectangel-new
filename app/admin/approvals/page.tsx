@@ -18,7 +18,10 @@ import type {
 } from "@/app/my-startups/page";
 
 // Define specific Approval types that match the _approval tables.
-export interface CreatorApproval extends PendingStartup {}
+// Add 'rating' to CreatorApproval
+export interface CreatorApproval extends PendingStartup {
+  rating?: number | null; // Add rating property
+}
 export interface IncubationApproval extends IncubationProfile {}
 export interface InvestorApproval extends InvestorProfile {}
 export interface MentorApproval extends MentorProfile {}
@@ -130,7 +133,7 @@ export default function AdminApprovalsPage() {
         if (dataError) {
           console.error(
             `Error fetching ${roleTab.key} ${statusTab.key} approvals:`,
-            dataError.message,
+            dataError.message
           );
           errorMessage += `Error loading ${roleTab.key} ${statusTab.key}: ${dataError.message}\n`;
           hasError = true;
@@ -160,7 +163,7 @@ export default function AdminApprovalsPage() {
         setLoading(false);
       }
     },
-    [fetchAllApprovals],
+    [fetchAllApprovals]
   ); // Depends on fetchAllApprovals
 
   // Effect to manage user authentication and trigger initial data fetch
@@ -201,7 +204,7 @@ export default function AdminApprovalsPage() {
           setError("You have been logged out or your session expired. Please log in.");
           setLoading(false);
         }
-      },
+      }
     );
 
     // Add event listener for window focus to re-fetch data
@@ -227,14 +230,15 @@ export default function AdminApprovalsPage() {
   const handleApprovalAction = useCallback(
     async (
       profileId: string,
-      actionType: "approve" | "reject" | "needs_update",
+      actionType: "approve" | "reject" | "needs_update" | "rate", // Added 'rate'
       reason?: string,
+      rating?: number // Added rating parameter
     ) => {
       setLoading(true); // Set global loading for the action
       setError(null);
       try {
         const approvalProfile = approvals[activeRoleTab][activeStatusTab].find(
-          (p) => p.id === profileId,
+          (p) => p.id === profileId
         );
         if (!approvalProfile) {
           throw new Error("Profile not found in current list for action.");
@@ -249,16 +253,21 @@ export default function AdminApprovalsPage() {
           // Ensure 'id' is included for the main table.
           const { status, created_at, updated_at, ...mainTablePayload } =
             approvalProfile;
-          const { error: insertError } = await supabase.from(mainTableName).insert({
+
+          // For startup, include the rating in the main table payload
+          const payloadForMainTable = {
             ...mainTablePayload,
             created_at: new Date(created_at).toISOString(),
             updated_at: new Date().toISOString(),
             approved_at: new Date().toISOString(),
             status: "approved", // Explicitly set status to approved for the main table
-          });
+            ...(activeRoleTab === "startup" && { rating: (approvalProfile as CreatorApproval).rating || null }), // Include rating for startups
+          };
+
+          const { error: insertError } = await supabase.from(mainTableName).insert(payloadForMainTable);
           if (insertError) {
             throw new Error(
-              `Failed to insert into ${mainTableName}: ${insertError.message}`,
+              `Failed to insert into ${mainTableName}: ${insertError.message}`
             );
           }
 
@@ -268,10 +277,28 @@ export default function AdminApprovalsPage() {
             .eq("id", profileId);
           if (deleteError) {
             throw new Error(
-              `Failed to delete from ${approvalTableName}: ${deleteError.message}`,
+              `Failed to delete from ${approvalTableName}: ${deleteError.message}`
             );
           }
           toast.success(`${activeRoleTab} profile approved successfully!`);
+        } else if (actionType === "rate") {
+            if (activeRoleTab !== "startup") {
+                throw new Error("Rating is only applicable for startup profiles.");
+            }
+            if (rating === undefined || rating === null) {
+                throw new Error("Rating value is required for 'rate' action.");
+            }
+            const { error: updateError } = await supabase
+                .from(approvalTableName)
+                .update({
+                    rating: rating,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq("id", profileId);
+            if (updateError) {
+                throw new Error(`Failed to update rating in ${approvalTableName}: ${updateError.message}`);
+            }
+            toast.success(`${activeRoleTab} rating updated successfully!`);
         } else {
           // For 'reject' and 'needs_update' actions, ensure the status stored matches the frontend keys
           const statusToStore =
@@ -286,11 +313,11 @@ export default function AdminApprovalsPage() {
             .eq("id", profileId);
           if (updateError) {
             throw new Error(
-              `Failed to update status in ${approvalTableName}: ${updateError.message}`,
+              `Failed to update status in ${approvalTableName}: ${updateError.message}`
             );
           }
           toast.success(
-            `${activeRoleTab} profile status updated to ${statusToStore.replace("_", " ")}!`,
+            `${activeRoleTab} profile status updated to ${statusToStore.replace("_", " ")}!`
           );
         }
 
@@ -309,13 +336,13 @@ export default function AdminApprovalsPage() {
         setLoading(false); // End global loading
       }
     },
-    [activeRoleTab, activeStatusTab, approvals, loadData], // Ensure loadData is a dependency
+    [activeRoleTab, activeStatusTab, approvals, loadData] // Ensure loadData is a dependency
   );
 
   const renderApprovalList = (
     profiles: AdminApprovalProfile[],
     roleType: ProfileRoleType,
-    status: StatusKey,
+    status: StatusKey
   ) => {
     if (profiles.length === 0) {
       return (
@@ -331,9 +358,10 @@ export default function AdminApprovalsPage() {
             approval={approval}
             roleType={roleType}
             key={approval.id}
-            onApprove={handleApprovalAction}
-            onReject={handleApprovalAction}
-            onNeedUpdate={handleApprovalAction}
+            onApprove={(id) => handleApprovalAction(id, "approve")}
+            onReject={(id, reason) => handleApprovalAction(id, "reject", reason)}
+            onNeedUpdate={(id, reason) => handleApprovalAction(id, "needs_update", reason)}
+            onRate={(id, rating) => handleApprovalAction(id, "rate", undefined, rating)} // Pass rating
             currentStatus={status}
           />
         ))}
@@ -412,7 +440,7 @@ export default function AdminApprovalsPage() {
                   {renderApprovalList(
                     approvals[roleTab.key][statusTab.key],
                     roleTab.key,
-                    statusTab.key,
+                    statusTab.key
                   )}
                 </TabsContent>
               ))}

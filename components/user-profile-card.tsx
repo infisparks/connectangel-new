@@ -1,8 +1,7 @@
-// components/user-profile-card.tsx
 "use client";
 
 import Image from "next/image";
-import { Play } from "lucide-react";
+import { Play, Star } from "lucide-react"; // Import Star icon
 import { useState } from "react";
 import { useRouter } from "next/navigation"; // Import useRouter
 import { VideoPlayerModal } from "./video-player-modal"; // Assuming this path is correct
@@ -30,7 +29,7 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
   const [isModalOpen, setIsModalOpen] = useState(false); // State for the new detail modal
   const router = useRouter(); // Initialize useRouter
 
-  const statusText = profile.status || "Pending";
+  const statusText = (profile.status || "Pending").replace("_", " ");
   // Updated statusColor to handle 'needs_update'
   const statusColor =
     profile.status === "approved"
@@ -52,6 +51,10 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
   const fullVideoUrl = isStartupProfile
     ? startupProfile.pitch_video_url || null
     : null;
+
+  // Get the rating if it's an approved startup profile
+  const startupRating = (isStartupProfile && profile.status === "approved") ? (profile as ApprovedStartup).rating : null;
+
 
   // Determine if Edit button should be shown
   const showEditButton =
@@ -220,22 +223,30 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
       </div>
 
       {isStartupProfile && (
-        <div
-          className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950 cursor-pointer group"
-          onClick={() => fullVideoUrl && setShowVideoModal(true)}
-        >
-          <Image
-            src={fullThumbnailUrl}
-            alt={`${(profile as ApprovedStartup).startup_name || "Profile"} Thumbnail`}
-            fill
-            style={{ objectFit: "cover" }}
-            className="transition-transform duration-300 group-hover:scale-105"
-          />
-          {fullVideoUrl && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Play className="h-12 w-12 text-white" />
+        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950">
+          {startupRating !== null && startupRating !== undefined && (
+            <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1">
+              <Star className="h-4 w-4 fill-current text-white" />
+              Rating: {startupRating}/100
             </div>
           )}
+          <div
+            className="w-full h-full cursor-pointer group"
+            onClick={() => fullVideoUrl && setShowVideoModal(true)}
+          >
+            <Image
+              src={fullThumbnailUrl}
+              alt={`${(profile as ApprovedStartup).startup_name || "Profile"} Thumbnail`}
+              fill
+              style={{ objectFit: "cover" }}
+              className="transition-transform duration-300 group-hover:scale-105"
+            />
+            {fullVideoUrl && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Play className="h-12 w-12 text-white" />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -244,6 +255,12 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         {" "}
         {/* Added padding to top for role tag */}
         {renderProfileDetails()}
+        {/* Display reason if the status is rejected or needs update */}
+        {(profile.status === "rejected" || profile.status === "needs_update") && 'reason' in profile && profile.reason && (
+          <p className="text-red-300 text-sm mt-2">
+            <strong>Reason:</strong> {profile.reason}
+          </p>
+        )}
         {/* New: Buttons for Professional View and Edit */}
         <div className="flex gap-3 mt-4">
           <Button

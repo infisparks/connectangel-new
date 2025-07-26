@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Play, Loader2 } from "lucide-react"; // Loader2 for processing state
+import { Play, Loader2, Star } from "lucide-react"; // Loader2 for processing state, Star for rating icon
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input"; // Import Input for rating
 import {
   Dialog,
   DialogContent,
@@ -39,13 +40,10 @@ interface AdminApprovalCardProps {
   approval: AdminApprovalProfile; // Now a generic AdminApprovalProfile
   roleType: ProfileRoleType; // New prop to specify the type of profile
   // Callbacks from parent for actions (id, actionType, reason?)
-  onApprove: (id: string, actionType: "approve") => Promise<void>;
-  onReject: (id: string, actionType: "reject", reason: string) => Promise<void>;
-  onNeedUpdate: (
-    id: string,
-    actionType: "needs_update",
-    reason: string,
-  ) => Promise<void>;
+  onApprove: (id: string) => Promise<void>;
+  onReject: (id: string, reason: string) => Promise<void>;
+  onNeedUpdate: (id: string, reason: string) => Promise<void>;
+  onRate: (id: string, rating: number) => Promise<void>; // New callback for rating
   currentStatus: string; // The status of the tab this card is currently displayed in (e.g., 'pending', 'rejected', 'needs_update')
 }
 
@@ -55,19 +53,22 @@ export function AdminApprovalCard({
   onApprove,
   onReject,
   onNeedUpdate,
+  onRate, // Destructure new prop
   currentStatus,
 }: AdminApprovalCardProps) {
   const [showReasonDialog, setShowReasonDialog] = useState(false);
   const [reason, setReason] = useState("");
   const [actionToConfirm, setActionToConfirm] = useState<
-    "reject" | "needs_update" | null
+    "reject" | "needs_update" | "rate" | null // Added 'rate'
   >(null);
   const [isProcessing, setIsProcessing] = useState(false); // New state to manage loading on buttons
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false); // State for the new detail modal
+  const [ratingInput, setRatingInput] = useState<string>(""); // State for rating input
 
   // Safely access the status property common to all approval types
   const profileStatus = approval.status;
   const profileReason = (approval as any).reason; // Reason is optional, cast to any for direct access
+  const profileRating = (approval as CreatorApproval).rating; // Get rating for CreatorApproval
 
   // Function to get the main title for the profile card based on its role type
   const getProfileTitle = () => {
@@ -143,26 +144,41 @@ export function AdminApprovalCard({
   // When opening reason dialog, pre-fill reason if it exists from previous action
   useEffect(() => {
     if (showReasonDialog && actionToConfirm) {
-      // Access reason dynamically based on the current approval object and its type
-      setReason(profileReason || ""); // Use the reason stored in the approval itself
+      if (actionToConfirm === "rate") {
+        setRatingInput(profileRating?.toString() || ""); // Pre-fill rating if available
+      } else {
+        setReason(profileReason || ""); // Use the reason stored in the approval itself
+      }
     } else if (!showReasonDialog) {
       setReason(""); // Clear reason when dialog closes
+      setRatingInput(""); // Clear rating when dialog closes
       setActionToConfirm(null); // Clear action type
     }
-  }, [showReasonDialog, actionToConfirm, profileReason]); // Depend on relevant states/props
+  }, [showReasonDialog, actionToConfirm, profileReason, profileRating]); // Depend on relevant states/props
 
-  // Handle submission of reason (for Reject/Need Update)
-  const handleReasonSubmit = async () => {
-    if (!reason.trim()) {
-      toast.error("Please provide a reason.");
-      return;
-    }
+  // Handle submission of reason (for Reject/Need Update) or Rating
+  const handleDialogSubmit = async () => {
     setIsProcessing(true); // Indicate processing
     try {
       if (actionToConfirm === "reject") {
-        await onReject(approval.id, "reject", reason);
+        if (!reason.trim()) {
+          toast.error("Please provide a reason for rejection.");
+          return;
+        }
+        await onReject(approval.id, reason);
       } else if (actionToConfirm === "needs_update") {
-        await onNeedUpdate(approval.id, "needs_update", reason);
+        if (!reason.trim()) {
+          toast.error("Please provide a reason for needing an update.");
+          return;
+        }
+        await onNeedUpdate(approval.id, reason);
+      } else if (actionToConfirm === "rate") {
+        const parsedRating = parseInt(ratingInput);
+        if (isNaN(parsedRating) || parsedRating < 1 || parsedRating > 100) {
+          toast.error("Please enter a rating between 1 and 100.");
+          return;
+        }
+        await onRate(approval.id, parsedRating);
       }
       setShowReasonDialog(false); // Close dialog on success
     } catch (err) {
@@ -177,7 +193,7 @@ export function AdminApprovalCard({
   const handleApproveClick = async () => {
     setIsProcessing(true);
     try {
-      await onApprove(approval.id, "approve");
+      await onApprove(approval.id);
     } catch (err) {
       console.error("Approve action error:", err);
     } finally {
@@ -194,6 +210,12 @@ export function AdminApprovalCard({
   // Trigger dialog for Need Update
   const handleNeedUpdateClick = () => {
     setActionToConfirm("needs_update");
+    setShowReasonDialog(true);
+  };
+
+  // Trigger dialog for Rating
+  const handleRateClick = () => {
+    setActionToConfirm("rate");
     setShowReasonDialog(true);
   };
 
@@ -230,22 +252,30 @@ export function AdminApprovalCard({
 
       {/* Thumbnail/Video Preview (only for Startup role) */}
       {roleType === "startup" && (
-        <div
-          className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950 cursor-pointer group"
-          onClick={() => getPitchVideoUrl() && setShowVideoModal(true)}
-        >
-          <Image
-            src={getThumbnailUrl()}
-            alt={`${getProfileTitle()} Thumbnail`}
-            fill
-            style={{ objectFit: "cover" }}
-            className="transition-transform duration-300 group-hover:scale-105"
-          />
-          {getPitchVideoUrl() && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Play className="h-12 w-12 text-white" />
+        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950">
+          {currentStatus === "approved" && profileRating !== null && profileRating !== undefined && (
+            <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1">
+              <Star className="h-4 w-4 fill-current text-white" />
+              Rating: {profileRating}/100
             </div>
           )}
+          <div
+            className="w-full h-full cursor-pointer group"
+            onClick={() => getPitchVideoUrl() && setShowVideoModal(true)}
+          >
+            <Image
+              src={getThumbnailUrl()}
+              alt={`${getProfileTitle()} Thumbnail`}
+              fill
+              style={{ objectFit: "cover" }}
+              className="transition-transform duration-300 group-hover:scale-105"
+            />
+            {getPitchVideoUrl() && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Play className="h-12 w-12 text-white" />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -278,8 +308,8 @@ export function AdminApprovalCard({
                 ))}
             </div>
           )}
-        {/* Display reason if available */}
-        {profileReason && (
+        {/* Display reason only if available and the card is not in the 'Approved' tab */}
+        {profileReason && currentStatus !== "approved" && (
           <p className="text-red-300 text-sm mt-2">Reason: {profileReason}</p>
         )}
         {/* Action Buttons */}
@@ -293,6 +323,16 @@ export function AdminApprovalCard({
           </Button>
           {currentStatus === "pending" && (
             <>
+              {roleType === "startup" && (
+                <Button
+                  type="button"
+                  className="bg-yellow-600 text-white hover:bg-yellow-700 flex-1 min-w-[100px]"
+                  onClick={handleRateClick}
+                  disabled={isProcessing}
+                >
+                  Rate
+                </Button>
+              )}
               <Button
                 type="button"
                 className="bg-green-600 text-white hover:bg-green-700 flex-1 min-w-[100px]"
@@ -330,42 +370,78 @@ export function AdminApprovalCard({
             </Button>
           )}
           {currentStatus === "needs_update" && (
-            <Button
-              type="button"
-              className="bg-green-600 text-white hover:bg-green-700 flex-1 min-w-[100px]"
-              onClick={handleApproveClick}
-              disabled={isProcessing}
-            >
-              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Approve Updated"}
-            </Button>
+            <>
+              {roleType === "startup" && (
+                <Button
+                  type="button"
+                  className="bg-yellow-600 text-white hover:bg-yellow-700 flex-1 min-w-[100px]"
+                  onClick={handleRateClick}
+                  disabled={isProcessing}
+                >
+                  Rate
+                </Button>
+              )}
+              <Button
+                type="button"
+                className="bg-green-600 text-white hover:bg-green-700 flex-1 min-w-[100px]"
+                onClick={handleApproveClick}
+                disabled={isProcessing}
+              >
+                {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Approve Updated"}
+              </Button>
+            </>
           )}
         </div>
       </div>
 
-      {/* Reason Dialog */}
+      {/* Reason/Rating Dialog */}
       <Dialog open={showReasonDialog} onOpenChange={setShowReasonDialog}>
         <DialogContent className="sm:max-w-[425px] bg-[#0E0616] text-white border-[rgba(255,255,255,0.6)] rounded-xl">
           <DialogHeader>
             <DialogTitle className="text-white text-xl font-bold">
               {actionToConfirm === "reject"
                 ? "Reason for Rejection"
-                : "Reason for Need Update"}
+                : actionToConfirm === "needs_update"
+                ? "Reason for Need Update"
+                : "Rate Startup"}
             </DialogTitle>
             <DialogDescription className="text-neutral-400">
-              Please provide a clear reason. This will be visible to the user.
+              {actionToConfirm === "rate"
+                ? "Please enter a rating between 1 and 100."
+                : "Please provide a clear reason. This will be visible to the user."}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Label htmlFor="reason" className="text-right text-neutral-300">
-              Reason
-            </Label>
-            <Textarea
-              id="reason"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="col-span-3 bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[100px]"
-              required
-            />
+            {actionToConfirm === "rate" ? (
+              <>
+                <Label htmlFor="rating" className="text-right text-neutral-300">
+                  Rating (1-100)
+                </Label>
+                <Input
+                  id="rating"
+                  type="number"
+                  value={ratingInput}
+                  onChange={(e) => setRatingInput(e.target.value)}
+                  min="1"
+                  max="100"
+                  className="col-span-3 bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg"
+                  required
+                />
+              </>
+            ) : (
+              <>
+                <Label htmlFor="reason" className="text-right text-neutral-300">
+                  Reason
+                </Label>
+                <Textarea
+                  id="reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  className="col-span-3 bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[100px]"
+                  required
+                />
+              </>
+            )}
           </div>
           <DialogFooter>
             <Button
@@ -373,6 +449,7 @@ export function AdminApprovalCard({
               onClick={() => {
                 setShowReasonDialog(false);
                 setReason("");
+                setRatingInput("");
                 setActionToConfirm(null);
               }}
               className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
@@ -380,11 +457,17 @@ export function AdminApprovalCard({
               Cancel
             </Button>
             <Button
-              onClick={handleReasonSubmit}
-              disabled={isProcessing || !reason.trim()} // Disable if no reason
-              className={`${actionToConfirm === "reject" ? "bg-red-600 hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"} text-white`}
+              onClick={handleDialogSubmit}
+              disabled={isProcessing || (actionToConfirm === "rate" ? !ratingInput.trim() : !reason.trim())}
+              className={`${actionToConfirm === "reject" ? "bg-red-600 hover:bg-red-700" : actionToConfirm === "rate" ? "bg-yellow-600 hover:bg-yellow-700" : "bg-blue-600 hover:bg-blue-700"} text-white`}
             >
-              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Submit Reason"}
+              {isProcessing ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : actionToConfirm === "rate" ? (
+                "Submit Rating"
+              ) : (
+                "Submit Reason"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
