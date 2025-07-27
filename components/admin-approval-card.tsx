@@ -241,7 +241,7 @@ export function AdminApprovalCard({
     >
       {/* Role and Status Tag */}
       <div
-        className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColorClass(profileStatus)}`}
+        className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColorClass(profileStatus)} z-20`}
       >
         {roleType.charAt(0).toUpperCase() + roleType.slice(1)}:{" "}
         {profileStatus
@@ -252,7 +252,7 @@ export function AdminApprovalCard({
 
       {/* Thumbnail/Video Preview (only for Startup role) */}
       {roleType === "startup" && (
-        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950">
+        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950 z-10 mt-12 md:mt-0">
           {currentStatus === "approved" && profileRating !== null && profileRating !== undefined && (
             <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1">
               <Star className="h-4 w-4 fill-current text-white" />
