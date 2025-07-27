@@ -214,9 +214,18 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
 
   return (
     <div className="relative flex flex-col md:flex-row items-start p-4 gap-4 border rounded-lg shadow-sm bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
-      {/* Role Tag */}
+      {/* Mobile Status Display - Shows prominently on mobile */}
+      <div className="md:hidden w-full mb-2 flex justify-end">
+        <div className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-semibold ${statusColor} text-white`}>
+          <span className="capitalize">{roleType}</span>
+          <span className="mx-2">•</span>
+          <span className="capitalize">{statusText}</span>
+        </div>
+      </div>
+
+      {/* Desktop Role Tag - Hidden on mobile */}
       <div
-        className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold w-fit ${statusColor} text-white`}
+        className={`hidden md:block absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold w-fit ${statusColor} text-white`}
       >
         {roleType.charAt(0).toUpperCase() + roleType.slice(1)} Profile:{" "}
         {statusText.charAt(0).toUpperCase() + statusText.slice(1)}
@@ -224,10 +233,12 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
 
       {isStartupProfile && (
         <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950">
+          {/* Rating Badge - Show on both mobile and desktop */}
           {startupRating !== null && startupRating !== undefined && (
-            <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-md text-sm font-semibold flex items-center gap-1">
+            <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-md text-sm font-semibold items-center gap-1 flex">
               <Star className="h-4 w-4 fill-current text-white" />
-              Rating: {startupRating}/100
+              <span className="hidden md:inline">Rating: </span>
+              <span>{startupRating}/100</span>
             </div>
           )}
           <div
@@ -252,8 +263,6 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
 
       {/* Content Area */}
       <div className="flex-1 flex flex-col gap-2 pt-8 md:pt-0">
-        {" "}
-        {/* Added padding to top for role tag */}
         {renderProfileDetails()}
         {/* Display reason if the status is rejected or needs update */}
         {(profile.status === "rejected" || profile.status === "needs_update") && 'reason' in profile && profile.reason && (
