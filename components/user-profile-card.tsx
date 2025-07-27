@@ -214,25 +214,16 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
 
   return (
     <div className="relative flex flex-col md:flex-row items-start p-4 gap-4 border rounded-lg shadow-sm bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
-      {/* Mobile Status Display - Shows prominently on mobile */}
-      <div className="md:hidden w-full mb-2 flex justify-end">
-        <div className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-semibold ${statusColor} text-white`}>
-          <span className="capitalize">{roleType}</span>
-          <span className="mx-2">•</span>
-          <span className="capitalize">{statusText}</span>
-        </div>
-      </div>
-
-      {/* Desktop Role Tag - Hidden on mobile */}
+      {/* Role and Status Tag */}
       <div
-        className={`hidden md:block absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold w-fit ${statusColor} text-white`}
+        className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold ${statusColor} z-20`}
       >
-        {roleType.charAt(0).toUpperCase() + roleType.slice(1)} Profile:{" "}
+        {roleType.charAt(0).toUpperCase() + roleType.slice(1)}:{" "}
         {statusText.charAt(0).toUpperCase() + statusText.slice(1)}
       </div>
 
       {isStartupProfile && (
-        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950">
+        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950 z-10 mt-12 md:mt-0">
           {/* Rating Badge - Show on both mobile and desktop */}
           {startupRating !== null && startupRating !== undefined && (
             <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-md text-sm font-semibold items-center gap-1 flex">
