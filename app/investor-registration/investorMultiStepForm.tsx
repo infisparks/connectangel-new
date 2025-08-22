@@ -102,7 +102,7 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
         otherSupportType: initialData.other_support_type || "",
         requireSpecificCountryRegion: initialData.require_specific_country_region ? "Yes" : "No", // Convert boolean to "Yes"/"No"
         specificCountryRegion: initialData.specific_country_region || "",
-        bucketAmount: initialData.bucket_amount || "", // Add new field here
+        bucketAmount: initialData.bucket_amount != null ? String(initialData.bucket_amount) : "", // Add new field here
 
         consentContact: false, // User should always re-consent
         consentTermsPrivacy: false, // User should always re-consent
