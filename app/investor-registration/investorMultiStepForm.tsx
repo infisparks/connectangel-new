@@ -56,6 +56,7 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
     otherSupportType: "", // Appears if "Other" is selected
     requireSpecificCountryRegion: "", // "Yes" or "No"
     specificCountryRegion: "", // text
+    bucketAmount: "", // New field: Bucket Amount
 
     // Step 5: Consent & Submission
     consentContact: false,
@@ -69,8 +70,6 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
   // --- useEffect to pre-fill form data when initialData prop is received ---
   useEffect(() => {
     if (initialData) {
-      // Helper to parse phone number (e.g., "+911234567890" -> "+91", "1234567890")
-      // Your InvestorProfile has separate phoneCountryCode and localPhoneNumber, so just use them directly
       const fullPhoneNumber = initialData.phone_country_code + initialData.local_phone_number;
       const phoneMatch = fullPhoneNumber.match(/^(\+\d+)(.*)$/);
       const parsedPhoneCountryCode = phoneMatch ? phoneMatch[1] : "+91";
@@ -103,6 +102,7 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
         otherSupportType: initialData.other_support_type || "",
         requireSpecificCountryRegion: initialData.require_specific_country_region ? "Yes" : "No", // Convert boolean to "Yes"/"No"
         specificCountryRegion: initialData.specific_country_region || "",
+        bucketAmount: initialData.bucket_amount || "", // Add new field here
 
         consentContact: false, // User should always re-consent
         consentTermsPrivacy: false, // User should always re-consent
@@ -115,7 +115,7 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
         investorType: "", typicalInvestmentRange: "", investmentStagePreference: [], preferredSectorsIndustries: [], otherSectorIndustry: "",
         hasInvestedBefore: "", numberOfStartupsInvested: "", exampleStartups: "", averageTicketSize: "",
         lookingForNewOpportunities: "", investmentCriteria: "",
-        supportOfferedApartFromFunding: [], otherSupportType: "", requireSpecificCountryRegion: "", specificCountryRegion: "",
+        supportOfferedApartFromFunding: [], otherSupportType: "", requireSpecificCountryRegion: "", specificCountryRegion: "", bucketAmount: "", // Add new field here
         consentContact: false, consentTermsPrivacy: false,
       });
       setStep(1); // Ensure new form starts at step 1
@@ -196,6 +196,10 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
           isValid = false;
           errorMessage = "Please specify the required country or region.";
         }
+        if (!formData.bucketAmount) { // Validation for the new field
+          isValid = false;
+          errorMessage = "Please enter the bucket amount.";
+        }
         break;
       default:
         break;
@@ -245,6 +249,7 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
         other_support_type: formData.otherSupportType,
         require_specific_country_region: formData.requireSpecificCountryRegion === "Yes", // Convert to boolean
         specific_country_region: formData.requireSpecificCountryRegion === "Yes" ? formData.specificCountryRegion : null,
+        bucket_amount: formData.bucketAmount, // Include the new field in the payload
         status: "pending", // Always set to pending for re-approval/initial submission
       };
 
@@ -622,6 +627,15 @@ export function InvestorMultiStepForm({ userId, initialData }: InvestorMultiStep
                 required
               />
             )}
+            {/* Added new input field for bucket amount */}
+            <Input
+              name="bucketAmount"
+              placeholder="Bucket Amount"
+              value={formData.bucketAmount}
+              onChange={handleInputChange}
+              className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+              required
+            />
           </div>
         );
       case 5: // Consent & Submission

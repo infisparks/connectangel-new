@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Cropper from "react-easy-crop";
-import { Plus, Play, ImageIcon, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Plus, ImageIcon, ArrowRight, CheckCircle2 } from "lucide-react";
 import { countryCodes } from "@/lib/country-codes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,10 +18,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CountryCodeSelect } from "@/components/country-code-select";
 import { supabase } from "@/lib/supabaselib";
-import { ApprovedStartup, PendingStartup } from "@/app/my-startups/page"; // Ensure these types are correctly imported
+import { ApprovedStartup, PendingStartup } from "@/app/my-startups/page";
 
 // Supabase storage bucket names (define these if not already in a config)
-const SUPABASE_VIDEO_BUCKET = "pitch-videos";
 const SUPABASE_THUMBNAIL_BUCKET = "thumbnails";
 
 type StartupMultiStepFormProps = {
@@ -249,7 +248,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     country: "",
     city: "",
     startupName: "",
-    industry: "",
     yearOfEstablishment: "",
     numberOfEmployees: "",
     domain: "",
@@ -268,14 +266,11 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     problemBeingSolved: "",
     futurePlans: "",
     consentAgreed: false,
-    selectedVideoFile: null as File | null,
     selectedCustomThumbnailFile: null as File | null,
-    // Store original URLs if editing to avoid re-uploading if files aren't changed
-    originalVideoUrl: initialData?.pitch_video_url || null as string | null,
     originalThumbnailUrl: initialData?.thumbnail_url || null as string | null,
   });
   const [previewThumbnailUrl, setPreviewThumbnailUrl] = useState<string | null>(
-    initialData?.thumbnail_url || "/img/login.png" // Use initialData's thumbnail if available
+    initialData?.thumbnail_url || "/img/login.png"
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
@@ -284,22 +279,17 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
   // --- useEffect to pre-fill form data when initialData prop is received ---
   useEffect(() => {
     if (initialData) {
       setFormData({
         fullName: initialData.full_name || "",
         emailAddress: initialData.email_address || "",
-        // Split phone number into country code and local number if needed, assuming the format is +CODE_NUMBER
-        phoneCountryCode: initialData.phone_number?.match(/^\+(\d+)/)?.[0] || "+91", // Extract country code
-        localPhoneNumber: initialData.phone_number?.replace(/^\+\d+/, '') || "", // Extract local number
-        country: initialData.location?.split(", ")[1] || "", // Assuming format "City, Country"
+        phoneCountryCode: initialData.phone_number?.match(/^\+(\d+)/)?.[0] || "+91",
+        localPhoneNumber: initialData.phone_number?.replace(/^\+\d+/, '') || "",
+        country: initialData.location?.split(", ")[1] || "",
         city: initialData.location?.split(", ")[0] || "",
         startupName: initialData.startup_name || "",
-        industry: initialData.startup_type || "", // Maps to startup_type in DB
         yearOfEstablishment: initialData.establishment_year || "",
         numberOfEmployees: initialData.employee_count || "",
         domain: initialData.domain || "",
@@ -312,22 +302,19 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         websiteUrl: initialData.website_url || "",
         teamMembers: initialData.team_members || [],
         supportNeeded: initialData.support_needed || [],
-        otherSupportNeed: "", // Not directly in initialData
+        otherSupportNeed: "",
         majorChallenges: initialData.major_challenges || "",
-        oneSentenceDescription: initialData.description || "", // Maps to description in DB
+        oneSentenceDescription: initialData.description || "",
         problemBeingSolved: initialData.problem_being_solved || "",
         futurePlans: initialData.future_plans || "",
-        consentAgreed: false, // User should re-consent on edit/resubmit
-        selectedVideoFile: null, // No file selected initially for edit
-        selectedCustomThumbnailFile: null, // No file selected initially for edit
-        originalVideoUrl: initialData.pitch_video_url || null, // Store original URLs
+        consentAgreed: false,
+        selectedCustomThumbnailFile: null,
         originalThumbnailUrl: initialData.thumbnail_url || null,
       });
-      // Set preview thumbnail URL
       setPreviewThumbnailUrl(initialData.thumbnail_url || "/img/login.png");
-      setStep(1); // Reset to first step when initialData loads for editing
+      setStep(1);
     }
-  }, [initialData]); // Depend on initialData prop
+  }, [initialData]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -344,48 +331,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
       : [...formData.supportNeeded, supportType];
     setFormData({ ...formData, supportNeeded: newSupportNeeded });
   };
-
-  const generateThumbnailFromVideo = useCallback(async (videoFile: File): Promise<File | null> => {
-    return new Promise((resolve) => {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      if (video && canvas) {
-        video.src = URL.createObjectURL(videoFile);
-        video.load();
-        video.onloadedmetadata = () => {
-          video.currentTime = Math.min(1, video.duration / 2); // Try to get a frame at 1s or middle if video is shorter
-        };
-        video.onseeked = () => {
-          const ctx = canvas.getContext("2d");
-          if (!ctx) {
-            resolve(null);
-            return;
-          }
-          const aspect = video.videoWidth / video.videoHeight;
-          const w = 400;
-          const h = w / aspect;
-          canvas.width = 400;
-          canvas.height = h;
-          ctx.drawImage(video, 0, 0, w, h);
-          canvas.toBlob((blob) => {
-            if (blob) {
-              const thumbnailFile = new File([blob], `${videoFile.name}_thumbnail.png`, { type: "image/png" });
-              setPreviewThumbnailUrl(URL.createObjectURL(thumbnailFile));
-              resolve(thumbnailFile);
-            } else {
-              resolve(null);
-            }
-          }, "image/png");
-        };
-        video.onerror = () => {
-          console.error("Error loading video for thumbnail generation.");
-          resolve(null);
-        };
-      } else {
-        resolve(null);
-      }
-    });
-  }, []);
 
   function is16by9(file: File, cb: (result: boolean, url: string) => void) {
     const img = new window.Image();
@@ -418,36 +363,11 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     setPreviewThumbnailUrl(URL.createObjectURL(croppedFile));
   };
 
-  const handleVideoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && file.type.startsWith("video/")) {
-      setFormData((prev) => ({ ...prev, selectedVideoFile: file }));
-      toast.success("Video selected for upload. Generating thumbnail...");
-      const generatedThumb = await generateThumbnailFromVideo(file);
-      if (generatedThumb) {
-        setFormData((prev) => ({ ...prev, selectedCustomThumbnailFile: generatedThumb }));
-      } else {
-        toast.error("Could not generate thumbnail from video.");
-      }
-    } else {
-      setFormData((prev) => ({ ...prev, selectedVideoFile: null, selectedCustomThumbnailFile: null }));
-      // If no valid file selected, revert to original thumbnail or default
-      setPreviewThumbnailUrl(formData.originalThumbnailUrl || "/img/login.png");
-      toast.error("Please select a valid video file.");
-    }
-  };
-
   const handleNext = async () => {
     let isValid = true;
     let errorMessage = "";
 
-    if (step === 1) {
-      // For step 1, either a new video file must be selected OR an original video URL must exist (if editing)
-      if (!formData.selectedVideoFile && !formData.originalVideoUrl) {
-        isValid = false;
-        errorMessage = "Please upload your pitch video.";
-      }
-    } else if (step === 2) {
+    if (step === 1) { // Now this is "Personal & Contact Details"
       if (
         !formData.fullName ||
         !formData.emailAddress ||
@@ -459,10 +379,9 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         isValid = false;
         errorMessage = "Please fill in all personal and contact details.";
       }
-    } else if (step === 3) {
+    } else if (step === 2) { // Now this is "Startup Overview"
       if (
         !formData.startupName ||
-        !formData.industry ||
         !formData.startupStage ||
         !formData.domain ||
         !formData.language
@@ -470,17 +389,17 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         isValid = false;
         errorMessage = "Please fill in all startup overview fields.";
       }
-    } else if (step === 4) {
+    } else if (step === 3) { // Now this is "Needs & Challenges"
       if (formData.supportNeeded.length === 0 || !formData.majorChallenges) {
         isValid = false;
         errorMessage = "Please select at least one support type and describe your challenges.";
       }
-    } else if (step === 5) {
+    } else if (step === 4) { // Now this is "Open-Ended Questions"
       if (!formData.oneSentenceDescription || !formData.problemBeingSolved) {
         isValid = false;
         errorMessage = "Please fill in both open-ended questions.";
       }
-    } else if (step === 6) {
+    } else if (step === 5) { // Now this is "Future Plans"
       if (!formData.futurePlans) {
         isValid = false;
         errorMessage = "Please describe your future plans and vision.";
@@ -506,28 +425,10 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     setIsSubmitting(true);
     setSubmissionError(null);
 
-    let finalVideoUrl = formData.originalVideoUrl; // Start with existing URL
     let finalThumbnailUrl = formData.originalThumbnailUrl; // Start with existing URL
 
     try {
-      // 1. Upload new Video if selectedVideoFile exists
-      if (formData.selectedVideoFile) {
-        const videoFileName = `${userId}/${Date.now()}_${formData.selectedVideoFile.name}`;
-        const { data: videoUploadData, error: videoUploadError } = await supabase.storage
-          .from(SUPABASE_VIDEO_BUCKET)
-          .upload(videoFileName, formData.selectedVideoFile, {
-            cacheControl: '3600',
-            upsert: false,
-          });
-
-        if (videoUploadError) throw videoUploadError;
-        finalVideoUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SUPABASE_VIDEO_BUCKET}/${videoFileName}`;
-      } else if (!finalVideoUrl) {
-        // If no new video and no original video, throw error
-        throw new Error("Pitch video is required.");
-      }
-
-      // 2. Upload new Custom Thumbnail if selectedCustomThumbnailFile exists
+      // 1. Upload new Custom Thumbnail if selectedCustomThumbnailFile exists
       if (formData.selectedCustomThumbnailFile) {
         const thumbnailFileName = `${userId}/${Date.now()}_${formData.selectedCustomThumbnailFile.name}`;
         const { data: thumbnailUploadData, error: thumbnailUploadError } = await supabase.storage
@@ -540,24 +441,20 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         if (thumbnailUploadError) throw thumbnailUploadError;
         finalThumbnailUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SUPABASE_THUMBNAIL_BUCKET}/${thumbnailFileName}`;
       } else if (!finalThumbnailUrl) {
-        // If no new thumbnail and no original, and it's a new submission, we might need a default
-        // For edits, this generally means the original is kept unless changed.
-        finalThumbnailUrl = "/img/login.png"; // Fallback for new submissions if no video/thumbnail given
+        finalThumbnailUrl = "/img/login.png";
       }
 
       // Prepare data for Supabase
       const submissionPayload = {
         user_id: userId,
-        startup_type: formData.industry,
         startup_name: formData.startupName,
         description: formData.oneSentenceDescription,
         location: `${formData.city}, ${formData.country}`,
         language: formData.language,
         domain: formData.domain,
         founder_names: formData.teamMembers.map((member) => `${member.name} (${member.designation})`),
-        pitch_video_url: finalVideoUrl,
         thumbnail_url: finalThumbnailUrl,
-        status: "pending", // Always set to pending for approval/re-approval
+        status: "pending",
         revenue_model: formData.revenueModel,
         funding_stage: formData.fundingStage,
         employee_count: formData.numberOfEmployees,
@@ -573,7 +470,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         email_address: formData.emailAddress,
         phone_number: `${formData.phoneCountryCode}${formData.localPhoneNumber}`,
         startup_stage: formData.startupStage,
-        team_members: formData.teamMembers, // Store the full team members array as JSONB
+        team_members: formData.teamMembers,
       };
 
       let dbOperationError = null;
@@ -604,7 +501,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
 
       setShowSuccessDialog(true);
       toast.success("Form submitted successfully! Waiting for approval.");
-      setTimeout(() => router.push("/my-startups"), 3000); // Redirect to My Profiles
+      setTimeout(() => router.push("/my-startups"), 3000);
     } catch (err: any) {
       console.error("Submission error:", err);
       setSubmissionError(err?.message || "Submission failed. Please try again.");
@@ -617,53 +514,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
   const renderStep = () => {
     switch (step) {
       case 1:
-        return (
-          <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Upload Pitch Video</h3>
-            <div className="space-y-4">
-              <p className="text-neutral-300 font-medium">Upload your startup pitch video (Max 50MB)</p>
-              <input
-                type="file"
-                id="video-upload"
-                accept="video/*"
-                className="hidden"
-                onChange={handleVideoFileChange}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById("video-upload")?.click()}
-                className="flex items-center justify-center gap-2 bg-neutral-800 border-neutral-700 text-neutral-50 hover:bg-neutral-700"
-              >
-                <Play className="h-5 w-5" />
-                {formData.selectedVideoFile ? "Change Video" : formData.originalVideoUrl ? "Change Existing Video" : "Upload Pitch Video"}
-              </Button>
-              {formData.selectedVideoFile && (
-                <span className="text-sm text-neutral-400 truncate max-w-[150px]">
-                  {formData.selectedVideoFile.name}
-                </span>
-              )}
-              {!formData.selectedVideoFile && formData.originalVideoUrl && (
-                <span className="text-sm text-neutral-400 truncate max-w-[150px]">
-                  Existing Video: <a href={formData.originalVideoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
-                </span>
-              )}
-              {(formData.selectedVideoFile || formData.originalVideoUrl) && (
-                <p className="text-sm text-neutral-400">
-                  * Thumbnail will be automatically generated from your video. You can upload a custom one later.
-                </p>
-              )}
-            </div>
-            <Button
-              type="button"
-              onClick={handleNext}
-              className="w-[163px] h-[62px] bg-[#8800FF] hover:bg-purple-700 text-white rounded-full text-[25px] flex items-center justify-center"
-            >
-              Next <ArrowRight className="ml-2 h-6 w-6" />
-            </Button>
-          </div>
-        );
-      case 2:
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Personal & Contact Details</h3>
@@ -725,22 +575,14 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 required
               />
             </div>
-            <div className="flex justify-between items-center pt-4">
-              <Button
-                type="button"
-                onClick={() => setStep(step - 1)}
-                variant="outline"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
-              >
-                Back
-              </Button>
+            <div className="flex justify-end items-center pt-4">
               <Button type="button" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         );
-      case 3: // This was step 3, now it becomes step 3 and next will be step 4
+      case 2:
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Startup Overview</h3>
@@ -753,47 +595,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
                 required
               />
-              <Select
-                name="industry"
-                value={formData.industry}
-                onValueChange={(val) => handleSelectChange("industry", val)}
-              >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Industry" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="Tech" className="focus:bg-purple-700 focus:text-white">
-                    Tech
-                  </SelectItem>
-                  <SelectItem value="SaaS" className="focus:bg-purple-700 focus:text-white">
-                    SaaS
-                  </SelectItem>
-                  <SelectItem value="Fintech" className="focus:bg-purple-700 focus:text-white">
-                    Fintech
-                  </SelectItem>
-                  <SelectItem value="Healthcare" className="focus:bg-purple-700 focus:text-white">
-                    Healthcare
-                  </SelectItem>
-                  <SelectItem value="EdTech" className="focus:bg-purple-700 focus:text-white">
-                    EdTech
-                  </SelectItem>
-                  <SelectItem value="AgriTech" className="focus:bg-purple-700 focus:text-white">
-                    AgriTech
-                  </SelectItem>
-                  <SelectItem value="E-commerce" className="focus:bg-purple-700 focus:text-white">
-                    E-commerce
-                  </SelectItem>
-                  <SelectItem value="AI/ML" className="focus:bg-purple-700 focus:text-white">
-                    AI/ML
-                  </SelectItem>
-                  <SelectItem value="Biotechnology" className="focus:bg-purple-700 focus:text-white">
-                    Biotechnology
-                  </SelectItem>
-                  <SelectItem value="Renewable Energy" className="focus:bg-purple-700 focus:text-white">
-                    Renewable Energy
-                  </SelectItem>
-                </SelectContent>
-              </Select>
               <Input
                 name="yearOfEstablishment"
                 placeholder="Year of Establishment"
@@ -1013,7 +814,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
             </div>
           </div>
         );
-      case 4:
+      case 3:
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Needs & Challenges</h3>
@@ -1071,7 +872,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
             </div>
           </div>
         );
-      case 5:
+      case 4:
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Open-Ended Questions</h3>
@@ -1114,7 +915,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
             </div>
           </div>
         );
-      case 6:
+      case 5:
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Future Plans & Vision</h3>
@@ -1144,11 +945,11 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
             </div>
           </div>
         );
-      case 7: // This will be the new "Review & Submit" step
+      case 6:
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Review & Submit</h3>
-            <p className="text-neutral-300">Optionally, upload a custom thumbnail for your pitch video.</p>
+            <p className="text-neutral-300">Upload a thumbnail for your profile.</p>
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <input
@@ -1222,7 +1023,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     <div className="p-6 lg:p-8 space-y-6 bg-[#1B0E2B] rounded-[8.95px] shadow-lg relative border border-[#4A0080] max-w-[441px] mx-auto lg:px-8 lg:pt-8">
       <div className="relative w-[369px] h-[218px] rounded-[15px] overflow-hidden bg-neutral-900 flex items-center justify-center border border-neutral-700">
         <Image
-          src={previewThumbnailUrl || "/img/login.png"} // Default to /login.png
+          src={previewThumbnailUrl || "/img/login.png"}
           alt="Video Thumbnail"
           fill
           style={{ objectFit: "cover" }}
@@ -1231,8 +1032,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         <div className="absolute inset-0 flex items-center justify-center">
           <span className="text-white text-[34px] font-bold drop-shadow-lg"></span>
         </div>
-
-        <Play className="absolute h-16 w-16 text-white cursor-pointer opacity-90 hover:opacity-100 transition-opacity" />
       </div>
       <div className="space-y-4">
         <h3 className="text-3xl font-bold text-white">{formData.startupName || "Your Startup Name"}</h3>
@@ -1278,20 +1077,18 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
 
   // Updated steps to match the new flow
   const steps = [
-    "Upload Video", // Step 1
-    "Personal Details", // Step 2
-    "Startup Overview", // Step 3
-    "Needs & Challenges", // Step 4
-    "Open-Ended Questions", // Step 5
-    "Future Plans", // Step 6
-    "Review & Submit", // Step 7
+    "Personal Details",
+    "Startup Overview",
+    "Needs & Challenges",
+    "Open-Ended Questions",
+    "Future Plans",
+    "Review & Submit",
   ];
 
   return (
     <div className="min-h-screen bg-[#0E0617] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <header className="flex items-center mt-32 justify-between mb-10">
-          {/* Removed MessageSquareText as it was commented out and likely not needed here */}
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
@@ -1314,7 +1111,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                     className={cn(
                       "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
                       step > index
-                        ? "border-white bg-white shadow-lg shadow-white/50" // Added glow effect
+                        ? "border-white bg-white shadow-lg shadow-white/50"
                         : "border-[#818181] bg-[#0E0617] group-hover:border-purple-500",
                     )}
                   >
@@ -1394,9 +1191,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
           </div>
         </DialogContent>
       </Dialog>
-      {/* Hidden video and canvas for thumbnail generation (if needed for re-upload or initial processing) */}
-      <video ref={videoRef} style={{ display: "none" }} muted preload="metadata" />
-      <canvas ref={canvasRef} style={{ display: "none" }} />
     </div>
   );
 }
