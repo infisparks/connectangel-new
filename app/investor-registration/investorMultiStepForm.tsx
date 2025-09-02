@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CountryCodeSelect } from "@/components/country-code-select";
 import { supabase } from "@/lib/supabaselib";
-import { InvestorProfile } from "@/app/my-startups/page"; // Ensure InvestorProfile is imported
+import { InvestorProfile } from "@/components/admin-approval-card"; // Ensure InvestorProfile is imported
 
 type InvestorMultiStepFormProps = {
   userId: string;

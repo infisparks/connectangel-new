@@ -4,10 +4,25 @@ import { ArrowRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { useRef, useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
-import { countries } from "@/lib/data" // Assuming you have this data file
-import ParticleEffect from "./particle-effect" // Assuming you have this component
+import { countries } from "@/lib/data"
+import ParticleEffect from "./particle-effect"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+
+const domainFilters = [
+  "All",
+  "IT & SaaS",
+  "AgriTech",
+  "HealthTech",
+  "FinTech",
+  "Manufacturing",
+  "PropTech",
+  "EdTech",
+];
 
 export default function CountriesSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -17,12 +32,14 @@ export default function CountriesSection() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const sectionRef = useRef<HTMLElement>(null)
 
-  // Auto-scroll specific refs and state
+  const [showFilterDialog, setShowFilterDialog] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState("")
+  const [selectedDomain, setSelectedDomain] = useState("All")
+
   const animationFrameId = useRef<number | null>(null)
-  const scrollSpeed = 1 // Controls scroll speed
+  const scrollSpeed = 1
   const isScrollingPaused = useRef(false)
 
-  // Mouse move effect for the "fog"
   useEffect(() => {
     const handleMouseMove = (event: MouseEvent) => {
       if (sectionRef.current) {
@@ -35,7 +52,7 @@ export default function CountriesSection() {
     }
 
     const handleMouseLeave = () => {
-      setMousePosition({ x: -9999, y: -9999 }) // Move off-screen
+      setMousePosition({ x: -9999, y: -9999 })
     }
 
     const currentSectionRef = sectionRef.current
@@ -52,7 +69,6 @@ export default function CountriesSection() {
     }
   }, [])
 
-  // Intersection Observer for pagination dots
   useEffect(() => {
     const scrollElement = scrollRef.current
     if (!scrollElement) return
@@ -86,14 +102,12 @@ export default function CountriesSection() {
         if (ref) observer.unobserve(ref)
       })
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countries.length])
 
   const handleExploreClick = () => {
-    router.push("/countries")
+    router.push("/allstartup")
   }
 
-  // Auto-scroll logic
   const animateScroll = useCallback(() => {
     if (scrollRef.current && !isScrollingPaused.current) {
       scrollRef.current.scrollLeft += scrollSpeed
@@ -129,7 +143,6 @@ export default function CountriesSection() {
     return () => stopAutoScroll()
   }, [startAutoScroll, stopAutoScroll])
 
-  // Combine countries for infinite scroll effect
   const loopedCountries = [...countries, ...countries]
 
   const scrollToCard = (index: number) => {
@@ -140,17 +153,32 @@ export default function CountriesSection() {
         inline: "center",
         block: "nearest",
       })
-      // Restart auto-scroll after a delay
       setTimeout(startAutoScroll, 3000)
     }
   }
+  
+  const handleCountryCardClick = (countryName: string) => {
+    setSelectedCountry(countryName);
+    setSelectedDomain("All");
+    setShowFilterDialog(true);
+  };
+  
+  const handleFilterSubmit = () => {
+    let query = "";
+    if (selectedCountry && selectedCountry !== "All") {
+        query += `country=${encodeURIComponent(selectedCountry)}`;
+    }
+    if (selectedDomain && selectedDomain !== "All") {
+        query += query ? `&domain=${encodeURIComponent(selectedDomain)}` : `domain=${encodeURIComponent(selectedDomain)}`;
+    }
+    const path = query ? `/allstartup?${query}` : `/startups`;
+    router.push(path);
+    setShowFilterDialog(false);
+  };
 
   return (
     <section ref={sectionRef} className="relative py-12 md:py-20 bg-[#000A18] overflow-hidden">
-      {/* AI Particle Effect */}
       <ParticleEffect />
-
-      {/* Mouse Fog/Light Effect */}
       <motion.div
         className="absolute inset-0 pointer-events-none z-10"
         style={{
@@ -160,10 +188,8 @@ export default function CountriesSection() {
           transition: "opacity 0.3s ease-out",
         }}
       />
-
       <div className="relative z-20 container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col space-y-8">
-          {/* Section Header */}
           <div className="flex justify-between items-center">
             <motion.h2
               className="font-semibold text-3xl md:text-4xl text-white"
@@ -182,15 +208,13 @@ export default function CountriesSection() {
               <ArrowRightIcon className="h-5 w-5" />
             </Button>
           </div>
-
-          {/* Countries Scroller */}
           <div className="w-full">
             <div
               ref={scrollRef}
               className="flex overflow-x-auto gap-[15px] pb-4 scroll-smooth"
               style={{
-                scrollbarWidth: "none", // Firefox
-                msOverflowStyle: "none", // IE/Edge
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
               }}
               onMouseEnter={stopAutoScroll}
               onMouseLeave={startAutoScroll}
@@ -200,13 +224,13 @@ export default function CountriesSection() {
                   key={`${name}-${idx}`}
                   ref={(el) => (cardRefs.current[idx] = el)}
                   data-original-index={idx % countries.length}
-                  // 👇 **BORDER STYLE UPDATED HERE**
                   className="flex-shrink-0 flex items-center box-border w-[180px] h-[67px] pt-[10px] pb-[10px] pl-[15.2px] pr-[15.2px] rounded-[13.01px] border-[2.13px] border-[#FFFFFF] cursor-pointer bg-[#DDDDDD33]"
                   whileHover={{
                     scale: 1.05,
                     borderColor: "rgba(255, 255, 255, 0.6)",
                   }}
                   transition={{ duration: 0.2 }}
+                  onClick={() => handleCountryCardClick(name)}
                 >
                   <div className="relative w-[46.45px] h-[47px] rounded-full overflow-hidden flex-shrink-0">
                     <Image src={image || "/placeholder.svg"} alt={name} fill className="object-cover" />
@@ -219,7 +243,6 @@ export default function CountriesSection() {
                   </span>
                 </motion.div>
               ))}
-              {/* Inline style to hide scrollbar in WebKit browsers */}
               <style jsx>{`
                 div[ref="scrollRef"]::-webkit-scrollbar {
                   display: none;
@@ -227,8 +250,6 @@ export default function CountriesSection() {
               `}</style>
             </div>
           </div>
-
-          {/* Pagination Dots */}
           <div className="flex justify-center gap-2 pt-4">
             {countries.map((_, index) => (
               <button
@@ -243,6 +264,58 @@ export default function CountriesSection() {
           </div>
         </div>
       </div>
+      
+      {/* Search Filter Dialog */}
+      <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
+        <DialogContent className="sm:max-w-[425px] bg-[#0E0616] text-white border-[rgba(255,255,255,0.6)] rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-bold">Search Filter</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="country" className="text-sm font-semibold text-gray-300">Country</Label>
+              <Select
+                value={selectedCountry}
+                onValueChange={setSelectedCountry}
+              >
+                <SelectTrigger className="w-full bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4">
+                  <SelectValue placeholder="Select a country" />
+                </SelectTrigger>
+                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700">
+                  {countries.map((c) => (
+                    <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="domain" className="text-sm font-semibold text-gray-300">Domain</Label>
+              <Select
+                value={selectedDomain}
+                onValueChange={setSelectedDomain}
+              >
+                <SelectTrigger className="w-full bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4">
+                  <SelectValue placeholder="Select a domain" />
+                </SelectTrigger>
+                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700">
+                  {domainFilters.map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              onClick={handleFilterSubmit}
+              className="bg-purple-600 text-white hover:bg-purple-700 px-8 py-6 rounded-full text-base font-bold transition-colors"
+            >
+              Select
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }

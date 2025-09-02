@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { StartupMultiStepForm } from "@/app/startup-registration/startup-multi-step-form";
 import { supabase } from "@/lib/supabaselib";
 import { useRouter, useParams } from "next/navigation";
-import { PendingStartup } from "@/app/my-startups/page"; // Only need PendingStartup for editable data
+import { PendingStartup } from  "@/types"
 
 interface StartupRegistrationPageProps {
   params: { id: string };

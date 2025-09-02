@@ -5,7 +5,7 @@ import { Play } from "lucide-react"
 import { useState } from "react"
 import { VideoPlayerModal } from "./video-player-modal" // Assuming this path is correct
 // Corrected import: Use ApprovedStartup and PendingStartup
-import type { ProfileData, ProfileRoleType, ApprovedStartup, PendingStartup, IncubationProfile, InvestorProfile, MentorProfile } from "@/app/my-startups/page"
+import type { ProfileData, ProfileRoleType, ApprovedStartup, PendingStartup, IncubationProfile, InvestorProfile, MentorProfile } from "@/types"
 
 interface UserProfileCardProps {
   profile: ProfileData

@@ -9,32 +9,220 @@ import { AdminApprovalCard } from "@/components/admin-approval-card";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-// --- Import all profile types from my-startups/page.tsx or a shared types file ---
-import type {
-  PendingStartup,
-  IncubationProfile,
-  InvestorProfile,
-  MentorProfile,
-} from "@/app/my-startups/page";
-
-// Define specific Approval types that match the _approval tables.
-// Add 'rating' to CreatorApproval
-export interface CreatorApproval extends PendingStartup {
-  rating?: number | null; // Add rating property
+// --- START: All Profile types consolidated here ---
+// The key fix is making the type definitions consistent.
+export interface ApprovedStartup {
+  id: string;
+  user_id: string;
+  startup_type: string | null; // This must match the props
+  startup_name: string;
+  description: string;
+  location: string | null;
+  language: string | null;
+  domain: string | null;
+  founder_names: string[] | null;
+  created_at: string;
+  updated_at: string;
+  thumbnail_url: string | null;
+  logo_url: string | null;
+  full_name: string | null;
+  email_address: string | null;
+  phone_number: string | null;
+  country: string | null;
+  city: string | null;
+  establishment_year: string | null;
+  employee_count: string | null;
+  startup_stage: string | null;
+  revenue_model: string | null;
+  funding_stage: string | null;
+  instagram_url: string | null;
+  linkedin_url: string | null;
+  website_url: string | null;
+  support_needed: string[] | null;
+  major_challenges: string | null;
+  one_sentence_description: string | null;
+  problem_being_solved: string | null;
+  future_plans: string[] | null;
+  team_members: Array<{
+    name: string;
+    designation: string;
+    phoneCountryCode: string;
+    localPhoneNumber: string;
+    linkedin_url: string;
+    profile_url?: string;
+  }> | null;
+  pitch_video_url: string | null;
+  status: "approved";
+  approved_at: string;
+  rating: number | null;
 }
-export interface IncubationApproval extends IncubationProfile {}
-export interface InvestorApproval extends InvestorProfile {}
-export interface MentorApproval extends MentorProfile {}
 
-// Union type for any approval profile that the admin will manage
+export interface PendingStartup {
+  id: string;
+  user_id: string;
+  startup_type: string | null; // This is the core fix. It should be nullable.
+  startup_name: string;
+  description: string;
+  location: string | null;
+  language: string | null;
+  domain: string | null;
+  founder_names: string[] | null;
+  created_at: string;
+  updated_at: string;
+  thumbnail_url: string | null;
+  logo_url: string | null;
+  status: "pending" | "needs_update" | "rejected";
+  reason: string | null;
+  revenue_model?: string;
+  funding_stage?: string;
+  employee_count?: string;
+  establishment_year?: string;
+  instagram_url?: string;
+  linkedin_url?: string;
+  website_url?: string;
+  support_needed?: string[];
+  major_challenges?: string;
+  one_sentence_description?: string;
+  problem_being_solved?: string;
+  future_plans?: string[];
+  full_name?: string;
+  email_address?: string;
+  phone_number?: string;
+  startup_stage?: string;
+  team_members?: Array<{
+    name: string;
+    designation: string;
+    phoneCountryCode: string;
+    localPhoneNumber: string;
+    linkedin_url: string;
+    profile_url?: string;
+  }> | null;
+  pitch_video_url: string | null;
+  rating?: number | null;
+}
+
+export interface IncubationProfile {
+  id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  full_name: string;
+  email_address: string;
+  phone_country_code: string;
+  local_phone_number: string;
+  country: string;
+  city: string;
+  incubator_accelerator_name: string;
+  type_of_incubator: string;
+  year_established: number;
+  website: string;
+  linkedin_profile?: string;
+  physical_address: string;
+  affiliated_organization_university?: string;
+  registration_number?: string;
+  primary_focus_areas: string[];
+  specify_other_focus_area?: string;
+  services_offered_to_startups: string[];
+  specify_other_services?: string;
+  eligibility_criteria: string;
+  total_funding_raised_by_alumni: string;
+  percentage_startups_operational_after_3_yrs: number;
+  notable_alumni_startups: Array<{ startupName: string; websiteUrl: string }>;
+  unique_value_proposition: string;
+  problem_gaps_solved_in_ecosystem: string;
+  preferred_startup_stages: string[];
+  interested_in_cross_border_collaborations: string;
+  planned_expansions: string;
+  key_challenges_you_face: string;
+  first_goal_next_12_months: string;
+  second_goal?: string;
+  third_goal?: string;
+  status: "pending" | "approved" | "rejected" | "needs_update";
+  reason?: string;
+  thumbnail_url: string | null;
+  logo_url: string | null;
+  rating?: number | null;
+}
+
+export interface InvestorProfile {
+  id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  full_name: string;
+  email_address: string;
+  phone_country_code: string;
+  local_phone_number: string;
+  country: string;
+  city: string;
+  linkedin_profile?: string;
+  investor_type: string;
+  typical_investment_range: string;
+  investment_stage_preference: string[];
+  preferred_sectors_industries: string[];
+  other_sector_industry?: string;
+  has_invested_before: boolean;
+  number_of_startups_invested?: number;
+  example_startups?: string;
+  average_ticket_size?: string;
+  looking_for_new_opportunities: boolean;
+  investment_criteria: string;
+  support_offered_apart_from_funding: string[];
+  other_support_type?: string;
+  require_specific_country_region: boolean;
+  specific_country_region?: string;
+  status: "pending" | "approved" | "rejected" | "needs_update";
+  reason?: string;
+  bucket_amount?: number;
+}
+
+export interface MentorProfile {
+  id: string;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  full_name: string;
+  email_address: string;
+  phone_number: string;
+  gender: string;
+  linkedin_profile?: string;
+  city: string;
+  personal_website?: string;
+  country: string;
+  current_position_title: string;
+  organization_company: string;
+  years_of_experience: number;
+  key_areas_of_expertise: string[];
+  other_expertise_area?: string;
+  mentorship_domains: string[];
+  other_mentorship_domain?: string;
+  preferred_startup_stage: string;
+  mentorship_mode: string;
+  weekly_availability: string;
+  languages_spoken: string[];
+  why_mentor_startups: string;
+  proud_mentoring_experience: string;
+  industries_most_excited_to_mentor: string;
+  open_to_other_contributions: string[];
+  other_contribution_type?: string;
+  status: "pending" | "approved" | "rejected" | "needs_update";
+  reason?: string;
+}
+
+// These type aliases are crucial for the component logic
+export type CreatorApproval = PendingStartup;
+export type IncubationApproval = IncubationProfile;
+export type InvestorApproval = InvestorProfile;
+export type MentorApproval = MentorProfile;
+
 export type AdminApprovalProfile =
   | CreatorApproval
   | IncubationApproval
   | InvestorApproval
   | MentorApproval;
 
-// Type for the role of the profile being approved/managed
 export type ProfileRoleType = "startup" | "incubation" | "investor" | "mentor";
+// --- END: All Profile types consolidated here ---
 
 // Mapping of role type to Supabase approval table name
 const APPROVAL_TABLE_MAP: Record<ProfileRoleType, string> = {
@@ -87,8 +275,6 @@ export default function AdminApprovalsPage() {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // New function to fetch ALL approvals for ALL roles and statuses
-  // This function now only fetches data and throws errors, it doesn't manage loading/error states directly.
   const fetchAllApprovals = useCallback(async (currentUserId: string | null) => {
     if (!currentUserId) {
       throw new Error("Not authenticated. Cannot fetch data.");
@@ -124,7 +310,7 @@ export default function AdminApprovalsPage() {
           const { data, error } = await supabase
             .from(approvalTableName)
             .select("*")
-            .eq("status", statusTab.key) // Use the statusTab.key directly
+            .eq("status", statusTab.key)
             .order("created_at", { ascending: false });
           fetchedData = (data as AdminApprovalProfile[]) || [];
           dataError = error;
@@ -146,13 +332,12 @@ export default function AdminApprovalsPage() {
       throw new Error(errorMessage);
     }
     return newApprovals;
-  }, []); // Empty dependency array for useCallback, as it only uses constants and the supabase client
+  }, []);
 
-  // Helper function to load data, wrapped in useCallback, managing loading/error states
   const loadData = useCallback(
     async (userId: string | null) => {
       setLoading(true);
-      setError(null); // Clear previous errors
+      setError(null);
       try {
         const fetchedApprovals = await fetchAllApprovals(userId);
         setApprovals(fetchedApprovals);
@@ -164,9 +349,8 @@ export default function AdminApprovalsPage() {
       }
     },
     [fetchAllApprovals]
-  ); // Depends on fetchAllApprovals
+  );
 
-  // Effect to manage user authentication and trigger initial data fetch
   useEffect(() => {
     const checkUserAndLoad = async () => {
       const {
@@ -186,16 +370,14 @@ export default function AdminApprovalsPage() {
 
     checkUserAndLoad();
 
-    // Listener for auth state changes (e.g., user logs in/out)
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (session?.user) {
           setUser(session.user);
-          await loadData(session.user.id); // Re-fetch all on auth change
+          await loadData(session.user.id);
         } else {
           setUser(null);
           setApprovals({
-            // Clear all data on logout
             startup: { approved: [], pending: [], rejected: [], needs_update: [] },
             incubation: { approved: [], pending: [], rejected: [], needs_update: [] },
             investor: { approved: [], pending: [], rejected: [], needs_update: [] },
@@ -207,8 +389,6 @@ export default function AdminApprovalsPage() {
       }
     );
 
-    // Add event listener for window focus to re-fetch data
-    // This ensures data is fresh when the user returns to the tab.
     const handleWindowFocus = async () => {
       console.log("Window focused, re-fetching data...");
       const {
@@ -223,18 +403,18 @@ export default function AdminApprovalsPage() {
 
     return () => {
       authListener?.subscription.unsubscribe();
-      window.removeEventListener("focus", handleWindowFocus); // Clean up event listener
+      window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [loadData]); // Dependencies for useEffect now only include loadData
+  }, [loadData]);
 
   const handleApprovalAction = useCallback(
     async (
       profileId: string,
-      actionType: "approve" | "reject" | "needs_update" | "rate", // Added 'rate'
+      actionType: "approve" | "reject" | "needs_update" | "rate",
       reason?: string,
-      rating?: number // Added rating parameter
+      rating?: number | null
     ) => {
-      setLoading(true); // Set global loading for the action
+      setLoading(true);
       setError(null);
       try {
         const approvalProfile = approvals[activeRoleTab][activeStatusTab].find(
@@ -248,21 +428,20 @@ export default function AdminApprovalsPage() {
         const mainTableName = MAIN_TABLE_MAP[activeRoleTab];
 
         if (actionType === "approve") {
-          // Destructure to exclude 'status', 'created_at', 'updated_at' from direct insertion
-          // as they are handled explicitly or are part of the approval table, not main table.
-          // Ensure 'id' is included for the main table.
           const { status, created_at, updated_at, ...mainTablePayload } =
             approvalProfile;
 
-          // For startup, include the rating in the main table payload
-          const payloadForMainTable = {
+          const payloadForMainTable: any = {
             ...mainTablePayload,
             created_at: new Date(created_at).toISOString(),
             updated_at: new Date().toISOString(),
             approved_at: new Date().toISOString(),
-            status: "approved", // Explicitly set status to approved for the main table
-            ...(activeRoleTab === "startup" && { rating: (approvalProfile as CreatorApproval).rating || null }), // Include rating for startups
+            status: "approved",
           };
+
+          if (activeRoleTab === "startup" || activeRoleTab === "incubation") {
+              payloadForMainTable.rating = rating || (approvalProfile as CreatorApproval | IncubationApproval).rating || null;
+          }
 
           const { error: insertError } = await supabase.from(mainTableName).insert(payloadForMainTable);
           if (insertError) {
@@ -282,8 +461,8 @@ export default function AdminApprovalsPage() {
           }
           toast.success(`${activeRoleTab} profile approved successfully!`);
         } else if (actionType === "rate") {
-            if (activeRoleTab !== "startup") {
-                throw new Error("Rating is only applicable for startup profiles.");
+            if (activeRoleTab !== "startup" && activeRoleTab !== "incubation") {
+                throw new Error("Rating is only applicable for startup and incubation profiles.");
             }
             if (rating === undefined || rating === null) {
                 throw new Error("Rating value is required for 'rate' action.");
@@ -300,13 +479,12 @@ export default function AdminApprovalsPage() {
             }
             toast.success(`${activeRoleTab} rating updated successfully!`);
         } else {
-          // For 'reject' and 'needs_update' actions, ensure the status stored matches the frontend keys
           const statusToStore =
-            actionType === "reject" ? "rejected" : "needs_update"; // Fix: Store "rejected"
+            actionType === "reject" ? "rejected" : "needs_update";
           const { error: updateError } = await supabase
             .from(approvalTableName)
             .update({
-              status: statusToStore, // Use the corrected status key
+              status: statusToStore,
               reason: reason || null,
               updated_at: new Date().toISOString(),
             })
@@ -321,22 +499,21 @@ export default function AdminApprovalsPage() {
           );
         }
 
-        // After any successful action, re-fetch all data to ensure consistency across tabs
         const {
           data: { user: currentUser },
         } = await supabase.auth.getUser();
         if (currentUser) {
-          await loadData(currentUser.id); // Use the new loadData helper to refresh all data
+          await loadData(currentUser.id);
         }
       } catch (err: any) {
         console.error("Admin action error:", err);
         setError(err.message || "An unexpected error occurred during the action.");
         toast.error(err.message || "Action failed. Check console for details.");
       } finally {
-        setLoading(false); // End global loading
+        setLoading(false);
       }
     },
-    [activeRoleTab, activeStatusTab, approvals, loadData] // Ensure loadData is a dependency
+    [activeRoleTab, activeStatusTab, approvals, loadData]
   );
 
   const renderApprovalList = (
@@ -358,10 +535,10 @@ export default function AdminApprovalsPage() {
             approval={approval}
             roleType={roleType}
             key={approval.id}
-            onApprove={(id) => handleApprovalAction(id, "approve")}
+            onApprove={(id, rating) => handleApprovalAction(id, "approve", undefined, rating)}
             onReject={(id, reason) => handleApprovalAction(id, "reject", reason)}
             onNeedUpdate={(id, reason) => handleApprovalAction(id, "needs_update", reason)}
-            onRate={(id, rating) => handleApprovalAction(id, "rate", undefined, rating)} // Pass rating
+            onRate={(id, rating) => handleApprovalAction(id, "rate", undefined, rating)}
             currentStatus={status}
           />
         ))}
@@ -396,7 +573,6 @@ export default function AdminApprovalsPage() {
     <div className="max-w-4xl mx-auto py-8 mt-24 px-4 space-y-8 bg-gray-950 min-h-screen text-white">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-purple-400">Admin Approvals</h1>
-        {/* No "Add New" button here as this is an approval page */}
       </div>
       <Tabs
         value={activeRoleTab}

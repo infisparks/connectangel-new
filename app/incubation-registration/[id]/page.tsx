@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation'; // Import useParams
 import { supabase } from "@/lib/supabaselib";
 import { IncubationMultiStepForm } from "@/app/incubation-registration/IncubationMultiStepForm";
 import { toast } from "sonner";
-import { IncubationProfile } from '@/app/my-startups/page'; // Import type
+import { IncubationProfile } from '@/types'; // Import type
 
 interface IncubationRegistrationPageProps {
   params: { id: string }; // Define params prop for dynamic route

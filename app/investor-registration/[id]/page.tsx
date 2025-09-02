@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation'; // Import useParams
 import { supabase } from "@/lib/supabaselib";
 import { InvestorMultiStepForm } from "@/app/investor-registration/investorMultiStepForm";
 import { toast } from "sonner";
-import { InvestorProfile } from '@/app/my-startups/page'; // Import type
+import { InvestorProfile } from '@/types'; // Import type
 
 interface InvestorRegistrationPageProps {
   params: { id: string }; // Define params prop for dynamic route

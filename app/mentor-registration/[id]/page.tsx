@@ -6,7 +6,7 @@ import { useRouter, useParams } from 'next/navigation'; // Import useParams
 import { supabase } from "@/lib/supabaselib";
 import { MentorMultiStepForm } from "@/app/mentor-registration/MentorMultiStepForm";
 import { toast } from "sonner";
-import { MentorProfile } from '@/app/my-startups/page'; // Import type
+import { MentorProfile } from '@/types'; // Import type
 
 interface MentorRegistrationPageProps {
   params: { id: string }; // Define params prop for dynamic route

@@ -1,14 +1,24 @@
-"use client"
+// components/user-profile-card.tsx
 
-import Image from "next/image"
-import { Play, Star } from "lucide-react" // Import Star icon
-import { useState } from "react"
-import { useRouter } from "next/navigation" // Import useRouter
-import { VideoPlayerModal } from "./video-player-modal" // Assuming this path is correct
-import { Button } from "@/components/ui/button" // Import Button component
+"use client";
+
+import Image from "next/image";
+import { Play, Star, MoreVertical, LayoutDashboard } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { VideoPlayerModal } from "./video-player-modal";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Import all types directly from the page file
-import type {
+import {
   ProfileData,
   ProfileRoleType,
   ApprovedStartup,
@@ -16,76 +26,129 @@ import type {
   IncubationProfile,
   InvestorProfile,
   MentorProfile,
-} from "@/app/my-startups/page" // Updated import path to match new location
-import { ProfileDetailModal } from "@/components/profile-detail-model" // Import the new modal component
+} from "@/types";
+import { ProfileDetailModal } from "@/components/profile-detail-model";
 
 interface UserProfileCardProps {
-  profile: ProfileData
-  roleType: ProfileRoleType
+  profile: ProfileData;
+  roleType: ProfileRoleType;
 }
 
-export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
-  const [showVideoModal, setShowVideoModal] = useState(false)
-  const [isModalOpen, setIsModalOpen] = useState(false) // State for the new detail modal
-  const router = useRouter() // Initialize useRouter
+// Helper function to get flag emojis
+function getFlagEmoji(countryName: string | null) {
+  const countryCodeMap: { [key: string]: string } = {
+    "Indonesia": "🇮🇩",
+    "Bahrain": "🇧🇭",
+    "Serbia": "🇷🇸",
+    "India": "🇮🇳",
+    "United States": "🇺🇸"
+  };
+  return countryName ? countryCodeMap[countryName] || "🌍" : "🌍";
+}
 
-  const statusText = (profile.status || "Pending").replace("_", " ")
-  // Updated statusColor to handle 'needs_update'
+const getImageUrl = (path: string | null | undefined) => {
+  if (!path) return "/placeholder.svg";
+  if (path.startsWith("/storage/")) {
+    const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.endsWith('/')
+      ? process.env.NEXT_PUBLIC_SUPABASE_URL.slice(0, -1)
+      : process.env.NEXT_PUBLIC_SUPABASE_URL;
+    return `${baseUrl}${path}`;
+  }
+  return path;
+};
+
+export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const router = useRouter();
+
+  const statusText = (profile.status || "Pending").replace("_", " ");
   const statusColor =
     profile.status === "approved"
       ? "bg-green-600"
       : profile.status === "pending"
         ? "bg-yellow-600"
-        : profile.status === "needs_update" // Explicitly handle needs_update
+        : profile.status === "needs_update"
           ? "bg-blue-600"
-          : "bg-red-600" // Assuming red for 'rejected' or other states
+          : "bg-red-600";
 
-  // Determine if it's a startup profile for video/thumbnail logic
-  const isStartupProfile = roleType === "startup"
-  const startupProfile = profile as ApprovedStartup | PendingStartup // Cast for specific startup properties
+  const isStartupOrIncubation = roleType === "startup" || roleType === "incubation";
 
-  // Conditional fullThumbnailUrl and fullVideoUrl based on isStartupProfile
-  const fullThumbnailUrl = isStartupProfile ? startupProfile.thumbnail_url || "/placeholder.svg" : "/placeholder.svg"
-  const fullVideoUrl = isStartupProfile ? startupProfile.pitch_video_url || null : null
+  const getThumbnailPath = () => {
+    if (roleType === "startup") {
+      return (profile as ApprovedStartup | PendingStartup).thumbnail_url;
+    }
+    if (roleType === "incubation") {
+      return (profile as IncubationProfile).thumbnail_url;
+    }
+    return null;
+  };
 
-  // Get the rating if it's an approved startup profile
-  const startupRating = isStartupProfile && profile.status === "approved" ? (profile as ApprovedStartup).rating : null
+  const getLogoPath = () => {
+    if (roleType === "startup") {
+      return (profile as ApprovedStartup | PendingStartup).logo_url;
+    }
+    if (roleType === "incubation") {
+      return (profile as IncubationProfile).logo_url;
+    }
+    return null;
+  };
 
-  // Determine if Edit button should be shown
-  const showEditButton = profile.status === "pending" || profile.status === "needs_update"
+  const fullThumbnailUrl = getImageUrl(getThumbnailPath());
+  const fullLogoUrl = getImageUrl(getLogoPath());
+  const fullVideoUrl = roleType === "startup" ? (profile as ApprovedStartup | PendingStartup).pitch_video_url || null : null;
 
-  // Function to handle edit button click
+  const profileRating = (profile as any).rating;
+  const isApproved = profile.status === "approved";
+  const isPendingOrNeedsUpdate = profile.status === "pending" || profile.status === "needs_update";
+  
+  const isIncubationMember = roleType === "startup" && (profile as ApprovedStartup).is_incubation;
+  const incubationName = roleType === "startup" ? (profile as ApprovedStartup).incubation_name : null;
+
   const handleEditClick = () => {
-    let editPath = ""
+    let editPath = "";
     switch (roleType) {
       case "startup":
-        editPath = `/startup-registration/${profile.id}`
-        break
+        editPath = `/startup-registration/${profile.id}`;
+        break;
       case "incubation":
-        editPath = `/incubation-registration/${profile.id}`
-        break
+        editPath = `/incubation-registration/${profile.id}`;
+        break;
       case "investor":
-        editPath = `/investor-registration/${profile.id}`
-        break
+        editPath = `/investor-registration/${profile.id}`;
+        break;
       case "mentor":
-        editPath = `/mentor-registration/${profile.id}`
-        break
+        editPath = `/mentor-registration/${profile.id}`;
+        break;
       default:
-        console.warn("Unknown roleType for edit:", roleType)
-        return
+        console.warn("Unknown roleType for edit:", roleType);
+        return;
     }
-    router.push(editPath)
-  }
+    router.push(editPath);
+  };
+
+  const handleJoinIncubation = () => {
+    router.push(`/request-incubation/${profile.id}`);
+  };
+
+  const handleDashboardClick = () => {
+    if (roleType === 'incubation') {
+      router.push(`/incubation-dashboard/${profile.id}`);
+    }
+  };
+
 
   const renderProfileDetails = () => {
     switch (roleType) {
       case "startup":
-        const startup = profile as ApprovedStartup | PendingStartup
+        const startup = profile as ApprovedStartup | PendingStartup;
+        const locationCountry = startup.location?.split(", ")[1];
         return (
           <>
             <h3 className="text-lg font-semibold text-gray-100">{startup.startup_name}</h3>
-            <p className="text-sm text-gray-300">
-              {startup.startup_type} • {startup.domain}
+            <p className="text-sm text-gray-300 flex items-center">
+              <span className="mr-1">{getFlagEmoji(locationCountry || null)}</span>
+              {locationCountry} • {startup.domain}
             </p>
             <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">{startup.description}</p>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -99,13 +162,12 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
               ))}
             </div>
             <div className="text-gray-500 text-xs mt-1">
-              <span>Location: {startup.location}</span> • <span>Language: {startup.language}</span> •{" "}
               <span>Submitted: {new Date(startup.created_at).toLocaleDateString()}</span>
             </div>
           </>
-        )
+        );
       case "incubation":
-        const incubation = profile as IncubationProfile
+        const incubation = profile as IncubationProfile;
         return (
           <>
             <h3 className="text-lg font-semibold text-gray-100">{incubation.incubator_accelerator_name}</h3>
@@ -133,9 +195,9 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
               </span>
             </div>
           </>
-        )
+        );
       case "investor":
-        const investor = profile as InvestorProfile
+        const investor = profile as InvestorProfile;
         return (
           <>
             <h3 className="text-lg font-semibold text-gray-100">{investor.full_name}</h3>
@@ -155,9 +217,9 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
               • <span>Looking for new opportunities: {investor.looking_for_new_opportunities ? "Yes" : "No"}</span>
             </div>
           </>
-        )
+        );
       case "mentor":
-        const mentor = profile as MentorProfile
+        const mentor = profile as MentorProfile;
         return (
           <>
             <h3 className="text-lg font-semibold text-gray-100">{mentor.full_name}</h3>
@@ -176,34 +238,33 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
               <span>Languages: {mentor.languages_spoken.join(", ")}</span>
             </div>
           </>
-        )
+        );
       default:
-        return <p className="text-gray-400">No details available for this profile type.</p>
+        return <p className="text-gray-400">No details available for this profile type.</p>;
     }
-  }
+  };
+
+  const profileName = (profile as any).startup_name || (profile as any).incubator_accelerator_name || (profile as any).full_name;
 
   return (
-    <div className="relative flex flex-col md:flex-row items-start p-4 gap-4 border rounded-lg shadow-sm bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow">
-      {/* Role and Status Tag */}
-      <div className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold ${statusColor} z-20`}>
-        {roleType.charAt(0).toUpperCase() + roleType.slice(1)}:{" "}
-        {statusText.charAt(0).toUpperCase() + statusText.slice(1)}
-      </div>
-
-      {isStartupProfile && (
-        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950 z-10 mt-12 md:mt-0">
-          {/* Rating Badge - Show on both mobile and desktop */}
-          {startupRating !== null && startupRating !== undefined && (
+    <div className="relative flex flex-col md:flex-row items-start p-4 gap-4 border rounded-lg shadow-sm bg-gray-800 border-gray-700 hover:shadow-lg transition-shadow pt-12 md:pt-4">
+      {isStartupOrIncubation && (
+        <div className="relative w-full md:w-[240px] h-[160px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-950 z-10 mt-4 md:mt-0">
+          {profileRating !== null && profileRating !== undefined && (
             <div className="absolute top-2 left-2 z-10 bg-purple-600 text-white px-3 py-1 rounded-md text-sm font-semibold items-center gap-1 flex">
               <Star className="h-4 w-4 fill-current text-white" />
-              <span className="hidden md:inline">Rating: </span>
-              <span>{startupRating}/100</span>
+              <span>{profileRating}/100</span>
+            </div>
+          )}
+          {isIncubationMember && incubationName && (
+            <div className="absolute bottom-2 left-2 z-10 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold items-center gap-1 flex">
+              In an Incubation
             </div>
           )}
           <div className="w-full h-full cursor-pointer group" onClick={() => fullVideoUrl && setShowVideoModal(true)}>
             <Image
               src={fullThumbnailUrl || "/placeholder.svg"}
-              alt={`${(profile as ApprovedStartup).startup_name || "Profile"} Thumbnail`}
+              alt={`${profileName} Thumbnail`}
               fill
               style={{ objectFit: "cover" }}
               className="transition-transform duration-300 group-hover:scale-105"
@@ -214,13 +275,55 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
               </div>
             )}
           </div>
+          {fullLogoUrl && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full border-4 border-gray-800 bg-gray-800 overflow-hidden shadow-lg z-30">
+              <Image src={fullLogoUrl} alt={`${profileName} Logo`} fill className="object-cover" />
+            </div>
+          )}
         </div>
       )}
 
-      {/* Content Area */}
-      <div className="flex-1 flex flex-col gap-2 pt-8 md:pt-0">
+      <div className={`absolute top-2 right-10 px-3 py-1 rounded-full text-xs font-semibold ${statusColor} z-20`}>
+        {roleType.charAt(0).toUpperCase() + roleType.slice(1)}: {statusText.charAt(0).toUpperCase() + statusText.slice(1)}
+      </div>
+
+      {isApproved && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="absolute top-1 right-1 p-2 rounded-full hover:bg-gray-700 z-30"
+              aria-label="Options"
+            >
+              <MoreVertical className="h-5 w-5 text-gray-400" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-gray-800 border border-gray-700 text-gray-200">
+            {roleType === 'startup' && (
+              <>
+                {isIncubationMember ? (
+                  <DropdownMenuItem className="cursor-default text-gray-400">
+                    Already in an Incubation ({incubationName})
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem onClick={handleJoinIncubation} className="cursor-pointer hover:bg-purple-700">
+                    Join Incubation
+                  </DropdownMenuItem>
+                )}
+              </>
+            )}
+             {roleType === 'incubation' && (
+                <DropdownMenuItem onClick={handleDashboardClick} className="cursor-pointer hover:bg-purple-700 flex items-center gap-2">
+                   <LayoutDashboard className="h-4 w-4" />
+                   Go to Dashboard
+                </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+
+      <div className="flex-1 flex flex-col gap-2 pt-0 md:pt-0">
         {renderProfileDetails()}
-        {/* Display reason if the status is rejected or needs update */}
         {(profile.status === "rejected" || profile.status === "needs_update") &&
           "reason" in profile &&
           profile.reason && (
@@ -228,15 +331,14 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
               <strong>Reason:</strong> {profile.reason}
             </p>
           )}
-        {/* New: Buttons for Professional View and Edit */}
         <div className="flex gap-3 mt-4">
           <Button className="bg-purple-600 text-white hover:bg-purple-700" onClick={() => setIsModalOpen(true)}>
-            View {/* Changed button text */}
+            View
           </Button>
-          {showEditButton && (
+          {isPendingOrNeedsUpdate && (
             <Button
               className="bg-blue-600 text-white hover:bg-blue-700"
-              onClick={handleEditClick} // Call the new handler
+              onClick={handleEditClick}
             >
               Edit
             </Button>
@@ -244,17 +346,15 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         </div>
       </div>
 
-      {/* Video Player Modal */}
       {fullVideoUrl && (
         <VideoPlayerModal
           isOpen={showVideoModal}
           onClose={() => setShowVideoModal(false)}
           videoUrl={fullVideoUrl}
-          title={(profile as ApprovedStartup).startup_name || "Video Playback"}
+          title={profileName || "Video Playback"}
         />
       )}
 
-      {/* Professional Detail Modal (New) */}
       <ProfileDetailModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -262,5 +362,5 @@ export function UserProfileCard({ profile, roleType }: UserProfileCardProps) {
         roleType={roleType}
       />
     </div>
-  )
+  );
 }

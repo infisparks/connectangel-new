@@ -18,17 +18,77 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CountryCodeSelect } from "@/components/country-code-select";
 import { supabase } from "@/lib/supabaselib";
-import { ApprovedStartup, PendingStartup } from "@/app/my-startups/page";
+import Link from "next/link";
 
-// Supabase storage bucket names (define these if not already in a config)
+
+// Supabase storage bucket names
 const SUPABASE_THUMBNAIL_BUCKET = "thumbnails";
+const SUPABASE_LOGO_BUCKET = "logos";
+
+// Define a common base interface for startup data
+interface BaseStartup {
+  id: string;
+  user_id: string;
+  startup_name: string;
+  description: string;
+  location: string | null;
+  language: string | null;
+  domain: string | null;
+  founder_names: string[] | null;
+  created_at: string;
+  updated_at: string;
+  thumbnail_url: string | null;
+  full_name?: string | null;
+  email_address?: string | null;
+  phone_number?: string | null;
+  country?: string | null;
+  city?: string | null;
+  establishment_year?: string | null;
+  employee_count?: string | null;
+  startup_stage?: string | null;
+  revenue_model?: string | null;
+  funding_stage?: string | null;
+  instagram_url?: string | null;
+  linkedin_url?: string | null;
+  website_url?: string | null;
+  support_needed?: string[] | null;
+  major_challenges?: string | null;
+  one_sentence_description?: string | null;
+  problem_being_solved?: string | null;
+  future_plans?: string[] | null;
+  team_members?: { name: string; designation: string; phoneCountryCode: string; localPhoneNumber: string; linkedin_url?: string; profile_url?: string }[] | null;
+  logo_url?: string | null | undefined;
+  startup_type: string | null;
+}
+
+interface ApprovedStartup extends BaseStartup {
+  status: "approved";
+  approved_at: string;
+  rating: number | null;
+}
+
+interface PendingStartup extends BaseStartup {
+  status: "pending" | "needs_update" | "rejected";
+  reason?: string | null;
+}
 
 type StartupMultiStepFormProps = {
   userId: string;
   initialData?: ApprovedStartup | PendingStartup | null;
 };
 
-function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> {
+const categories = [
+  "Startups",
+  "Technology",
+  "Business",
+  "Innovation",
+  "Finance",
+  "Healthcare",
+  "Education",
+  "Environment",
+];
+
+function getCroppedImg(imageSrc: string, croppedAreaPixels: any, options: { isCircular?: boolean; aspectRatio?: number }): Promise<Blob> {
   return new Promise(async (resolve) => {
     const image = new window.Image();
     image.crossOrigin = "anonymous";
@@ -38,8 +98,19 @@ function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> 
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
 
-      canvas.width = 400;
-      canvas.height = 225;
+      const { isCircular = false } = options;
+      const finalWidth = isCircular ? 200 : 400;
+      const finalHeight = isCircular ? 200 : 225;
+
+      canvas.width = finalWidth;
+      canvas.height = finalHeight;
+
+      if (isCircular) {
+        ctx.beginPath();
+        ctx.arc(finalWidth / 2, finalHeight / 2, finalWidth / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip();
+      }
 
       ctx.drawImage(
         image,
@@ -49,8 +120,8 @@ function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> 
         croppedAreaPixels.height,
         0,
         0,
-        400,
-        225
+        finalWidth,
+        finalHeight
       );
 
       canvas.toBlob((blob) => {
@@ -60,7 +131,7 @@ function getCroppedImg(imageSrc: string, croppedAreaPixels: any): Promise<Blob> 
   });
 }
 
-const ThumbnailCropper = ({
+const AspectRatioCropper = ({
   imageUrl,
   onCropComplete,
   onClose,
@@ -80,7 +151,7 @@ const ThumbnailCropper = ({
 
   const handleApply = async () => {
     setLoading(true);
-    const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels);
+    const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels, { aspectRatio: 16 / 9 });
     setLoading(false);
     onCropComplete(croppedBlob);
     onClose();
@@ -122,7 +193,69 @@ const ThumbnailCropper = ({
   );
 };
 
-// Separate component for adding team members in a pop-up
+const CircularCropper = ({
+  imageUrl,
+  onCropComplete,
+  onClose,
+}: {
+  imageUrl: string;
+  onCropComplete: (croppedBlob: Blob) => void;
+  onClose: () => void;
+}) => {
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  const handleApply = async () => {
+    setLoading(true);
+    const croppedBlob = await getCroppedImg(imageUrl, croppedAreaPixels, { isCircular: true, aspectRatio: 1 });
+    setLoading(false);
+    onCropComplete(croppedBlob);
+    onClose();
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[600px] bg-[#2A0050] text-white border-[#4A0080] rounded-xl">
+        <DialogHeader>
+          <DialogTitle className="text-white text-xl font-bold">Crop Logo (Circular)</DialogTitle>
+        </DialogHeader>
+        <div className="relative w-full h-[300px] bg-black rounded-lg overflow-hidden">
+          <Cropper
+            image={imageUrl}
+            crop={crop}
+            zoom={zoom}
+            aspect={1}
+            cropShape="round"
+            onCropChange={setCrop}
+            onZoomChange={setZoom}
+            onCropComplete={handleCropComplete}
+          />
+        </div>
+        <div className="flex flex-col space-y-3 pt-4">
+          <input
+            type="range"
+            min={1}
+            max={3}
+            step={0.1}
+            value={zoom}
+            onChange={(e) => setZoom(Number(e.target.value))}
+            className="w-full accent-purple-500"
+          />
+          <Button onClick={handleApply} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white">
+            {loading ? "Processing..." : "Apply Crop"}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const AddTeamMembersDialog = ({
   isOpen,
   onClose,
@@ -139,16 +272,28 @@ const AddTeamMembersDialog = ({
     designation: "",
     phoneCountryCode: "+91",
     localPhoneNumber: "",
+    linkedinUrl: "",
   });
 
   const handleAddMember = () => {
-    if (newMember.name && newMember.designation && newMember.localPhoneNumber && newMember.phoneCountryCode) {
-      setTeamMembers([...teamMembers, newMember]);
-      setNewMember({ name: "", designation: "", phoneCountryCode: "+91", localPhoneNumber: "" });
-      toast.success("Team member added!");
-    } else {
-      toast.error("Please fill all member details.");
+    if (!newMember.name || !newMember.designation || !newMember.linkedinUrl) {
+      toast.error("Please fill in member name, designation, and LinkedIn URL.");
+      return;
     }
+    setTeamMembers([
+      ...teamMembers,
+      {
+        ...newMember,
+      },
+    ]);
+    setNewMember({
+      name: "",
+      designation: "",
+      phoneCountryCode: "+91",
+      localPhoneNumber: "",
+      linkedinUrl: "",
+    });
+    toast.success("Team member added!");
   };
 
   return (
@@ -172,27 +317,21 @@ const AddTeamMembersDialog = ({
               <SelectValue placeholder="Designation" />
             </SelectTrigger>
             <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-              <SelectItem value="Founder" className="focus:bg-purple-700 focus:text-white">
-                Founder
-              </SelectItem>
-              <SelectItem value="CEO" className="focus:bg-purple-700 focus:text-white">
-                CEO
-              </SelectItem>
-              <SelectItem value="CTO" className="focus:bg-purple-700 focus:text-white">
-                CTO
-              </SelectItem>
-              <SelectItem value="CMO" className="focus:bg-purple-700 focus:text-white">
-                CMO
-              </SelectItem>
-              <SelectItem value="CFO" className="focus:bg-purple-700 focus:text-white">
-                CFO
-              </SelectItem>
-              <SelectItem value="CXO" className="focus:bg-purple-700 focus:text-white">
-                CXO
-              </SelectItem>
+              <SelectItem value="Founder">Founder</SelectItem>
+              <SelectItem value="CEO">CEO</SelectItem>
+              <SelectItem value="CTO">CTO</SelectItem>
+              <SelectItem value="CMO">CMO</SelectItem>
+              <SelectItem value="CFO">CFO</SelectItem>
+              <SelectItem value="CXO">CXO</SelectItem>
             </SelectContent>
           </Select>
-          <div className="flex gap-2">
+          <Input
+            placeholder="LinkedIn Profile URL"
+            value={newMember.linkedinUrl}
+            onChange={(e) => setNewMember({ ...newMember, linkedinUrl: e.target.value })}
+            className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+          />
+          <div className="flex gap-2 items-center">
             <CountryCodeSelect
               value={newMember.phoneCountryCode}
               onValueChange={(value) => setNewMember({ ...newMember, phoneCountryCode: value })}
@@ -215,18 +354,16 @@ const AddTeamMembersDialog = ({
             <p className="text-neutral-400 text-sm">No team members added yet.</p>
           ) : (
             <div className="grid gap-2">
-              {teamMembers.map((member, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 bg-neutral-800 rounded-md border border-neutral-700"
-                >
-                  <span className="text-sm text-neutral-300 font-medium">
-                    {member.name} <span className="text-neutral-500">({member.designation})</span>
-                  </span>
-                  <span className="text-xs text-neutral-400">
-                    {member.phoneCountryCode}
-                    {member.localPhoneNumber}
-                  </span>
+              {teamMembers.map((member: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between p-3 bg-neutral-800 rounded-md border border-neutral-700">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-neutral-300 font-medium">
+                      {member.name} <span className="text-neutral-500">({member.designation})</span>
+                    </span>
+                  </div>
+                  <Link href={member.linkedinUrl || "#"} target="_blank" className="text-purple-400 hover:underline text-xs">
+                    LinkedIn
+                  </Link>
                 </div>
               ))}
             </div>
@@ -243,7 +380,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
   const [formData, setFormData] = useState({
     fullName: "",
     emailAddress: "",
-    phoneCountryCode: "+91", // Default to +91
+    phoneCountryCode: "+91",
     localPhoneNumber: "",
     country: "",
     city: "",
@@ -252,48 +389,69 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     numberOfEmployees: "",
     domain: "",
     language: "",
+    startupType: "",
     startupStage: "",
     revenueModel: "",
     fundingStage: "",
     instagramUrl: "",
     linkedinUrl: "",
     websiteUrl: "",
-    teamMembers: [] as { name: string; designation: string; phoneCountryCode: string; localPhoneNumber: string }[],
+    teamMembers: initialData?.team_members || [] as { name: string; designation: string; phoneCountryCode: string; localPhoneNumber: string; linkedin_url?: string; profile_url?: string }[],
     supportNeeded: [] as string[],
-    otherSupportNeed: "", // Not used in current form but good to keep
     majorChallenges: "",
-    oneSentenceDescription: "", // maps to description in DB
+    oneSentenceDescription: "",
     problemBeingSolved: "",
-    futurePlans: "",
+    futurePlans: {
+      goal1: "",
+      goal2: "",
+      goal3: "",
+    },
     consentAgreed: false,
     selectedCustomThumbnailFile: null as File | null,
-    originalThumbnailUrl: initialData?.thumbnail_url || null as string | null,
+    originalThumbnailPath: initialData?.thumbnail_url || null as string | null,
+    selectedCustomLogoFile: null as File | null,
+    originalLogoPath: initialData?.logo_url || null as string | null,
   });
   const [previewThumbnailUrl, setPreviewThumbnailUrl] = useState<string | null>(
-    initialData?.thumbnail_url || "/img/login.png"
+    initialData?.thumbnail_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.thumbnail_url}` : "/img/login.png"
+  );
+  const [previewLogoUrl, setPreviewLogoUrl] = useState<string | null>(
+    initialData?.logo_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.logo_url}` : "/img/login.png"
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [showThumbnailCropModal, setShowThumbnailCropModal] = useState(false);
+  const [showLogoCropModal, setShowLogoCropModal] = useState(false);
   const [cropImageUrl, setCropImageUrl] = useState<string | null>(null);
+  const [cropLogoUrl, setCropLogoUrl] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
 
-  // --- useEffect to pre-fill form data when initialData prop is received ---
+  // Load data from localStorage or initialData on first render
   useEffect(() => {
-    if (initialData) {
+    const savedData = localStorage.getItem('startupFormData');
+    if (savedData) {
+      const parsedData = JSON.parse(savedData);
+      setFormData(prev => ({
+        ...prev,
+        ...parsedData,
+        teamMembers: parsedData.teamMembers || []
+      }));
+      setStep(parsedData.step || 1);
+    } else if (initialData) {
       setFormData({
         fullName: initialData.full_name || "",
         emailAddress: initialData.email_address || "",
-        phoneCountryCode: initialData.phone_number?.match(/^\+(\d+)/)?.[0] || "+91",
+        phoneCountryCode: initialData.phone_number?.match(/^\+\d+/)?.[0] || "+91",
         localPhoneNumber: initialData.phone_number?.replace(/^\+\d+/, '') || "",
-        country: initialData.location?.split(", ")[1] || "",
-        city: initialData.location?.split(", ")[0] || "",
+        country: initialData.country || "", // Corrected mapping
+        city: initialData.city || "", // Corrected mapping
         startupName: initialData.startup_name || "",
         yearOfEstablishment: initialData.establishment_year || "",
         numberOfEmployees: initialData.employee_count || "",
         domain: initialData.domain || "",
         language: initialData.language || "",
+        startupType: initialData.startup_type || "",
         startupStage: initialData.startup_stage || "",
         revenueModel: initialData.revenue_model || "",
         fundingStage: initialData.funding_stage || "",
@@ -302,23 +460,42 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         websiteUrl: initialData.website_url || "",
         teamMembers: initialData.team_members || [],
         supportNeeded: initialData.support_needed || [],
-        otherSupportNeed: "",
         majorChallenges: initialData.major_challenges || "",
-        oneSentenceDescription: initialData.description || "",
+        oneSentenceDescription: initialData.one_sentence_description || initialData.description || "",
         problemBeingSolved: initialData.problem_being_solved || "",
-        futurePlans: initialData.future_plans || "",
+        futurePlans: {
+          goal1: Array.isArray(initialData.future_plans) ? initialData.future_plans[0] || "" : "",
+          goal2: Array.isArray(initialData.future_plans) ? initialData.future_plans[1] || "" : "",
+          goal3: Array.isArray(initialData.future_plans) ? initialData.future_plans[2] || "" : "",
+        },
         consentAgreed: false,
         selectedCustomThumbnailFile: null,
-        originalThumbnailUrl: initialData.thumbnail_url || null,
+        originalThumbnailPath: initialData.thumbnail_url || null,
+        selectedCustomLogoFile: null,
+        originalLogoPath: initialData.logo_url || null,
       });
-      setPreviewThumbnailUrl(initialData.thumbnail_url || "/img/login.png");
-      setStep(1);
+      setPreviewThumbnailUrl(initialData.thumbnail_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.thumbnail_url}` : "/img/login.png");
+      setPreviewLogoUrl(initialData.logo_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.logo_url}` : "/img/login.png");
     }
-  }, [initialData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // Save data to localStorage whenever formData or step changes
+  useEffect(() => {
+    localStorage.setItem('startupFormData', JSON.stringify({ ...formData, step }));
+  }, [formData, step]);
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    if (name.startsWith("futurePlans.")) {
+      const goalKey = name.split(".")[1] as "goal1" | "goal2" | "goal3";
+      setFormData((prev) => ({
+        ...prev,
+        futurePlans: { ...prev.futurePlans, [goalKey]: value },
+      }));
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSelectChange = (name: string, value: string) => {
@@ -357,53 +534,62 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     }
   };
 
+  const handleCustomLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setCropLogoUrl(url);
+      setShowLogoCropModal(true);
+    }
+  };
+
   const handleCroppedThumbnail = (blob: Blob) => {
     const croppedFile = new File([blob], "cropped_thumbnail.png", { type: "image/png", lastModified: Date.now() });
     setFormData((prev) => ({ ...prev, selectedCustomThumbnailFile: croppedFile }));
     setPreviewThumbnailUrl(URL.createObjectURL(croppedFile));
   };
 
+  const handleCroppedLogo = (blob: Blob) => {
+    const croppedFile = new File([blob], "cropped_logo.png", { type: "image/png", lastModified: Date.now() });
+    setFormData((prev) => ({ ...prev, selectedCustomLogoFile: croppedFile }));
+    setPreviewLogoUrl(URL.createObjectURL(croppedFile));
+  };
+
   const handleNext = async () => {
     let isValid = true;
     let errorMessage = "";
 
-    if (step === 1) { // Now this is "Personal & Contact Details"
-      if (
-        !formData.fullName ||
-        !formData.emailAddress ||
-        !formData.localPhoneNumber ||
-        !formData.phoneCountryCode ||
-        !formData.country ||
-        !formData.city
-      ) {
-        isValid = false;
-        errorMessage = "Please fill in all personal and contact details.";
-      }
-    } else if (step === 2) { // Now this is "Startup Overview"
-      if (
-        !formData.startupName ||
-        !formData.startupStage ||
-        !formData.domain ||
-        !formData.language
-      ) {
-        isValid = false;
-        errorMessage = "Please fill in all startup overview fields.";
-      }
-    } else if (step === 3) { // Now this is "Needs & Challenges"
-      if (formData.supportNeeded.length === 0 || !formData.majorChallenges) {
-        isValid = false;
-        errorMessage = "Please select at least one support type and describe your challenges.";
-      }
-    } else if (step === 4) { // Now this is "Open-Ended Questions"
-      if (!formData.oneSentenceDescription || !formData.problemBeingSolved) {
-        isValid = false;
-        errorMessage = "Please fill in both open-ended questions.";
-      }
-    } else if (step === 5) { // Now this is "Future Plans"
-      if (!formData.futurePlans) {
-        isValid = false;
-        errorMessage = "Please describe your future plans and vision.";
-      }
+    switch (step) {
+      case 1:
+        if (!formData.fullName || !formData.emailAddress || !formData.localPhoneNumber || !formData.country || !formData.city) {
+          isValid = false;
+          errorMessage = "Please fill in all personal and contact details.";
+        }
+        break;
+      case 2:
+        if (!formData.startupName || !formData.startupType || !formData.startupStage || !formData.domain || !formData.language || formData.teamMembers.length === 0) {
+          isValid = false;
+          errorMessage = "Please fill in all startup overview fields and add at least one team member.";
+        }
+        break;
+      case 3:
+        if (formData.supportNeeded.length === 0 || !formData.majorChallenges) {
+          isValid = false;
+          errorMessage = "Please select at least one support type and describe your challenges.";
+        }
+        break;
+      case 4:
+        if (!formData.oneSentenceDescription || !formData.problemBeingSolved) {
+          isValid = false;
+          errorMessage = "Please fill in both open-ended questions.";
+        }
+        break;
+      case 5:
+        if (!formData.futurePlans.goal1 || !formData.futurePlans.goal2 || !formData.futurePlans.goal3) {
+          isValid = false;
+          errorMessage = "Please provide all three goals for your future plans.";
+        }
+        break;
     }
 
     if (isValid) {
@@ -425,13 +611,13 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     setIsSubmitting(true);
     setSubmissionError(null);
 
-    let finalThumbnailUrl = formData.originalThumbnailUrl; // Start with existing URL
+    let finalThumbnailPath = formData.originalThumbnailPath;
+    let finalLogoPath = formData.originalLogoPath;
 
     try {
-      // 1. Upload new Custom Thumbnail if selectedCustomThumbnailFile exists
       if (formData.selectedCustomThumbnailFile) {
-        const thumbnailFileName = `${userId}/${Date.now()}_${formData.selectedCustomThumbnailFile.name}`;
-        const { data: thumbnailUploadData, error: thumbnailUploadError } = await supabase.storage
+        const thumbnailFileName = `${userId}/${Date.now()}_thumbnail.png`;
+        const { error: thumbnailUploadError } = await supabase.storage
           .from(SUPABASE_THUMBNAIL_BUCKET)
           .upload(thumbnailFileName, formData.selectedCustomThumbnailFile, {
             cacheControl: '3600',
@@ -439,21 +625,37 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
           });
 
         if (thumbnailUploadError) throw thumbnailUploadError;
-        finalThumbnailUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${SUPABASE_THUMBNAIL_BUCKET}/${thumbnailFileName}`;
-      } else if (!finalThumbnailUrl) {
-        finalThumbnailUrl = "/img/login.png";
+        finalThumbnailPath = `/storage/v1/object/public/${SUPABASE_THUMBNAIL_BUCKET}/${thumbnailFileName}`;
       }
 
-      // Prepare data for Supabase
+      if (formData.selectedCustomLogoFile) {
+        const logoFileName = `${userId}/${Date.now()}_logo.png`;
+        const { error: logoUploadError } = await supabase.storage
+          .from(SUPABASE_LOGO_BUCKET)
+          .upload(logoFileName, formData.selectedCustomLogoFile, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+
+        if (logoUploadError) throw logoUploadError;
+        finalLogoPath = `/storage/v1/object/public/${SUPABASE_LOGO_BUCKET}/${logoFileName}`;
+      }
+
+      const futurePlansArray = Object.values(formData.futurePlans).filter(plan => plan);
+
       const submissionPayload = {
         user_id: userId,
         startup_name: formData.startupName,
         description: formData.oneSentenceDescription,
         location: `${formData.city}, ${formData.country}`,
+        city: formData.city, // Storing city separately
+        country: formData.country, // Storing country separately
         language: formData.language,
         domain: formData.domain,
-        founder_names: formData.teamMembers.map((member) => `${member.name} (${member.designation})`),
-        thumbnail_url: finalThumbnailUrl,
+        startup_type: formData.startupType,
+        founder_names: formData.teamMembers.map((member: any) => `${member.name} (${member.designation})`),
+        thumbnail_url: finalThumbnailPath,
+        logo_url: finalLogoPath,
         status: "pending",
         revenue_model: formData.revenueModel,
         funding_stage: formData.fundingStage,
@@ -465,18 +667,18 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         support_needed: formData.supportNeeded,
         major_challenges: formData.majorChallenges,
         problem_being_solved: formData.problemBeingSolved,
-        future_plans: formData.futurePlans,
+        future_plans: futurePlansArray,
         full_name: formData.fullName,
         email_address: formData.emailAddress,
         phone_number: `${formData.phoneCountryCode}${formData.localPhoneNumber}`,
         startup_stage: formData.startupStage,
         team_members: formData.teamMembers,
+        one_sentence_description: formData.oneSentenceDescription,
       };
 
       let dbOperationError = null;
 
       if (initialData?.id) {
-        // --- UPDATE Existing Profile ---
         const { error: updateError } = await supabase
           .from("creator_approval")
           .update({
@@ -486,7 +688,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
           .eq("id", initialData.id);
         dbOperationError = updateError;
       } else {
-        // --- INSERT New Profile ---
         const { error: insertError } = await supabase
           .from("creator_approval")
           .insert({
@@ -501,6 +702,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
 
       setShowSuccessDialog(true);
       toast.success("Form submitted successfully! Waiting for approval.");
+      localStorage.removeItem('startupFormData');
       setTimeout(() => router.push("/my-startups"), 3000);
     } catch (err: any) {
       console.error("Submission error:", err);
@@ -560,7 +762,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 max-h-60 overflow-y-auto rounded-lg">
                   {countryCodes.map((cc) => (
-                    <SelectItem key={cc.name} value={cc.name} className="focus:bg-purple-700 focus:text-white">
+                    <SelectItem key={cc.name} value={cc.name}>
                       {cc.name}
                     </SelectItem>
                   ))}
@@ -595,6 +797,20 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
                 required
               />
+              <Select
+                name="startupType"
+                value={formData.startupType}
+                onValueChange={(val) => handleSelectChange("startupType", val)}
+              >
+                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
+                  <SelectValue placeholder="Startup Category" />
+                </SelectTrigger>
+                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Input
                 name="yearOfEstablishment"
                 placeholder="Year of Establishment"
@@ -612,18 +828,10 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="No. of Employees" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="1-10" className="focus:bg-purple-700 focus:text-white">
-                    1-10
-                  </SelectItem>
-                  <SelectItem value="11-50" className="focus:bg-purple-700 focus:text-white">
-                    11-50
-                  </SelectItem>
-                  <SelectItem value="51-200" className="focus:bg-purple-700 focus:text-white">
-                    51-200
-                  </SelectItem>
-                  <SelectItem value="200+" className="focus:bg-purple-700 focus:text-white">
-                    200+
-                  </SelectItem>
+                  <SelectItem value="1-10">1-10</SelectItem>
+                  <SelectItem value="11-50">11-50</SelectItem>
+                  <SelectItem value="51-200">51-200</SelectItem>
+                  <SelectItem value="200+">200+</SelectItem>
                 </SelectContent>
               </Select>
               <Select name="domain" value={formData.domain} onValueChange={(val) => handleSelectChange("domain", val)}>
@@ -631,27 +839,13 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Domain" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="AI" className="focus:bg-purple-700 focus:text-white">
-                    AI
-                  </SelectItem>
-                  <SelectItem value="Healthcare" className="focus:bg-purple-700 focus:text-white">
-                    Healthcare
-                  </SelectItem>
-                  <SelectItem value="Education" className="focus:bg-purple-700 focus:text-white">
-                    Education
-                  </SelectItem>
-                  <SelectItem value="Fintech" className="focus:bg-purple-700 focus:text-white">
-                    Fintech
-                  </SelectItem>
-                  <SelectItem value="Software Development" className="focus:bg-purple-700 focus:text-white">
-                    Software Development
-                  </SelectItem>
-                  <SelectItem value="Marketing" className="focus:bg-purple-700 focus:text-white">
-                    Marketing
-                  </SelectItem>
-                  <SelectItem value="Consulting" className="focus:bg-purple-700 focus:text-white">
-                    Consulting
-                  </SelectItem>
+                  <SelectItem value="AI">AI</SelectItem>
+                  <SelectItem value="Healthcare">Healthcare</SelectItem>
+                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="Fintech">Fintech</SelectItem>
+                  <SelectItem value="Software Development">Software Development</SelectItem>
+                  <SelectItem value="Marketing">Marketing</SelectItem>
+                  <SelectItem value="Consulting">Consulting</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -663,21 +857,11 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Language" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="English" className="focus:bg-purple-700 focus:text-white">
-                    English
-                  </SelectItem>
-                  <SelectItem value="Hindi" className="focus:bg-purple-700 focus:text-white">
-                    Hindi
-                  </SelectItem>
-                  <SelectItem value="Spanish" className="focus:bg-purple-700 focus:text-white">
-                    Spanish
-                  </SelectItem>
-                  <SelectItem value="French" className="focus:bg-purple-700 focus:text-white">
-                    French
-                  </SelectItem>
-                  <SelectItem value="German" className="focus:bg-purple-700 focus:text-white">
-                    German
-                  </SelectItem>
+                  <SelectItem value="English">English</SelectItem>
+                  <SelectItem value="Hindi">Hindi</SelectItem>
+                  <SelectItem value="Spanish">Spanish</SelectItem>
+                  <SelectItem value="French">French</SelectItem>
+                  <SelectItem value="German">German</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -689,21 +873,11 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Startup Stage" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="Idea" className="focus:bg-purple-700 focus:text-white">
-                    Idea
-                  </SelectItem>
-                  <SelectItem value="Prototype" className="focus:bg-purple-700 focus:text-white">
-                    Prototype
-                  </SelectItem>
-                  <SelectItem value="Seed" className="focus:bg-purple-700 focus:text-white">
-                    Seed
-                  </SelectItem>
-                  <SelectItem value="Growth" className="focus:bg-purple-700 focus:text-white">
-                    Growth
-                  </SelectItem>
-                  <SelectItem value="Scale-up" className="focus:bg-purple-700 focus:text-white">
-                    Scale-up
-                  </SelectItem>
+                  <SelectItem value="Idea">Idea</SelectItem>
+                  <SelectItem value="Prototype">Prototype</SelectItem>
+                  <SelectItem value="Seed">Seed</SelectItem>
+                  <SelectItem value="Growth">Growth</SelectItem>
+                  <SelectItem value="Scale-up">Scale-up</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -715,24 +889,12 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Revenue Model" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="B2B" className="focus:bg-purple-700 focus:text-white">
-                    B2B
-                  </SelectItem>
-                  <SelectItem value="B2C" className="focus:bg-purple-700 focus:text-white">
-                    B2C
-                  </SelectItem>
-                  <SelectItem value="B2B2C" className="focus:bg-purple-700 focus:text-white">
-                    B2B2C
-                  </SelectItem>
-                  <SelectItem value="Subscription" className="focus:bg-purple-700 focus:text-white">
-                    Subscription
-                  </SelectItem>
-                  <SelectItem value="Freemium" className="focus:bg-purple-700 focus:text-white">
-                    Freemium
-                  </SelectItem>
-                  <SelectItem value="Ad-based" className="focus:bg-purple-700 focus:text-white">
-                    Ad-based
-                  </SelectItem>
+                  <SelectItem value="B2B">B2B</SelectItem>
+                  <SelectItem value="B2C">B2C</SelectItem>
+                  <SelectItem value="B2B2C">B2B2C</SelectItem>
+                  <SelectItem value="Subscription">Subscription</SelectItem>
+                  <SelectItem value="Freemium">Freemium</SelectItem>
+                  <SelectItem value="Ad-based">Ad-based</SelectItem>
                 </SelectContent>
               </Select>
               <Select
@@ -744,21 +906,11 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Funding Stage" />
                 </SelectTrigger>
                 <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="Pre-Seed" className="focus:bg-purple-700 focus:text-white">
-                    Pre-Seed
-                  </SelectItem>
-                  <SelectItem value="Seed" className="focus:bg-purple-700 focus:text-white">
-                    Seed
-                  </SelectItem>
-                  <SelectItem value="Series A" className="focus:bg-purple-700 focus:text-white">
-                    Series A
-                  </SelectItem>
-                  <SelectItem value="Series B" className="focus:bg-purple-700 focus:text-white">
-                    Series B
-                  </SelectItem>
-                  <SelectItem value="Series C+" className="focus:bg-purple-700 focus:text-white">
-                    Series C+
-                  </SelectItem>
+                  <SelectItem value="Pre-Seed">Pre-Seed</SelectItem>
+                  <SelectItem value="Seed">Seed</SelectItem>
+                  <SelectItem value="Series A">Series A</SelectItem>
+                  <SelectItem value="Series B">Series B</SelectItem>
+                  <SelectItem value="Series C+">Series C+</SelectItem>
                 </SelectContent>
               </Select>
               <Input
@@ -922,14 +1074,32 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
             <p className="text-neutral-300">
               Share your vision for the next 1-3 years. What are your key milestones and long-term goals?
             </p>
-            <Textarea
-              name="futurePlans"
-              placeholder="Describe your future plans and goals, including market expansion, product development, and team growth."
-              value={formData.futurePlans}
-              onChange={handleInputChange}
-              className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[120px] px-4 py-3 focus-visible:ring-purple-500"
-              required
-            />
+            <div className="space-y-4">
+              <Textarea
+                name="futurePlans.goal1"
+                placeholder="What's your first goal?"
+                value={formData.futurePlans.goal1}
+                onChange={handleInputChange}
+                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[80px] px-4 py-3 focus-visible:ring-purple-500"
+                required
+              />
+              <Textarea
+                name="futurePlans.goal2"
+                placeholder="What's your second goal?"
+                value={formData.futurePlans.goal2}
+                onChange={handleInputChange}
+                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[80px] px-4 py-3 focus-visible:ring-purple-500"
+                required
+              />
+              <Textarea
+                name="futurePlans.goal3"
+                placeholder="What's your third and last goal?"
+                value={formData.futurePlans.goal3}
+                onChange={handleInputChange}
+                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[80px] px-4 py-3 focus-visible:ring-purple-500"
+                required
+              />
+            </div>
             <div className="flex justify-between items-center pt-4">
               <Button
                 type="button"
@@ -949,8 +1119,11 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         return (
           <div className="space-y-6">
             <h3 className="text-[30px] font-semibold text-white">Review & Submit</h3>
-            <p className="text-neutral-300">Upload a thumbnail for your profile.</p>
+            <p className="text-neutral-300">Upload a thumbnail and logo for your profile.</p>
+            
+            {/* Thumbnail Upload */}
             <div className="space-y-4">
+              <p className="text-neutral-300 font-semibold">1. Upload Thumbnail (16:9)</p>
               <div className="flex items-center gap-4">
                 <input
                   type="file"
@@ -961,21 +1134,20 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 />
                 <Button
                   type="button"
-                  variant="outline"
                   onClick={() => document.getElementById("custom-thumbnail-upload")?.click()}
                   className="flex items-center justify-center gap-2 bg-neutral-800 border-neutral-700 text-neutral-50 hover:bg-neutral-700"
                 >
                   <ImageIcon className="h-5 w-5" />
-                  {formData.selectedCustomThumbnailFile ? "Change Thumbnail" : formData.originalThumbnailUrl ? "Change Existing Thumbnail" : "Upload Custom Thumbnail"}
+                  {formData.selectedCustomThumbnailFile ? "Change Thumbnail" : formData.originalThumbnailPath ? "Change Existing" : "Upload Thumbnail"}
                 </Button>
                 {formData.selectedCustomThumbnailFile && (
                   <span className="text-sm text-neutral-400 truncate max-w-[150px]">
                     {formData.selectedCustomThumbnailFile.name}
                   </span>
                 )}
-                {!formData.selectedCustomThumbnailFile && formData.originalThumbnailUrl && (
+                {!formData.selectedCustomThumbnailFile && formData.originalThumbnailPath && (
                   <span className="text-sm text-neutral-400 truncate max-w-[150px]">
-                    Existing Thumbnail: <a href={formData.originalThumbnailUrl} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
+                    Existing: <a href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${formData.originalThumbnailPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
                   </span>
                 )}
               </div>
@@ -983,6 +1155,43 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 * Thumbnail must be 16:9 ratio. A crop tool will appear if needed.
               </p>
             </div>
+
+            {/* Logo Upload */}
+            <div className="space-y-4 mt-6">
+              <p className="text-neutral-300 font-semibold">2. Upload Logo (Circular)</p>
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  id="custom-logo-upload"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleCustomLogoFileChange}
+                />
+                <Button
+                  type="button"
+                  onClick={() => document.getElementById("custom-logo-upload")?.click()}
+                  className="flex items-center justify-center gap-2 bg-neutral-800 border-neutral-700 text-neutral-50 hover:bg-neutral-700"
+                >
+                  <ImageIcon className="h-5 w-5" />
+                  {formData.selectedCustomLogoFile ? "Change Logo" : formData.originalLogoPath ? "Change Existing" : "Upload Logo"}
+                </Button>
+                {formData.selectedCustomLogoFile && (
+                  <span className="text-sm text-neutral-400 truncate max-w-[150px]">
+                    {formData.selectedCustomLogoFile.name}
+                  </span>
+                )}
+                 {!formData.selectedCustomLogoFile && formData.originalLogoPath && (
+                  <span className="text-sm text-neutral-400 truncate max-w-[150px]">
+                    Existing: <a href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${formData.originalLogoPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-neutral-400">
+                * Logo will be cropped to a circle automatically.
+              </p>
+            </div>
+
+
             <div className="flex items-center space-x-2 pt-4">
               <Checkbox
                 id="consent"
@@ -1030,7 +1239,16 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
           className="opacity-70"
         />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-white text-[34px] font-bold drop-shadow-lg"></span>
+          {previewLogoUrl && (
+            <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-white">
+               <Image
+                src={previewLogoUrl}
+                alt="Startup Logo"
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
         </div>
       </div>
       <div className="space-y-4">
@@ -1063,7 +1281,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
           <div className="mt-4">
             <h4 className="text-white font-semibold mb-2">Team</h4>
             <div className="flex flex-wrap gap-2">
-              {formData.teamMembers.map((member, idx) => (
+              {formData.teamMembers.map((member: any, idx: number) => (
                 <span key={idx} className="bg-purple-700 text-white text-xs px-3 py-1 rounded-full">
                   {member.name} ({member.designation})
                 </span>
@@ -1075,7 +1293,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     </div>
   );
 
-  // Updated steps to match the new flow
   const steps = [
     "Personal Details",
     "Startup Overview",
@@ -1088,19 +1305,15 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
   return (
     <div className="min-h-screen bg-[#0E0617] py-8">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <header className="flex items-center mt-32 justify-between mb-10">
-        </header>
-
+        <header className="flex items-center mt-32 justify-between mb-10"></header>
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
           <div className="p-6 lg:p-8 space-y-8 bg-[#0E0616] rounded-xl shadow-lg border border-[rgba(255,255,255,0.6)]">
-            {/* Professional Progress Bar */}
             <div className="relative flex justify-between items-center w-full mb-8 text-xs">
               <div
                 className="absolute left-0 h-1 bg-purple-600 rounded-full transition-all duration-500 ease-in-out"
                 style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
               />
               <div className="absolute left-0 right-0 h-1 bg-neutral-700 rounded-full" />
-
               {steps.map((label, index) => (
                 <div
                   key={index}
@@ -1139,7 +1352,6 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 </div>
               ))}
             </div>
-
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -1150,15 +1362,12 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
               {renderStep()}
             </form>
           </div>
-
-          {/* Desktop Preview */}
           <div className="hidden lg:block">
             <h3 className="text-2xl font-bold text-white mb-4">Live Preview</h3>
             {renderPreviewContent()}
           </div>
         </div>
       </div>
-
       {showAddMemberDialog && (
         <AddTeamMembersDialog
           isOpen={showAddMemberDialog}
@@ -1168,10 +1377,17 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         />
       )}
       {showThumbnailCropModal && cropImageUrl && (
-        <ThumbnailCropper
+        <AspectRatioCropper
           imageUrl={cropImageUrl}
           onCropComplete={handleCroppedThumbnail}
           onClose={() => setShowThumbnailCropModal(false)}
+        />
+      )}
+      {showLogoCropModal && cropLogoUrl && (
+        <CircularCropper
+          imageUrl={cropLogoUrl}
+          onCropComplete={handleCroppedLogo}
+          onClose={() => setShowLogoCropModal(false)}
         />
       )}
       <Dialog open={showSuccessDialog}>

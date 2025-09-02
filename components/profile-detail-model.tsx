@@ -1,32 +1,35 @@
-// components/profile-detail-modal.tsx
-import React from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Separator } from "@/components/ui/separator"
+"use client";
 
-import type {
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import {
+  ProfileData,
+  ProfileRoleType,
+  AdminApprovalProfile,
   ApprovedStartup,
   PendingStartup,
   IncubationProfile,
   InvestorProfile,
   MentorProfile,
-  ProfileData,
-  ProfileRoleType,
-} from "@/app/my-startups/page" // Updated import path to match new location
+} from "@/types";
 
 interface ProfileDetailModalProps {
-  isOpen: boolean
-  onClose: () => void
-  profile: ProfileData
-  roleType: ProfileRoleType
+  isOpen: boolean;
+  onClose: () => void;
+  // FIX: Change profile type to AdminApprovalProfile to match the data passed from the parent component
+  profile: ProfileData; 
+  roleType: ProfileRoleType;
 }
 
 const renderDetailRow = (
   label: string,
-  value: string | number | string[] | undefined | boolean | React.ReactElement,
+  // FIX: Added `| null` to the value type to handle nullable properties gracefully
+  value: string | number | string[] | undefined | boolean | React.ReactElement | null, 
 ) => {
   if (value === undefined || value === null || (Array.isArray(value) && value.length === 0)) {
-    return null // Don't render row if value is empty or undefined
+    return null; 
   }
   return (
     <div className="grid grid-cols-2 gap-4 py-2">
@@ -43,12 +46,13 @@ const renderDetailRow = (
               : value}
       </div>
     </div>
-  )
-}
+  );
+};
 
 export function ProfileDetailModal({ isOpen, onClose, profile, roleType }: ProfileDetailModalProps) {
-  const renderStartupDetails = (startup: ApprovedStartup | PendingStartup) => (
+  const renderStartupDetails = (startup: PendingStartup) => (
     <>
+      {renderDetailRow("Startup Name", startup.startup_name)}
       {renderDetailRow("Startup Type", startup.startup_type)}
       {renderDetailRow("Description", startup.description)}
       {renderDetailRow("Location", startup.location)}
@@ -82,8 +86,8 @@ export function ProfileDetailModal({ isOpen, onClose, profile, roleType }: Profi
         ),
       )}
       {renderDetailRow("Status", startup.status)}
-      {"approved_at" in startup &&
-        startup.approved_at &&
+      {/* FIX: Add a type guard to ensure approved_at exists before trying to access it */}
+      {"approved_at" in startup && typeof startup.approved_at === "string" && 
         renderDetailRow("Approved At", new Date(startup.approved_at).toLocaleDateString())}
       {renderDetailRow("Revenue Model", startup.revenue_model)}
       {renderDetailRow("Funding Stage", startup.funding_stage)}
@@ -149,7 +153,7 @@ export function ProfileDetailModal({ isOpen, onClose, profile, roleType }: Profi
         </div>
       )}
     </>
-  )
+  );
 
   const renderIncubationDetails = (incubation: IncubationProfile) => (
     <>
@@ -233,7 +237,7 @@ export function ProfileDetailModal({ isOpen, onClose, profile, roleType }: Profi
       {renderDetailRow("Third Goal", incubation.third_goal)}
       {renderDetailRow("Status", incubation.status)}
     </>
-  )
+  );
 
   const renderInvestorDetails = (investor: InvestorProfile) => (
     <>
@@ -276,7 +280,7 @@ export function ProfileDetailModal({ isOpen, onClose, profile, roleType }: Profi
       )}
       {renderDetailRow("Status", investor.status)}
     </>
-  )
+  );
 
   const renderMentorDetails = (mentor: MentorProfile) => (
     <>
@@ -330,34 +334,36 @@ export function ProfileDetailModal({ isOpen, onClose, profile, roleType }: Profi
       {renderDetailRow("Other Contribution Type", mentor.other_contribution_type)}
       {renderDetailRow("Status", mentor.status)}
     </>
-  )
+  );
 
   const getProfileTitle = () => {
     switch (roleType) {
       case "startup":
-        return (profile as ApprovedStartup).startup_name
+        return (profile as PendingStartup).startup_name;
       case "incubation":
-        return (profile as IncubationProfile).incubator_accelerator_name
+        return (profile as IncubationProfile).incubator_accelerator_name;
       case "investor":
-        return `Investor: ${(profile as InvestorProfile).full_name}`
+        return `Investor: ${(profile as InvestorProfile).full_name}`;
       case "mentor":
-        return `Mentor: ${(profile as MentorProfile).full_name}`
+        return `Mentor: ${(profile as MentorProfile).full_name}`;
       default:
-        return "Profile Details"
+        return "Profile Details";
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl h-[80vh] flex flex-col p-6 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700">
         <DialogHeader className="pb-4">
           <DialogTitle className="text-3xl font-bold text-purple-400">{getProfileTitle()}</DialogTitle>
-          <DialogDescription className="text-gray-400">Full details of this {roleType} profile.</DialogDescription>
+          <DialogDescription className="text-gray-400">
+            Full details of this {roleType} profile.
+          </DialogDescription>
         </DialogHeader>
         <Separator className="bg-gray-700" />
         <ScrollArea className="flex-grow pr-4 -mr-4">
           <div className="py-4 space-y-4">
-            {roleType === "startup" && renderStartupDetails(profile as ApprovedStartup | PendingStartup)}
+            {roleType === "startup" && renderStartupDetails(profile as PendingStartup)}
             {roleType === "incubation" && renderIncubationDetails(profile as IncubationProfile)}
             {roleType === "investor" && renderInvestorDetails(profile as InvestorProfile)}
             {roleType === "mentor" && renderMentorDetails(profile as MentorProfile)}
@@ -365,5 +371,5 @@ export function ProfileDetailModal({ isOpen, onClose, profile, roleType }: Profi
         </ScrollArea>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

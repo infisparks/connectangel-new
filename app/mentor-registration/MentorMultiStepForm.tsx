@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CountryCodeSelect } from "@/components/country-code-select";
 import { supabase } from "@/lib/supabaselib";
-import { MentorProfile } from "@/app/my-startups/page"; // Ensure MentorProfile is imported
+import { MentorProfile } from '@/types'; // Import type
 
 type MentorMultiStepFormProps = {
   userId: string;
