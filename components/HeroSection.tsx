@@ -609,43 +609,6 @@ export default function HeroSection() {
           </div>
         </div>
       </div>
-
-      {/* Enhanced Mobile Graph Section - Shows at bottom on mobile */}
-      <motion.div
-        className="lg:hidden relative z-10 px-4 pb-8"
-        initial={{ opacity: 0, y: 50 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-        viewport={{ once: true, amount: 0.3 }}
-      >
-        <h3 className="text-gray-100 text-base sm:text-lg font-semibold mb-4 text-center" style={{ fontFamily: "Poppins, sans-serif" }}>
-          The Global Symphony of{" "}
-          <span className="shine-text-slow">Capacity Building</span>
-        </h3>
-        
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl blur-lg" />
-          <img
-            src={graphImages[currentGraphIndex]}
-            alt="Capacity Building Graph"
-            className="relative w-full h-auto aspect-[590/390] rounded-2xl shadow-xl border border-purple-500/30 object-cover"
-          />
-        </div>
-        
-        <div className="flex justify-center mt-6 space-x-2">
-          {graphImages.map((_, index) => (
-            <button
-              key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                currentGraphIndex === index 
-                  ? "bg-gradient-to-r from-purple-600 to-pink-600 scale-125" 
-                  : "bg-gray-600"
-              }`}
-              onClick={() => setCurrentGraphIndex(index)}
-            />
-          ))}
-        </div>
-      </motion.div>
     </section>
   )
 }
