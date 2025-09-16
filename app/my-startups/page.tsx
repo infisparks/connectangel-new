@@ -5,10 +5,21 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabaselib"
 import { UserProfileCard } from "@/components/user-profile-card"
-import { Loader2 } from "lucide-react"
+import { 
+  Loader2, 
+  Plus, 
+  Building2, 
+  Rocket, 
+  TrendingUp, 
+  Users,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  XCircle,
+  LayoutDashboard
+} from "lucide-react"
 import {
   ProfileData,
   ProfileRoleType,
@@ -17,7 +28,7 @@ import {
   IncubationProfile,
   InvestorProfile,
   MentorProfile,
-} from "@/types";
+} from "@/types"
 
 export default function MyProfilesPage() {
   // State for each profile type, separated by approved/pending/needs_update/rejected
@@ -43,7 +54,6 @@ export default function MyProfilesPage() {
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeMainTab, setActiveMainTab] = useState<ProfileRoleType>("startup") // State for main tabs
 
   const router = useRouter()
 
@@ -286,290 +296,247 @@ export default function MyProfilesPage() {
     }
   }, [fetchMyProfiles, router])
 
-  const renderProfileList = (
-    profiles: ProfileData[],
-    type: "approved" | "pending" | "needs_update" | "rejected",
-    roleType: ProfileRoleType,
-  ) => {
-    if (profiles.length === 0) {
-      return (
-        <div className="text-center text-gray-500 py-10">
-          No {type.replace("_", " ")} {roleType} profiles found.
-        </div>
-      )
+  const renderStatusBadge = (count: number, status: string, icon: React.ReactNode) => {
+    if (count === 0) return null
+    
+    const colorMap = {
+      approved: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      pending: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+      needs_update: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      rejected: "bg-red-500/10 text-red-400 border-red-500/20"
     }
+    
     return (
-      <div className="grid gap-6">
-        {profiles.map((profile) => (
-          <UserProfileCard key={profile.id} profile={profile} roleType={roleType} />
-        ))}
+      <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium ${colorMap[status as keyof typeof colorMap]}`}>
+        {icon}
+        <span>{count}</span>
       </div>
     )
   }
 
-  const hasIncubationProfile = approvedIncubations.length > 0 || pendingIncubations.length > 0 || needsUpdateIncubations.length > 0;
-  const hasApprovedIncubation = approvedIncubations.length > 0;
+  const renderProfileSection = (
+    title: string,
+    icon: React.ReactNode,
+    approved: ProfileData[],
+    pending: ProfileData[],
+    needsUpdate: ProfileData[],
+    rejected: ProfileData[],
+    roleType: ProfileRoleType,
+    canAddNew: boolean = true,
+    onAddNew?: () => void,
+    specialButtons?: React.ReactNode
+  ) => {
+    const totalCount = approved.length + pending.length + needsUpdate.length + rejected.length
+    const allProfiles = [...approved, ...pending, ...needsUpdate, ...rejected]
+    
+    if (totalCount === 0 && !canAddNew) return null
 
-  return (
-    <div className="max-w-4xl mx-auto py-8 mt-24 px-4 space-y-8 bg-gray-950 min-h-screen text-white">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-purple-400">My Profiles</h1>
-        {activeMainTab === "startup" && (
-          <Button
-            className="bg-purple-600 text-white hover:bg-purple-700"
-            onClick={() => router.push("/startup-registration")}
-          >
-            Add New Startup
-          </Button>
-        )}
-        {activeMainTab === "incubation" && (
-          <div className="flex flex-col items-end space-y-2">
-            {hasApprovedIncubation && (
+    return (
+      <div className="bg-gradient-to-br from-gray-900/50 to-gray-800/30 rounded-2xl border border-gray-700/50 backdrop-blur-sm">
+        <div className="p-6 border-b border-gray-700/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                {icon}
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white">{title}</h2>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {renderStatusBadge(approved.length, "approved", <CheckCircle2 className="w-3 h-3" />)}
+                  {renderStatusBadge(pending.length, "pending", <Clock className="w-3 h-3" />)}
+                  {renderStatusBadge(needsUpdate.length, "needs_update", <AlertCircle className="w-3 h-3" />)}
+                  {renderStatusBadge(rejected.length, "rejected", <XCircle className="w-3 h-3" />)}
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              {specialButtons}
+              {canAddNew && onAddNew && (
                 <Button
-                  className="bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={() => router.push(`/incubation-dashboard`)}
+                  onClick={onAddNew}
+                  className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
                 >
-                  Incubation Joined Startups
+                  <Plus className="w-4 h-4" />
+                  Add New
                 </Button>
-            )}
-            {!hasIncubationProfile && (
-              <Button
-                className="bg-purple-600 text-white hover:bg-purple-700"
-                onClick={() => router.push("/incubation-registration")}
-              >
-                Add New Incubation
-              </Button>
-            )}
-            {hasIncubationProfile && (
-              <p className="text-sm text-gray-400 text-right">You can only register one incubation center per account.</p>
-            )}
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {totalCount > 0 ? (
+          <div className="p-6">
+            <div className="grid gap-6">
+              {allProfiles.map((profile) => (
+                <UserProfileCard 
+                  key={profile.id} 
+                  profile={profile} 
+                  roleType={roleType} 
+                />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="p-8 text-center">
+            <div className="text-gray-500 mb-3">
+              <Building2 className="w-12 h-12 mx-auto opacity-30" />
+            </div>
+            <p className="text-gray-400 text-sm">No {title.toLowerCase()} profiles yet</p>
+            <p className="text-gray-500 text-xs mt-1">Get started by creating your first profile</p>
           </div>
         )}
-        {activeMainTab === "investor" && (
-          <Button
-            className="bg-purple-600 text-white hover:bg-purple-700"
-            onClick={() => router.push("/investor-registration")}
+      </div>
+    )
+  }
+
+  const hasIncubationProfile = approvedIncubations.length > 0 || pendingIncubations.length > 0 || needsUpdateIncubations.length > 0
+  const hasApprovedIncubation = approvedIncubations.length > 0
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950/20 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-400 mx-auto mb-4" />
+          <p className="text-gray-400">Loading your profiles...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950/20 flex items-center justify-center p-4">
+        <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-6 max-w-md w-full text-center">
+          <XCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-red-400 font-semibold mb-2">Error Loading Profiles</h2>
+          <p className="text-red-300/80 text-sm mb-4">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
-            Add New Investor
+            Retry
           </Button>
-        )}
-        {activeMainTab === "mentor" && (
-          <Button
-            className="bg-purple-600 text-white hover:bg-purple-700"
-            onClick={() => router.push("/mentor-registration")}
-          >
-            Add New Mentor
-          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950/20">
+      <div className="max-w-6xl mx-auto px-4 py-8 pt-24">
+        {/* Header */}
+        <div className="mb-12 text-center">
+          <div className="inline-flex items-center gap-3 mb-4">
+            <div className="p-3 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-2xl border border-purple-500/30">
+              <Users className="w-8 h-8 text-purple-400" />
+            </div>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            My <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600">Profiles</span>
+          </h1>
+          <p className="text-gray-400 text-lg max-w-2xl mx-auto">
+            Manage all your professional profiles in one place. Track applications, approvals, and grow your network.
+          </p>
+        </div>
+
+        {/* Profile Sections */}
+        <div className="space-y-8">
+          {/* Startups */}
+          {renderProfileSection(
+            "Startups",
+            <Rocket className="w-5 h-5 text-purple-400" />,
+            approvedStartups,
+            pendingStartups,
+            needsUpdateStartups,
+            rejectedStartups,
+            "startup",
+            true,
+            () => router.push("/startup-registration")
+          )}
+
+          {/* Incubations */}
+          {renderProfileSection(
+            "Incubation Center",
+            <Building2 className="w-5 h-5 text-purple-400" />,
+            approvedIncubations,
+            pendingIncubations,
+            needsUpdateIncubations,
+            rejectedIncubations,
+            "incubation",
+            !hasIncubationProfile,
+            () => router.push("/incubation-registration"),
+            hasApprovedIncubation ? (
+              <Button
+                onClick={() => router.push(`/incubation-dashboard`)}
+                variant="outline"
+                className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10 flex items-center gap-2"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                Dashboard
+              </Button>
+            ) : null
+          )}
+
+          {/* Investors */}
+          {renderProfileSection(
+            "Investors",
+            <TrendingUp className="w-5 h-5 text-purple-400" />,
+            approvedInvestors,
+            pendingInvestors,
+            needsUpdateInvestors,
+            rejectedInvestors,
+            "investor",
+            true,
+            () => router.push("/investor-registration")
+          )}
+
+          {/* Mentors */}
+          {renderProfileSection(
+            "Mentors",
+            <Users className="w-5 h-5 text-purple-400" />,
+            approvedMentors,
+            pendingMentors,
+            needsUpdateMentors,
+            rejectedMentors,
+            "mentor",
+            true,
+            () => router.push("/mentor-registration")
+          )}
+        </div>
+
+        {/* Empty State */}
+        {approvedStartups.length === 0 && pendingStartups.length === 0 && needsUpdateStartups.length === 0 && rejectedStartups.length === 0 &&
+         approvedIncubations.length === 0 && pendingIncubations.length === 0 && needsUpdateIncubations.length === 0 && rejectedIncubations.length === 0 &&
+         approvedInvestors.length === 0 && pendingInvestors.length === 0 && needsUpdateInvestors.length === 0 && rejectedInvestors.length === 0 &&
+         approvedMentors.length === 0 && pendingMentors.length === 0 && needsUpdateMentors.length === 0 && rejectedMentors.length === 0 && (
+          <div className="text-center py-20">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-purple-500/10 rounded-full mb-6">
+              <Users className="w-10 h-10 text-purple-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-4">Welcome to Your Profile Hub!</h3>
+            <p className="text-gray-400 mb-8 max-w-md mx-auto">
+              Start building your professional presence by creating your first profile. Choose from startups, incubations, investors, or mentors.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button
+                onClick={() => router.push("/startup-registration")}
+                className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-700 hover:to-purple-600 text-white"
+              >
+                <Rocket className="w-4 h-4 mr-2" />
+                Create Startup
+              </Button>
+              <Button
+                onClick={() => router.push("/investor-registration")}
+                variant="outline"
+                className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+              >
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Become Investor
+              </Button>
+            </div>
+          </div>
         )}
       </div>
-      <Tabs
-        value={activeMainTab}
-        onValueChange={(value) => setActiveMainTab(value as ProfileRoleType)}
-        className="w-full"
-      >
-        <TabsList className="grid w-full grid-cols-4 bg-gray-800 text-gray-300">
-          <TabsTrigger value="startup" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            Startups (
-            {approvedStartups.length + pendingStartups.length + needsUpdateStartups.length + rejectedStartups.length})
-          </TabsTrigger>
-          <TabsTrigger value="incubation" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            Incubations (
-            {approvedIncubations.length +
-              pendingIncubations.length +
-              needsUpdateIncubations.length +
-              rejectedIncubations.length}
-            )
-          </TabsTrigger>
-          <TabsTrigger value="investor" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            Investors (
-            {approvedInvestors.length +
-              pendingInvestors.length +
-              needsUpdateInvestors.length +
-              rejectedInvestors.length}
-            )
-          </TabsTrigger>
-          <TabsTrigger value="mentor" className="data-[state=active]:bg-purple-600 data-[state=active]:text-white">
-            Mentors (
-            {approvedMentors.length + pendingMentors.length + needsUpdateMentors.length + rejectedMentors.length})
-          </TabsTrigger>
-        </TabsList>
-
-        {/* Content for Startups Tab */}
-        <TabsContent value="startup" className="mt-6">
-          <Tabs defaultValue="approved-startups" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800 text-gray-300">
-              <TabsTrigger
-                value="approved-startups"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Approved ({approvedStartups.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="pending-startups"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Pending ({pendingStartups.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="needs-update-startups"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Needs Update ({needsUpdateStartups.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="rejected-startups"
-                className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-              >
-                Rejected ({rejectedStartups.length})
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="approved-startups" className="mt-6">
-              {renderProfileList(approvedStartups, "approved", "startup")}
-            </TabsContent>
-            <TabsContent value="pending-startups" className="mt-6">
-              {renderProfileList(pendingStartups, "pending", "startup")}
-            </TabsContent>
-            <TabsContent value="needs-update-startups" className="mt-6">
-              {renderProfileList(needsUpdateStartups, "needs_update", "startup")}
-            </TabsContent>
-            <TabsContent value="rejected-startups" className="mt-6">
-              {renderProfileList(rejectedStartups, "rejected", "startup")}
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        {/* Content for Incubations Tab */}
-        <TabsContent value="incubation" className="mt-6">
-          <Tabs defaultValue="approved-incubations" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800 text-gray-300">
-              <TabsTrigger
-                value="approved-incubations"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Approved ({approvedIncubations.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="pending-incubations"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Pending ({pendingIncubations.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="needs-update-incubations"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Needs Update ({needsUpdateIncubations.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="rejected-incubations"
-                className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-              >
-                Rejected ({rejectedIncubations.length})
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="approved-incubations" className="mt-6">
-              {renderProfileList(approvedIncubations, "approved", "incubation")}
-            </TabsContent>
-            <TabsContent value="pending-incubations" className="mt-6">
-              {renderProfileList(pendingIncubations, "pending", "incubation")}
-            </TabsContent>
-            <TabsContent value="needs-update-incubations" className="mt-6">
-              {renderProfileList(needsUpdateIncubations, "needs_update", "incubation")}
-            </TabsContent>
-            <TabsContent value="rejected-incubations" className="mt-6">
-              {renderProfileList(rejectedIncubations, "rejected", "incubation")}
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        {/* Content for Investors Tab */}
-        <TabsContent value="investor" className="mt-6">
-          <Tabs defaultValue="approved-investors" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800 text-gray-300">
-              <TabsTrigger
-                value="approved-investors"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Approved ({approvedInvestors.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="pending-investors"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Pending ({pendingInvestors.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="needs-update-investors"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Needs Update ({needsUpdateInvestors.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="rejected-investors"
-                className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-              >
-                Rejected ({rejectedInvestors.length})
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="approved-investors" className="mt-6">
-              {renderProfileList(approvedInvestors, "approved", "investor")}
-            </TabsContent>
-            <TabsContent value="pending-investors" className="mt-6">
-              {renderProfileList(pendingInvestors, "pending", "investor")}
-            </TabsContent>
-            <TabsContent value="needs-update-investors" className="mt-6">
-              {renderProfileList(needsUpdateInvestors, "needs_update", "investor")}
-            </TabsContent>
-            <TabsContent value="rejected-investors" className="mt-6">
-              {renderProfileList(rejectedInvestors, "rejected", "investor")}
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-
-        {/* Content for Mentors Tab */}
-        <TabsContent value="mentor" className="mt-6">
-          <Tabs defaultValue="approved-mentors" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-gray-800 text-gray-300">
-              <TabsTrigger
-                value="approved-mentors"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Approved ({approvedMentors.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="pending-mentors"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Pending ({pendingMentors.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="needs-update-mentors"
-                className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
-              >
-                Needs Update ({needsUpdateMentors.length})
-              </TabsTrigger>
-              <TabsTrigger
-                value="rejected-mentors"
-                className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-              >
-                Rejected ({rejectedMentors.length})
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="approved-mentors" className="mt-6">
-              {renderProfileList(approvedMentors, "approved", "mentor")}
-            </TabsContent>
-            <TabsContent value="pending-mentors" className="mt-6">
-              {renderProfileList(pendingMentors, "pending", "mentor")}
-            </TabsContent>
-            <TabsContent value="needs-update-mentors" className="mt-6">
-              {renderProfileList(needsUpdateMentors, "needs_update", "mentor")}
-            </TabsContent>
-            <TabsContent value="rejected-mentors" className="mt-6">
-              {renderProfileList(rejectedMentors, "rejected", "mentor")}
-            </TabsContent>
-          </Tabs>
-        </TabsContent>
-      </Tabs>
     </div>
   )
 }
