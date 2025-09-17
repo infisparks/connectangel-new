@@ -1,13 +1,11 @@
 "use client"
 
-import { ArrowRightIcon, TrendingUpIcon, SparklesIcon, ChevronRightIcon } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ArrowRightIcon, TrendingUpIcon, ChevronRightIcon } from "lucide-react"
 import Image from "next/image"
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { categories } from "@/lib/data" 
-import ParticleEffect from "./particle-effect"
 
 export default function CategoriesSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -15,44 +13,12 @@ export default function CategoriesSection() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null)
   const router = useRouter()
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const sectionRef = useRef<HTMLElement>(null)
 
   // Auto-scroll configuration
-  const scrollSpeed = useRef(1.2) // Increased speed
+  const scrollSpeed = useRef(1.2)
   const isScrollingPaused = useRef(false)
   const animationFrameId = useRef<number | null>(null)
-  const scrollDirection = useRef(1) // 1 for right, -1 for left
-
-  // Enhanced mouse move effect
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (sectionRef.current) {
-        const rect = sectionRef.current.getBoundingClientRect()
-        setMousePosition({
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top,
-        })
-      }
-    }
-
-    const handleMouseLeave = () => {
-      setMousePosition({ x: -9999, y: -9999 })
-    }
-
-    const currentSectionRef = sectionRef.current
-    if (currentSectionRef) {
-      currentSectionRef.addEventListener("mousemove", handleMouseMove)
-      currentSectionRef.addEventListener("mouseleave", handleMouseLeave)
-    }
-
-    return () => {
-      if (currentSectionRef) {
-        currentSectionRef.removeEventListener("mousemove", handleMouseMove)
-        currentSectionRef.removeEventListener("mouseleave", handleMouseLeave)
-      }
-    }
-  }, [])
+  const scrollDirection = useRef(1)
 
   // Enhanced intersection observer
   useEffect(() => {
@@ -89,10 +55,6 @@ export default function CategoriesSection() {
     }
   }, [categories.length])
 
-  const handleExploreClick = () => {
-    router.push("/categories")
-  }
-
   const handleCategoryClick = (categoryName: string) => {
     router.push(`/categories/${categoryName.toLowerCase().replace(/\s+/g, '-')}`)
   }
@@ -101,14 +63,10 @@ export default function CategoriesSection() {
   const animateScroll = useCallback(() => {
     if (scrollRef.current && !isScrollingPaused.current) {
       const container = scrollRef.current
-      const currentScroll = container.scrollLeft
-      const maxScroll = container.scrollWidth - container.clientWidth
       const halfWidth = container.scrollWidth / 2
 
-      // Move the scroll position
       container.scrollLeft += scrollSpeed.current * scrollDirection.current
 
-      // Seamless loop - when we reach the end of duplicated content, jump back
       if (container.scrollLeft >= halfWidth) {
         container.scrollLeft = container.scrollLeft - halfWidth
       } else if (container.scrollLeft <= 0) {
@@ -136,7 +94,6 @@ export default function CategoriesSection() {
 
   // Start auto-scroll on mount
   useEffect(() => {
-    // Add a small delay to ensure everything is rendered
     const timer = setTimeout(() => {
       startAutoScroll()
     }, 1000)
@@ -158,36 +115,38 @@ export default function CategoriesSection() {
         inline: "center",
         block: "nearest",
       })
-      // Resume auto-scroll after user interaction
       setTimeout(startAutoScroll, 3000)
     }
   }
 
   return (
-    <section ref={sectionRef} className="relative py-12 lg:py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 overflow-hidden">
-      {/* Enhanced Particle Effect */}
-      <ParticleEffect />
-
-      {/* Professional Background Effects */}
+    <section className="relative py-12 lg:py-20 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 overflow-hidden">
+      
+      {/* Updated Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 pointer-events-none z-10"
-          style={{
-            background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(99, 102, 241, 0.08) 0%, rgba(59, 130, 246, 0.04) 30%, transparent 60%)`,
-            filter: "blur(60px)",
-            opacity: mousePosition.x === -9999 ? 0 : 1,
-            transition: "opacity 0.5s ease-out",
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
           }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div className="absolute top-0 left-1/4 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-indigo-500/5 rounded-full blur-3xl" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.01] to-transparent" />
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            opacity: [0.5, 0.3, 0.5]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
       <div className="relative z-20 w-full max-w-7xl mx-auto px-4 lg:px-8">
         <div className="flex flex-col gap-8 lg:gap-12">
           
-          {/* Professional Section Header */}
+          {/* Section Header with Updated Colors */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-4">
               <motion.div
@@ -197,10 +156,10 @@ export default function CategoriesSection() {
                 transition={{ duration: 0.6 }}
               >
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                  <TrendingUpIcon className="w-5 h-5 text-blue-400" />
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                  <TrendingUpIcon className="w-5 h-5 text-purple-400" />
                 </div>
-                <span className="text-blue-300 text-sm font-semibold tracking-wider uppercase letter-spacing-wide">
+                <span className="text-purple-300 text-sm font-semibold tracking-wider uppercase letter-spacing-wide">
                   Popular Categories
                 </span>
               </motion.div>
@@ -222,28 +181,12 @@ export default function CategoriesSection() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                Discover innovative startups across the most dynamic sectors driving global transformation
+                Discover innovative startups across the most dynamic sectors driving global transformation.
               </motion.p>
             </div>
-            
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              {/* <Button
-                variant="outline"
-                className="group text-white border-slate-600 hover:border-blue-400 hover:bg-blue-500/10 flex items-center gap-3 text-base px-6 py-3 rounded-xl transition-all duration-300 backdrop-blur-sm"
-                onClick={handleExploreClick}
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                View All Categories
-                <ArrowRightIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </Button> */}
-            </motion.div>
           </div>
 
-          {/* Enhanced Categories Scroller */}
+          {/* Categories Scroller */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -287,7 +230,6 @@ export default function CategoriesSection() {
                       }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {/* Professional Image Container */}
                       <div className="relative flex-shrink-0">
                         <motion.div
                           className="relative w-12 h-12 rounded-xl overflow-hidden ring-1 ring-white/20 bg-gradient-to-br from-white/10 to-white/5"
@@ -304,24 +246,20 @@ export default function CategoriesSection() {
                         </motion.div>
                       </div>
 
-                      {/* Professional Text Content */}
                       <div className="flex-1 min-w-0">
-                        <motion.h3
+                        <h3
                           className="font-semibold text-white text-base lg:text-lg truncate mb-1"
                           style={{ fontFamily: "Inter, system-ui, sans-serif" }}
                         >
                           {name}
-                        </motion.h3>
-                        <motion.p
+                        </h3>
+                        <p
                           className="text-slate-400 text-sm"
-                          initial={{ opacity: 0.7 }}
-                          animate={{ opacity: isHovered ? 1 : 0.7 }}
                         >
                           Explore sector
-                        </motion.p>
+                        </p>
                       </div>
 
-                      {/* Arrow Icon */}
                       <motion.div
                         className="flex-shrink-0"
                         initial={{ x: 0, opacity: 0.5 }}
@@ -331,11 +269,11 @@ export default function CategoriesSection() {
                         <ChevronRightIcon className="w-5 h-5 text-slate-400" />
                       </motion.div>
 
-                      {/* Professional Hover Effect */}
+                      {/* Hover Effect with Updated Colors */}
                       <AnimatePresence>
                         {isHovered && (
                           <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-indigo-500/5 rounded-2xl pointer-events-none"
+                            className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-2xl pointer-events-none"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
@@ -344,7 +282,6 @@ export default function CategoriesSection() {
                         )}
                       </AnimatePresence>
 
-                      {/* Subtle Shine Effect */}
                       <motion.div
                         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/3 to-transparent -translate-x-full rounded-2xl"
                         animate={{ x: isHovered ? "240px" : "-240px" }}
@@ -356,7 +293,6 @@ export default function CategoriesSection() {
               })}
             </div>
 
-            {/* Hide scrollbar styles */}
             <style jsx>{`
               div::-webkit-scrollbar {
                 display: none;
@@ -364,7 +300,7 @@ export default function CategoriesSection() {
             `}</style>
           </motion.div>
 
-          {/* Professional Pagination Dots */}
+          {/* Pagination Dots with Updated Colors */}
           <motion.div 
             className="flex justify-center items-center gap-3 pt-4"
             initial={{ opacity: 0, y: 20 }}
@@ -383,7 +319,7 @@ export default function CategoriesSection() {
                 <div
                   className={`transition-all duration-300 rounded-full ${
                     index === activeIndex 
-                      ? "w-8 h-2 bg-gradient-to-r from-blue-500 to-indigo-500" 
+                      ? "w-8 h-2 bg-gradient-to-r from-purple-500 to-pink-500" 
                       : "w-2 h-2 bg-white/30 hover:bg-white/50"
                   }`}
                 />

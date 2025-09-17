@@ -209,7 +209,7 @@ export default function AllStartupsPage() {
   const featuredStartup = {
     name: "DSD Soft",
     country: "Indonesia",
-    background: "https://placehold.co/1920x600/2A0050/ffffff?text=DSD+Soft+Pitch",
+    background: "/img/bgcover.png",
   };
 
   return (

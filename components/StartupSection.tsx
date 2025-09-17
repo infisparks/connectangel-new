@@ -207,7 +207,7 @@ export default function StartupSection() {
   }, [startups]);
 
   return (
-    <section className="relative bg-gradient-to-br from-gray-950 via-purple-950/20 to-gray-900 w-full py-12 md:py-16 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 w-full py-12 md:py-16 overflow-hidden">
       {/* Enhanced CSS */}
       <style jsx>{`
         .glass-card {
@@ -272,14 +272,29 @@ export default function StartupSection() {
 
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-l from-purple-600/10 to-transparent rounded-full blur-3xl" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-pink-600/10 to-transparent rounded-full blur-3xl" />
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            opacity: [0.5, 0.3, 0.5]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+        />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <motion.div 
-          className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4"
+          className="flex items-center justify-between sm:flex-row sm:items-center mb-8 gap-4"
           initial={{ opacity: 0, y: -20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -289,11 +304,11 @@ export default function StartupSection() {
             <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl">
               <TrendingUp className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
                 Top Startups
               </h2>
-              <p className="text-gray-400 text-sm md:text-base mt-1">
+              <p className="text-gray-400 text-sm md:text-base mt-1 line-clamp-1">
                 Discover the next unicorns shaping tomorrow
               </p>
             </div>
@@ -301,44 +316,13 @@ export default function StartupSection() {
 
           {/* Navigation Controls */}
           <div className="flex items-center gap-3">
-            {/* Desktop scroll buttons */}
-            <div className="hidden md:flex items-center gap-2">
-              <motion.button
-                className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                  canScrollLeft 
-                    ? 'border-purple-500 hover:bg-purple-500/20 text-purple-400' 
-                    : 'border-gray-700 text-gray-600 cursor-not-allowed'
-                }`}
-                onClick={scrollLeft}
-                disabled={!canScrollLeft}
-                whileHover={{ scale: canScrollLeft ? 1.1 : 1 }}
-                whileTap={{ scale: canScrollLeft ? 0.95 : 1 }}
-              >
-                <ArrowRightIcon className="w-5 h-5 rotate-180" />
-              </motion.button>
-              <motion.button
-                className={`w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
-                  canScrollRight 
-                    ? 'border-purple-500 hover:bg-purple-500/20 text-purple-400' 
-                    : 'border-gray-700 text-gray-600 cursor-not-allowed'
-                }`}
-                onClick={scrollRight}
-                disabled={!canScrollRight}
-                whileHover={{ scale: canScrollRight ? 1.1 : 1 }}
-                whileTap={{ scale: canScrollRight ? 0.95 : 1 }}
-              >
-                <ArrowRightIcon className="w-5 h-5" />
-              </motion.button>
-            </div>
-
-            {/* View All Button */}
             <Link href="/allstartup">
               <motion.div 
-                className="group w-12 h-12 border-2 border-purple-500/50 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-purple-500/20 hover:border-purple-500 glow-effect"
+                className="group w-10 h-10 border-2 border-purple-500/50 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-purple-500/20 hover:border-purple-500 glow-effect"
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <ArrowRightIcon className="w-6 h-6 text-purple-400 transition-all duration-300 group-hover:text-purple-300" />
+                <ArrowRightIcon className="w-5 h-5 text-purple-400 transition-all duration-300 group-hover:text-purple-300" />
               </motion.div>
             </Link>
           </div>
@@ -348,7 +332,7 @@ export default function StartupSection() {
         {loading && (
           <div 
             ref={scrollRef}
-            className="flex gap-6 overflow-x-auto scroll-container pb-4"
+            className="flex gap-6 overflow-x-auto scroll-container py-4"
           >
             {[...Array(4)].map((_, i) => (
               <StartupCardSkeleton key={i} />
@@ -366,7 +350,7 @@ export default function StartupSection() {
           >
             <div 
               ref={scrollRef}
-              className="flex gap-6 overflow-x-auto scroll-container pb-4"
+              className="flex gap-6 overflow-x-auto scroll-container py-4"
               onScroll={checkScrollButtons}
             >
               <AnimatePresence>
@@ -484,10 +468,13 @@ export default function StartupSection() {
         )}
 
         {/* Mobile Scroll Indicator */}
-        <div className="md:hidden flex justify-center mt-6 gap-2">
-          <div className="text-xs text-gray-500 flex items-center gap-2">
+        <div className="md:hidden flex justify-center mt-6">
+          <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-            Scroll horizontally to explore more
+            <span className="text-xs text-gray-400">
+              Scroll horizontally to explore
+            </span>
+            <ArrowRightIcon className="w-4 h-4 text-purple-400" />
           </div>
         </div>
       </div>

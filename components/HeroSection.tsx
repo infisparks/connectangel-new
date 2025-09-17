@@ -1,3 +1,4 @@
+// components/HeroSection.tsx
 "use client"
 
 import { SearchIcon, ChevronDown, Sparkles } from "lucide-react"
@@ -7,6 +8,10 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabaselib"
+import dynamic from 'next/dynamic';
+
+// Use a dynamic import for the chart component to prevent server-side rendering
+const DynamicGraph = dynamic(() => import('./DynamicGraph'), { ssr: false });
 
 // Define a type for the startup object
 interface Startup {
@@ -22,15 +27,22 @@ interface Incubation {
   logo_url?: string
 }
 
+const graphTitles = [
+  "Quarterly Startup Creation vs. Incubation",
+  "Monthly Funding Rounds and Events",
+  "Projects and Mentors by Sector",
+  "Global Startup Ecosystem Growth",
+];
+
 export default function HeroSection() {
-  const [currentGraphIndex, setCurrentGraphIndex] = useState(0)
-  const [activeSearch, setActiveSearch] = useState<'startup' | 'incubation' | null>('startup')
-  const [searchTerm, setSearchTerm] = useState("")
-  const [searchResults, setSearchResults] = useState<Startup[] | Incubation[]>([])
-  const [showDropdown, setShowDropdown] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const router = useRouter()
+  const [currentGraphIndex, setCurrentGraphIndex] = useState(0);
+  const [activeSearch, setActiveSearch] = useState<'startup' | 'incubation' | null>('startup');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<Startup[] | Incubation[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Animation variants
   const containerVariants = {
@@ -42,119 +54,109 @@ export default function HeroSection() {
         delayChildren: 0.2,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30, scale: 0.9 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
+    visible: {
+      opacity: 1,
+      y: 0,
       scale: 1,
-      transition: { 
-        duration: 0.8, 
+      transition: {
+        duration: 0.8,
         ease: [0.645, 0.045, 0.355, 1],
         type: "spring",
         stiffness: 100
-      } 
+      }
     },
-  }
+  };
 
   const mobileButtonVariants = {
     hidden: { opacity: 0, x: -20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       x: 0,
       transition: { duration: 0.6, ease: "easeOut" }
     },
-    exit: { 
-      opacity: 0, 
+    exit: {
+      opacity: 0,
       x: 20,
       transition: { duration: 0.3 }
     }
-  }
-
-  const graphImages = [
-    "https://placehold.co/594x395/000a18/ffffff?text=Graph+1",
-    "https://placehold.co/594x395/000a18/ffffff?text=Graph+2",
-    "https://placehold.co/594x395/000a18/ffffff?text=Graph+3",
-    "https://placehold.co/594x395/000a18/ffffff?text=Graph+4",
-  ]
+  };
 
   // Auto-rotate graphs
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentGraphIndex((prev) => (prev + 1) % graphImages.length)
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
+      setCurrentGraphIndex((prev) => (prev + 1) % graphTitles.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
-  // Fixed: The function now constructs the public URL using the Supabase URL from environment variables
   const getPublicImageUrl = (path: string | undefined) => {
-    if (!path) return undefined
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!path) return undefined;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
-      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined')
-      return undefined
+      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+      return undefined;
     }
-    const relativePath = path.replace('/storage/v1/object/public', '')
-    return `${supabaseUrl}/storage/v1/object/public${relativePath}`
-  }
+    const relativePath = path.replace('/storage/v1/object/public', '');
+    return `${supabaseUrl}/storage/v1/object/public${relativePath}`;
+  };
 
-  // Search function to query Supabase for startups
   const searchStartups = async (query: string) => {
     if (!query) {
-      setSearchResults([])
-      return
+      setSearchResults([]);
+      return;
     }
     const { data, error } = await supabase
       .from('creator')
       .select('id, startup_name, logo_url')
       .ilike('startup_name', `%${query}%`)
-      .limit(10)
+      .limit(10);
 
     if (error) {
-      console.error("Error searching startups:", error.message)
-      setSearchResults([])
-      return
+      console.error("Error searching startups:", error.message);
+      setSearchResults([]);
+      return;
     }
 
     const startupsWithUrls = data.map(startup => ({
       ...startup,
       logo_url: getPublicImageUrl(startup.logo_url)
-    }))
+    }));
 
-    setSearchResults(startupsWithUrls || [])
-    setShowDropdown((startupsWithUrls?.length || 0) > 0)
-    setActiveSearch('startup')
-  }
+    setSearchResults(startupsWithUrls || []);
+    setShowDropdown((startupsWithUrls?.length || 0) > 0);
+    setActiveSearch('startup');
+  };
 
-  // Search function to query Supabase for incubations
   const searchIncubations = async (query: string) => {
     if (!query) {
-      setSearchResults([])
-      return
+      setSearchResults([]);
+      return;
     }
     const { data, error } = await supabase
       .from('incubation')
       .select('id, incubator_accelerator_name, logo_url')
       .ilike('incubator_accelerator_name', `%${query}%`)
-      .limit(10)
+      .limit(10);
 
     if (error) {
-      console.error("Error searching incubations:", error.message)
-      setSearchResults([])
-      return
+      console.error("Error searching incubations:", error.message);
+      setSearchResults([]);
+      return;
     }
 
     const incubationsWithUrls = data.map(incubation => ({
       ...incubation,
       logo_url: getPublicImageUrl(incubation.logo_url)
-    }))
+    }));
 
-    setSearchResults(incubationsWithUrls || [])
-    setShowDropdown((incubationsWithUrls?.length || 0) > 0)
-    setActiveSearch('incubation')
-  }
+    setSearchResults(incubationsWithUrls || []);
+    setShowDropdown((incubationsWithUrls?.length || 0) > 0);
+    setActiveSearch('incubation');
+  };
 
   useEffect(() => {
     if (searchTerm.length >= 2) {
@@ -170,44 +172,44 @@ export default function HeroSection() {
   }, [searchTerm, activeSearch]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value)
-  }
+    setSearchTerm(e.target.value);
+  };
 
   const handleSelectResult = (id: string) => {
     if (activeSearch === 'startup') {
-      router.push(`/startup/${id}`)
+      router.push(`/startup/${id}`);
     } else if (activeSearch === 'incubation') {
-      router.push(`/incubation-dashboard/${id}`)
+      router.push(`/incubation-dashboard/${id}`);
     }
-    setShowDropdown(false)
-    setSearchTerm("")
-    setActiveSearch(null)
-  }
+    setShowDropdown(false);
+    setSearchTerm("");
+    setActiveSearch(null);
+  };
 
   const handleSearchSubmit = () => {
     if (searchResults.length > 0) {
-      handleSelectResult(searchResults[0].id)
+      handleSelectResult(searchResults[0].id);
     }
-  }
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false)
+        setShowDropdown(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside)
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [dropdownRef])
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   const categoryButtons = [
     { id: 'startup', label: 'Startups', active: activeSearch === 'startup' },
     { id: 'incubation', label: 'Incubations', active: activeSearch === 'incubation' },
     { id: 'events', label: 'Startup Events', active: false },
     { id: 'mentor', label: 'Mentor', active: false },
-  ]
+  ];
 
   return (
     <section id="home" className="relative min-h-screen flex flex-col justify-center overflow-hidden">
@@ -334,13 +336,13 @@ export default function HeroSection() {
                 
                 <h1
                   className="font-bold text-white leading-tight"
-                  style={{ 
+                  style={{
                     fontFamily: "Poppins, sans-serif",
                     fontSize: "clamp(1.75rem, 8vw, 4rem)",
                     lineHeight: "1.1"
                   }}
                 >
-                  <motion.span 
+                  <motion.span
                     className="block"
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -348,7 +350,7 @@ export default function HeroSection() {
                   >
                     Where Global Angels
                   </motion.span>
-                  <motion.span 
+                  <motion.span
                     className="block"
                     initial={{ opacity: 0, x: -50 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -370,7 +372,7 @@ export default function HeroSection() {
                 {/* Enhanced Subheading */}
                 <motion.p
                   className="font-light text-gray-200 leading-relaxed max-w-2xl mx-auto lg:mx-0"
-                  style={{ 
+                  style={{
                     fontFamily: "Poppins, sans-serif",
                     fontSize: "clamp(1rem, 3vw, 1.25rem)"
                   }}
@@ -383,7 +385,7 @@ export default function HeroSection() {
               </motion.div>
 
               {/* Enhanced Category Selection */}
-              <motion.div 
+              <motion.div
                 className="w-full max-w-4xl"
                 variants={itemVariants}
               >
@@ -450,8 +452,8 @@ export default function HeroSection() {
                     >
                       <Button
                         className={`px-6 py-3 rounded-full text-sm sm:text-base font-medium transition-all duration-300 transform hover:scale-105 ${
-                          button.active 
-                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg pulse-glow' 
+                          button.active
+                            ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg pulse-glow'
                             : 'glass-morphism text-white hover:bg-white/20'
                         }`}
                         style={{ fontFamily: "Poppins, sans-serif" }}
@@ -470,7 +472,7 @@ export default function HeroSection() {
                 </div>
 
                 {/* Enhanced Search Input */}
-                <motion.div 
+                <motion.div
                   className="relative w-full"
                   ref={dropdownRef}
                   initial={{ opacity: 0, y: 30 }}
@@ -522,10 +524,10 @@ export default function HeroSection() {
                               whileHover={{ x: 5 }}
                             >
                               {item.logo_url && (
-                                <img 
-                                  src={item.logo_url} 
-                                  alt={`Logo`} 
-                                  className="w-10 h-10 rounded-full object-cover border border-purple-500/30" 
+                                <img
+                                  src={item.logo_url}
+                                  alt={`Logo`}
+                                  className="w-10 h-10 rounded-full object-cover border border-purple-500/30"
                                 />
                               )}
                               <span className="text-white font-medium">
@@ -550,21 +552,21 @@ export default function HeroSection() {
               </motion.div>
             </motion.div>
 
-            {/* Right Column: Enhanced Graph Section - Desktop Only */}
+            {/* Right Column: Dynamic Graph Section - Desktop Only */}
             <motion.div
               className="hidden lg:flex flex-col items-center w-full lg:w-[40%] floating-animation"
               initial={{ opacity: 0, x: 50, scale: 0.9 }}
               whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{ 
-                duration: 1, 
+              transition={{
+                duration: 1,
                 ease: [0.645, 0.045, 0.355, 1],
-                delay: 0.5 
+                delay: 0.5
               }}
               viewport={{ once: true, amount: 0.5 }}
             >
               {/* Enhanced Heading */}
-              <motion.h2 
-                className="text-gray-100 text-lg lg:text-xl font-semibold mb-6 text-center leading-tight" 
+              <motion.h2
+                className="text-gray-100 text-lg lg:text-xl font-semibold mb-6 text-center leading-tight"
                 style={{ fontFamily: "Poppins, sans-serif" }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -574,28 +576,27 @@ export default function HeroSection() {
                 <span className="shine-text-slow">Capacity Building</span>
               </motion.h2>
 
-              {/* Enhanced Graph Container */}
-              <motion.div 
-                className="relative group"
+              {/* Dynamic Graph Container */}
+              <motion.div
+                className="relative group w-full max-w-[590px] h-auto aspect-[590/390] rounded-3xl shadow-2xl border border-purple-500/30 object-cover transition-all duration-500 p-4 glass-morphism"
                 whileHover={{ scale: 1.02 }}
                 transition={{ duration: 0.3 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-300" />
-                <img
-                  src={graphImages[currentGraphIndex]}
-                  alt="Capacity Building Graph"
-                  className="relative w-full max-w-[590px] h-auto aspect-[590/390] rounded-3xl shadow-2xl border border-purple-500/30 object-cover transition-all duration-500"
-                />
+                
+                {/* The dynamically loaded chart component */}
+                <DynamicGraph currentGraphIndex={currentGraphIndex} />
+
               </motion.div>
 
               {/* Enhanced Dot Slider */}
               <div className="flex justify-center mt-8 space-x-3">
-                {graphImages.map((_, index) => (
+                {graphTitles.map((_, index) => (
                   <motion.button
                     key={index}
                     className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                      currentGraphIndex === index 
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 scale-125 shadow-lg" 
+                      currentGraphIndex === index
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 scale-125 shadow-lg"
                         : "bg-gray-600 hover:bg-gray-400 hover:scale-110"
                     }`}
                     onClick={() => setCurrentGraphIndex(index)}
@@ -610,5 +611,5 @@ export default function HeroSection() {
         </div>
       </div>
     </section>
-  )
+  );
 }

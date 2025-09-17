@@ -1,9 +1,9 @@
 "use client"
 
-import { ArrowRightIcon, TrendingUpIcon, SparklesIcon, ChevronRightIcon, PlayIcon } from "lucide-react"
+import { ArrowRightIcon, SparklesIcon, PlayIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { useRef, useState, useEffect, useCallback } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { categories } from "@/lib/data" 
@@ -153,7 +153,7 @@ export default function CategoriesSection() {
             transition={{ duration: 1, delay: 0.6 }}
           >
             {/* Desktop: All in one row */}
-            <div className="hidden lg:grid lg:grid-cols-4 gap-8">
+            <div className="hidden lg:grid lg:grid-cols-4 gap-8 py-4">
               {categories.slice(0, 4).map((category, index) => (
                 <CategoryVideoCard 
                   key={category.name}
@@ -172,7 +172,7 @@ export default function CategoriesSection() {
             {/* Mobile: Scrollable */}
             <div
               ref={scrollRef}
-              className="lg:hidden flex overflow-x-auto gap-4 pb-6 snap-x snap-mandatory"
+              className="lg:hidden flex overflow-x-auto gap-4 pt-4 pb-6 snap-x snap-mandatory"
               style={{
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
@@ -335,19 +335,15 @@ function CategoryVideoCard({
             
             {/* Video Details */}
             <div className="flex-1 space-y-2">
-              <motion.h3
+              <h3
                 className="font-bold text-white text-lg leading-tight group-hover:text-blue-300 transition-colors duration-300"
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
               >
                 {category.name} Startups
-              </motion.h3>
+              </h3>
               
               <div className="flex items-center gap-2 text-slate-400 text-sm">
                 <span>StartupHub</span>
-                {/* <div className="w-1 h-1 bg-slate-400 rounded-full" />
-                <span>1.2M views</span>
-                <div className="w-1 h-1 bg-slate-400 rounded-full" />
-                <span>2 days ago</span> */}
               </div>
               
               <p className="text-slate-300 text-sm leading-relaxed">

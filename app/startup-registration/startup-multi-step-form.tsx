@@ -5,7 +5,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Cropper from "react-easy-crop";
-import { Plus, ImageIcon, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Plus, ImageIcon, ArrowRight, CheckCircle2, Eye, X, ArrowLeft, Upload, User, Building2, HelpCircle, MessageSquare, Target, Camera, Sparkles } from "lucide-react";
 import { countryCodes } from "@/lib/country-codes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ import { cn } from "@/lib/utils";
 import { CountryCodeSelect } from "@/components/country-code-select";
 import { supabase } from "@/lib/supabaselib";
 import Link from "next/link";
-
 
 // Supabase storage bucket names
 const SUPABASE_THUMBNAIL_BUCKET = "thumbnails";
@@ -159,11 +158,14 @@ const AspectRatioCropper = ({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] bg-[#2A0050] text-white border-[#4A0080] rounded-xl">
-        <DialogHeader>
-          <DialogTitle className="text-white text-xl font-bold">Crop Thumbnail (16:9)</DialogTitle>
+      <DialogContent className="sm:max-w-[90vw] max-w-[95vw] h-[90vh] bg-slate-950 text-white border border-purple-500/30 rounded-2xl p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-4 border-b border-white/10">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Camera className="w-5 h-5 text-purple-400" />
+            Crop Thumbnail (16:9)
+          </DialogTitle>
         </DialogHeader>
-        <div className="relative w-full h-[300px] bg-black rounded-lg overflow-hidden">
+        <div className="relative flex-1 bg-black">
           <Cropper
             image={imageUrl}
             crop={crop}
@@ -174,19 +176,27 @@ const AspectRatioCropper = ({
             onCropComplete={handleCropComplete}
           />
         </div>
-        <div className="flex flex-col space-y-3 pt-4">
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.1}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="w-full accent-purple-500"
-          />
-          <Button onClick={handleApply} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white">
-            {loading ? "Processing..." : "Apply Crop"}
-          </Button>
+        <div className="p-6 pt-4 space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Zoom</label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={onClose} className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800">
+              Cancel
+            </Button>
+            <Button onClick={handleApply} disabled={loading} className="flex-1 bg-purple-600 hover:bg-purple-700">
+              {loading ? "Processing..." : "Apply Crop"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -221,11 +231,14 @@ const CircularCropper = ({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] bg-[#2A0050] text-white border-[#4A0080] rounded-xl">
-        <DialogHeader>
-          <DialogTitle className="text-white text-xl font-bold">Crop Logo (Circular)</DialogTitle>
+      <DialogContent className="sm:max-w-[90vw] max-w-[95vw] h-[90vh] bg-slate-950 text-white border border-purple-500/30 rounded-2xl p-0 overflow-hidden">
+        <DialogHeader className="p-6 pb-4 border-b border-white/10">
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Camera className="w-5 h-5 text-purple-400" />
+            Crop Logo (Circular)
+          </DialogTitle>
         </DialogHeader>
-        <div className="relative w-full h-[300px] bg-black rounded-lg overflow-hidden">
+        <div className="relative flex-1 bg-black">
           <Cropper
             image={imageUrl}
             crop={crop}
@@ -237,19 +250,27 @@ const CircularCropper = ({
             onCropComplete={handleCropComplete}
           />
         </div>
-        <div className="flex flex-col space-y-3 pt-4">
-          <input
-            type="range"
-            min={1}
-            max={3}
-            step={0.1}
-            value={zoom}
-            onChange={(e) => setZoom(Number(e.target.value))}
-            className="w-full accent-purple-500"
-          />
-          <Button onClick={handleApply} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white">
-            {loading ? "Processing..." : "Apply Crop"}
-          </Button>
+        <div className="p-6 pt-4 space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm text-gray-400">Zoom</label>
+            <input
+              type="range"
+              min={1}
+              max={3}
+              step={0.1}
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+            />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={onClose} className="flex-1 border-gray-600 text-gray-300 hover:bg-gray-800">
+              Cancel
+            </Button>
+            <Button onClick={handleApply} disabled={loading} className="flex-1 bg-purple-600 hover:bg-purple-700">
+              {loading ? "Processing..." : "Apply Crop"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -298,76 +319,203 @@ const AddTeamMembersDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] bg-[#0E0616] text-white border-[rgba(255,255,255,0.6)] rounded-xl">
+      <DialogContent className="sm:max-w-[500px] max-w-[95vw] bg-slate-950 text-white border border-purple-500/30 rounded-2xl">
         <DialogHeader>
-          <DialogTitle className="text-white text-xl font-bold">Add Team Members</DialogTitle>
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <User className="w-5 h-5 text-purple-400" />
+            Add Team Member
+          </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-4">
-          <Input
-            placeholder="Member Name"
-            value={newMember.name}
-            onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
-            className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-          />
-          <Select
-            value={newMember.designation}
-            onValueChange={(value) => setNewMember({ ...newMember, designation: value })}
-          >
-            <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-              <SelectValue placeholder="Designation" />
-            </SelectTrigger>
-            <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-              <SelectItem value="Founder">Founder</SelectItem>
-              <SelectItem value="CEO">CEO</SelectItem>
-              <SelectItem value="CTO">CTO</SelectItem>
-              <SelectItem value="CMO">CMO</SelectItem>
-              <SelectItem value="CFO">CFO</SelectItem>
-              <SelectItem value="CXO">CXO</SelectItem>
-            </SelectContent>
-          </Select>
-          <Input
-            placeholder="LinkedIn Profile URL"
-            value={newMember.linkedinUrl}
-            onChange={(e) => setNewMember({ ...newMember, linkedinUrl: e.target.value })}
-            className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-          />
-          <div className="flex gap-2 items-center">
-            <CountryCodeSelect
-              value={newMember.phoneCountryCode}
-              onValueChange={(value) => setNewMember({ ...newMember, phoneCountryCode: value })}
-            />
+        <div className="space-y-4 py-4">
+          <div className="space-y-3">
             <Input
-              placeholder="Phone Number"
-              type="tel"
-              value={newMember.localPhoneNumber}
-              onChange={(e) => setNewMember({ ...newMember, localPhoneNumber: e.target.value })}
-              className="flex-1 bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+              placeholder="Member Name"
+              value={newMember.name}
+              onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}
+              className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500"
             />
+            <Select
+              value={newMember.designation}
+              onValueChange={(value) => setNewMember({ ...newMember, designation: value })}
+            >
+              <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
+                <SelectValue placeholder="Select Designation" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
+                <SelectItem value="Founder">Founder</SelectItem>
+                <SelectItem value="CEO">CEO</SelectItem>
+                <SelectItem value="CTO">CTO</SelectItem>
+                <SelectItem value="CMO">CMO</SelectItem>
+                <SelectItem value="CFO">CFO</SelectItem>
+                <SelectItem value="CXO">CXO</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              placeholder="LinkedIn Profile URL"
+              value={newMember.linkedinUrl}
+              onChange={(e) => setNewMember({ ...newMember, linkedinUrl: e.target.value })}
+              className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500"
+            />
+            <div className="flex gap-2">
+              <CountryCodeSelect
+                value={newMember.phoneCountryCode}
+                onValueChange={(value) => setNewMember({ ...newMember, phoneCountryCode: value })}
+              />
+              <Input
+                placeholder="Phone Number"
+                type="tel"
+                value={newMember.localPhoneNumber}
+                onChange={(e) => setNewMember({ ...newMember, localPhoneNumber: e.target.value })}
+                className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500"
+              />
+            </div>
           </div>
-        </div>
-        <Button onClick={handleAddMember} className="bg-purple-600 hover:bg-purple-700 text-white">
-          Add Member
-        </Button>
-        <div className="mt-4">
-          <h4 className="text-white font-semibold mb-2">Current Members:</h4>
-          {teamMembers.length === 0 ? (
-            <p className="text-neutral-400 text-sm">No team members added yet.</p>
-          ) : (
-            <div className="grid gap-2">
-              {teamMembers.map((member: any, idx: number) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-neutral-800 rounded-md border border-neutral-700">
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-neutral-300 font-medium">
-                      {member.name} <span className="text-neutral-500">({member.designation})</span>
-                    </span>
+          
+          <Button onClick={handleAddMember} className="w-full bg-purple-600 hover:bg-purple-700 rounded-xl h-12">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Member
+          </Button>
+          
+          {teamMembers.length > 0 && (
+            <div className="mt-6">
+              <h4 className="text-white font-semibold mb-3 text-sm">Team Members ({teamMembers.length})</h4>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {teamMembers.map((member: any, idx: number) => (
+                  <div key={idx} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10">
+                    <div>
+                      <span className="text-sm font-medium text-white">
+                        {member.name}
+                      </span>
+                      <span className="text-xs text-gray-400 ml-2">
+                        ({member.designation})
+                      </span>
+                    </div>
+                    <Link href={member.linkedinUrl || "#"} target="_blank" className="text-purple-400 hover:text-purple-300 text-xs">
+                      LinkedIn
+                    </Link>
                   </div>
-                  <Link href={member.linkedinUrl || "#"} target="_blank" className="text-purple-400 hover:underline text-xs">
-                    LinkedIn
-                  </Link>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const MobilePreviewDialog = ({
+  isOpen,
+  onClose,
+  formData,
+  previewThumbnailUrl,
+  previewLogoUrl,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  formData: any;
+  previewThumbnailUrl: string | null;
+  previewLogoUrl: string | null;
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[400px] max-w-[95vw] max-h-[90vh] bg-slate-950 text-white border border-purple-500/30 rounded-2xl p-0 overflow-hidden">
+        <DialogHeader className="p-4 pb-2 border-b border-white/10 sticky top-0 bg-slate-950 z-10">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Eye className="w-4 h-4 text-purple-400" />
+              Preview
+            </DialogTitle>
+            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 hover:bg-white/10">
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </DialogHeader>
+        
+        <div className="p-4 overflow-y-auto">
+          <div className="bg-gradient-to-br from-slate-900 to-purple-950/20 rounded-2xl p-4 space-y-4">
+            {/* Thumbnail with Logo Overlay */}
+            <div className="relative w-full h-48 rounded-xl overflow-hidden bg-slate-800 border border-white/10">
+              <Image
+                src={previewThumbnailUrl || "/img/login.png"}
+                alt="Thumbnail Preview"
+                fill
+                className="object-cover opacity-80"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+              {previewLogoUrl && (
+                <div className="absolute top-4 left-4">
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/80">
+                    <Image
+                      src={previewLogoUrl}
+                      alt="Logo Preview"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Content */}
+            <div className="space-y-3">
+              <h3 className="text-xl font-bold text-white line-clamp-2">
+                {formData.startupName || "Your Startup Name"}
+              </h3>
+              
+              <p className="text-gray-300 text-sm leading-relaxed line-clamp-3">
+                {formData.oneSentenceDescription || "A brief description of your innovative startup will appear here."}
+              </p>
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2">
+                {formData.domain && (
+                  <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded-full text-xs">
+                    {formData.domain}
+                  </span>
+                )}
+                {formData.startupStage && (
+                  <span className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs">
+                    {formData.startupStage}
+                  </span>
+                )}
+                {formData.city && (
+                  <span className="px-2 py-1 bg-green-600/20 text-green-300 rounded-full text-xs">
+                    {formData.city}
+                  </span>
+                )}
+              </div>
+
+              {/* Team Members */}
+              {formData.teamMembers.length > 0 && (
+                <div>
+                  <h4 className="text-white font-semibold text-sm mb-2">Team</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {formData.teamMembers.slice(0, 3).map((member: any, idx: number) => (
+                      <span key={idx} className="bg-white/10 text-white text-xs px-2 py-1 rounded-full">
+                        {member.name}
+                      </span>
+                    ))}
+                    {formData.teamMembers.length > 3 && (
+                      <span className="bg-white/10 text-gray-400 text-xs px-2 py-1 rounded-full">
+                        +{formData.teamMembers.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Problem Statement */}
+              {formData.problemBeingSolved && (
+                <div className="pt-2 border-t border-white/10">
+                  <h4 className="text-white font-semibold text-sm mb-1">Problem</h4>
+                  <p className="text-gray-400 text-xs line-clamp-2">
+                    {formData.problemBeingSolved}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
@@ -377,6 +525,7 @@ const AddTeamMembersDialog = ({
 export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFormProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [showMobilePreview, setShowMobilePreview] = useState(false);
   const [formData, setFormData] = useState({
     fullName: "",
     emailAddress: "",
@@ -412,6 +561,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     selectedCustomLogoFile: null as File | null,
     originalLogoPath: initialData?.logo_url || null as string | null,
   });
+  
   const [previewThumbnailUrl, setPreviewThumbnailUrl] = useState<string | null>(
     initialData?.thumbnail_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.thumbnail_url}` : "/img/login.png"
   );
@@ -444,8 +594,8 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         emailAddress: initialData.email_address || "",
         phoneCountryCode: initialData.phone_number?.match(/^\+\d+/)?.[0] || "+91",
         localPhoneNumber: initialData.phone_number?.replace(/^\+\d+/, '') || "",
-        country: initialData.country || "", // Corrected mapping
-        city: initialData.city || "", // Corrected mapping
+        country: initialData.country || "",
+        city: initialData.city || "",
         startupName: initialData.startup_name || "",
         yearOfEstablishment: initialData.establishment_year || "",
         numberOfEmployees: initialData.employee_count || "",
@@ -477,8 +627,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
       setPreviewThumbnailUrl(initialData.thumbnail_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.thumbnail_url}` : "/img/login.png");
       setPreviewLogoUrl(initialData.logo_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.logo_url}` : "/img/login.png");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [initialData]);
 
   // Save data to localStorage whenever formData or step changes
   useEffect(() => {
@@ -581,7 +730,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
       case 4:
         if (!formData.oneSentenceDescription || !formData.problemBeingSolved) {
           isValid = false;
-          errorMessage = "Please fill in both open-ended questions.";
+          errorMessage = "Please fill in both description and problem statement.";
         }
         break;
       case 5:
@@ -648,8 +797,8 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         startup_name: formData.startupName,
         description: formData.oneSentenceDescription,
         location: `${formData.city}, ${formData.country}`,
-        city: formData.city, // Storing city separately
-        country: formData.country, // Storing country separately
+        city: formData.city,
+        country: formData.country,
         language: formData.language,
         domain: formData.domain,
         startup_type: formData.startupType,
@@ -713,22 +862,50 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     }
   };
 
+  const getStepIcon = (stepNumber: number) => {
+    switch (stepNumber) {
+      case 1: return User;
+      case 2: return Building2;
+      case 3: return HelpCircle;
+      case 4: return MessageSquare;
+      case 5: return Target;
+      case 6: return Upload;
+      default: return User;
+    }
+  };
+
   const renderStep = () => {
     switch (step) {
       case 1:
         return (
           <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Personal & Contact Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <User className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Personal Details</h3>
+              <p className="text-gray-400 text-sm">Let's start with your basic information</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 name="fullName"
                 placeholder="Full Name"
                 value={formData.fullName}
                 onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500"
                 required
               />
-              <div className="flex gap-2">
+              <Input
+                name="emailAddress"
+                type="email"
+                placeholder="Email Address"
+                value={formData.emailAddress}
+                onChange={handleInputChange}
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500"
+                required
+              />
+              <div className="flex gap-2 sm:col-span-2">
                 <CountryCodeSelect
                   value={formData.phoneCountryCode}
                   onValueChange={(value) => setFormData({ ...formData, phoneCountryCode: value })}
@@ -739,28 +916,19 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   placeholder="Phone Number"
                   value={formData.localPhoneNumber}
                   onChange={handleInputChange}
-                  className="flex-1 bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+                  className="flex-1 bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500"
                   required
                 />
               </div>
-              <Input
-                name="emailAddress"
-                type="email"
-                placeholder="Email Address"
-                value={formData.emailAddress}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-                required
-              />
               <Select
                 name="country"
                 value={formData.country}
                 onValueChange={(value) => handleSelectChange("country", value)}
               >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Country" />
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
+                  <SelectValue placeholder="Select Country" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 max-h-60 overflow-y-auto rounded-lg">
+                <SelectContent className="bg-slate-800 text-white border-slate-700 max-h-60 overflow-y-auto rounded-xl">
                   {countryCodes.map((cc) => (
                     <SelectItem key={cc.name} value={cc.name}>
                       {cc.name}
@@ -773,139 +941,161 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 placeholder="City"
                 value={formData.city}
                 onChange={handleInputChange}
-                className="md:col-span-2 bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500"
                 required
               />
             </div>
-            <div className="flex justify-end items-center pt-4">
-              <Button type="button" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
+            
+            <div className="flex justify-end pt-4">
+              <Button type="button" onClick={handleNext} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl px-8 h-12">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         );
+        
       case 2:
         return (
           <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Startup Overview</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Building2 className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Startup Overview</h3>
+              <p className="text-gray-400 text-sm">Tell us about your startup and team</p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
                 name="startupName"
                 placeholder="Startup Name"
                 value={formData.startupName}
                 onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500 sm:col-span-2"
                 required
               />
+              
               <Select
                 name="startupType"
                 value={formData.startupType}
                 onValueChange={(val) => handleSelectChange("startupType", val)}
               >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
                   <SelectValue placeholder="Startup Category" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
+                <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>{category}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              
+              <Select name="domain" value={formData.domain} onValueChange={(val) => handleSelectChange("domain", val)}>
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
+                  <SelectValue placeholder="Domain" />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
+                  <SelectItem value="AI/ML">AI/ML</SelectItem>
+                  <SelectItem value="Healthcare">Healthcare</SelectItem>
+                  <SelectItem value="Education">Education</SelectItem>
+                  <SelectItem value="Fintech">Fintech</SelectItem>
+                  <SelectItem value="E-commerce">E-commerce</SelectItem>
+                  <SelectItem value="SaaS">SaaS</SelectItem>
+                  <SelectItem value="IoT">IoT</SelectItem>
+                  <SelectItem value="Blockchain">Blockchain</SelectItem>
+                </SelectContent>
+              </Select>
+              
               <Input
                 name="yearOfEstablishment"
                 placeholder="Year of Establishment"
                 type="number"
+                min="1900"
+                max="2024"
                 value={formData.yearOfEstablishment}
                 onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500"
               />
+              
               <Select
                 name="numberOfEmployees"
                 value={formData.numberOfEmployees}
                 onValueChange={(val) => handleSelectChange("numberOfEmployees", val)}
               >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="No. of Employees" />
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
+                  <SelectValue placeholder="Team Size" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="1-10">1-10</SelectItem>
-                  <SelectItem value="11-50">11-50</SelectItem>
-                  <SelectItem value="51-200">51-200</SelectItem>
-                  <SelectItem value="200+">200+</SelectItem>
+                <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
+                  <SelectItem value="1-10">1-10 employees</SelectItem>
+                  <SelectItem value="11-50">11-50 employees</SelectItem>
+                  <SelectItem value="51-200">51-200 employees</SelectItem>
+                  <SelectItem value="200+">200+ employees</SelectItem>
                 </SelectContent>
               </Select>
-              <Select name="domain" value={formData.domain} onValueChange={(val) => handleSelectChange("domain", val)}>
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Domain" />
-                </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="AI">AI</SelectItem>
-                  <SelectItem value="Healthcare">Healthcare</SelectItem>
-                  <SelectItem value="Education">Education</SelectItem>
-                  <SelectItem value="Fintech">Fintech</SelectItem>
-                  <SelectItem value="Software Development">Software Development</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Consulting">Consulting</SelectItem>
-                </SelectContent>
-              </Select>
+              
               <Select
                 name="language"
                 value={formData.language}
                 onValueChange={(val) => handleSelectChange("language", val)}
               >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
-                  <SelectValue placeholder="Language" />
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
+                  <SelectValue placeholder="Primary Language" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
+                <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
                   <SelectItem value="English">English</SelectItem>
                   <SelectItem value="Hindi">Hindi</SelectItem>
                   <SelectItem value="Spanish">Spanish</SelectItem>
                   <SelectItem value="French">French</SelectItem>
                   <SelectItem value="German">German</SelectItem>
+                  <SelectItem value="Mandarin">Mandarin</SelectItem>
                 </SelectContent>
               </Select>
+              
               <Select
                 name="startupStage"
                 value={formData.startupStage}
                 onValueChange={(val) => handleSelectChange("startupStage", val)}
               >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
                   <SelectValue placeholder="Startup Stage" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
-                  <SelectItem value="Idea">Idea</SelectItem>
+                <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
+                  <SelectItem value="Idea">Idea Stage</SelectItem>
                   <SelectItem value="Prototype">Prototype</SelectItem>
-                  <SelectItem value="Seed">Seed</SelectItem>
+                  <SelectItem value="MVP">MVP</SelectItem>
                   <SelectItem value="Growth">Growth</SelectItem>
                   <SelectItem value="Scale-up">Scale-up</SelectItem>
                 </SelectContent>
               </Select>
+              
               <Select
                 name="revenueModel"
                 value={formData.revenueModel}
                 onValueChange={(val) => handleSelectChange("revenueModel", val)}
               >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
                   <SelectValue placeholder="Revenue Model" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
+                <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
                   <SelectItem value="B2B">B2B</SelectItem>
                   <SelectItem value="B2C">B2C</SelectItem>
                   <SelectItem value="B2B2C">B2B2C</SelectItem>
                   <SelectItem value="Subscription">Subscription</SelectItem>
                   <SelectItem value="Freemium">Freemium</SelectItem>
-                  <SelectItem value="Ad-based">Ad-based</SelectItem>
+                  <SelectItem value="Transaction-based">Transaction-based</SelectItem>
                 </SelectContent>
               </Select>
+              
               <Select
                 name="fundingStage"
                 value={formData.fundingStage}
                 onValueChange={(val) => handleSelectChange("fundingStage", val)}
               >
-                <SelectTrigger className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500">
+                <SelectTrigger className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500">
                   <SelectValue placeholder="Funding Stage" />
                 </SelectTrigger>
-                <SelectContent className="bg-neutral-800 text-neutral-50 border-neutral-700 rounded-lg">
+                <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
+                  <SelectItem value="Bootstrapped">Bootstrapped</SelectItem>
                   <SelectItem value="Pre-Seed">Pre-Seed</SelectItem>
                   <SelectItem value="Seed">Seed</SelectItem>
                   <SelectItem value="Series A">Series A</SelectItem>
@@ -913,500 +1103,788 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectItem value="Series C+">Series C+</SelectItem>
                 </SelectContent>
               </Select>
-              <Input
-                name="instagramUrl"
-                placeholder="Instagram URL (Optional)"
-                value={formData.instagramUrl}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-              />
-              <Input
-                name="linkedinUrl"
-                placeholder="LinkedIn URL (Optional)"
-                value={formData.linkedinUrl}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
-              />
+              
               <Input
                 name="websiteUrl"
                 placeholder="Website URL (Optional)"
                 value={formData.websiteUrl}
                 onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg h-14 px-4 focus-visible:ring-purple-500"
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500"
+              />
+              
+              <Input
+                name="linkedinUrl"
+                placeholder="LinkedIn URL (Optional)"
+                value={formData.linkedinUrl}
+                onChange={handleInputChange}
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500"
+              />
+              
+              <Input
+                name="instagramUrl"
+                placeholder="Instagram URL (Optional)"
+                value={formData.instagramUrl}
+                onChange={handleInputChange}
+                className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl h-12 px-4 focus-visible:ring-purple-500 focus-visible:border-purple-500 sm:col-span-2"
               />
             </div>
-            <div className="flex flex-col gap-3">
-              <Button
-                type="button"
-                onClick={() => setShowAddMemberDialog(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add Team Member
-              </Button>
-              <div className="flex flex-wrap gap-2">
-                {formData.teamMembers.map((member, idx) => (
-                  <span key={idx} className="bg-purple-700 text-white px-3 py-1 rounded-full text-xs font-medium">
-                    {member.name} ({member.designation})
-                  </span>
-                ))}
+            
+            {/* Team Members Section */}
+            <div className="space-y-4 pt-4 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <h4 className="text-lg font-semibold text-white">Team Members</h4>
+                <Button
+                  type="button"
+                  onClick={() => setShowAddMemberDialog(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl px-4 py-2 text-sm"
+                >
+                  <Plus className="mr-2 h-4 w-4" /> Add Member
+                </Button>
               </div>
+              
+              {formData.teamMembers.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {formData.teamMembers.map((member, idx) => (
+                    <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h5 className="font-semibold text-white text-sm">{member.name}</h5>
+                          <p className="text-gray-400 text-xs">{member.designation}</p>
+                        </div>
+                        <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                          {member.name.charAt(0)}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 border-2 border-dashed border-white/20 rounded-xl">
+                  <User className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">No team members added yet</p>
+                  <p className="text-gray-500 text-xs">Add at least one team member to continue</p>
+                </div>
+              )}
             </div>
-            <div className="flex justify-between items-center pt-4">
+            
+            <div className="flex justify-between pt-6">
               <Button
                 type="button"
                 onClick={() => setStep(step - 1)}
                 variant="outline"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
+                className="bg-transparent border-white/20 text-white hover:bg-white/10 rounded-xl px-6 h-12"
               >
-                Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button type="button" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button type="button" onClick={handleNext} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl px-8 h-12">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         );
+        
       case 3:
         return (
           <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Needs & Challenges</h3>
-            <div className="space-y-3">
-              <p className="text-neutral-300 font-medium">What kind of support are you seeking?</p>
-              <div className="flex flex-wrap gap-2">
-                {[
-                  "Funding",
-                  "Mentorship",
-                  "Infrastructure",
-                  "HealthTech",
-                  "AgriTech",
-                  "Legal Support",
-                  "Market Access",
-                  "Hiring Support",
-                  "Other",
-                ].map((type) => (
-                  <Button
-                    key={type}
-                    type="button"
-                    variant={formData.supportNeeded.includes(type) ? "default" : "outline"}
-                    onClick={() => handleSupportNeededChange(type)}
-                    className={cn(
-                      "rounded-full px-4 py-2 text-sm transition-colors",
-                      formData.supportNeeded.includes(type)
-                        ? "bg-purple-600 hover:bg-purple-700 text-white"
-                        : "bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700",
-                    )}
-                  >
-                    {type}
-                  </Button>
-                ))}
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <HelpCircle className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Support & Challenges</h3>
+              <p className="text-gray-400 text-sm">What support do you need and what challenges are you facing?</p>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-white font-semibold mb-4 block">What kind of support are you seeking?</label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    "Funding",
+                    "Mentorship", 
+                    "Technical Support",
+                    "Legal Support",
+                    "Market Access",
+                    "Talent Acquisition",
+                    "Infrastructure",
+                    "Networking",
+                    "Other",
+                  ].map((type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={formData.supportNeeded.includes(type) ? "default" : "outline"}
+                      onClick={() => handleSupportNeededChange(type)}
+                      className={cn(
+                        "rounded-xl h-12 text-sm font-medium transition-all duration-200",
+                        formData.supportNeeded.includes(type)
+                          ? "bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg"
+                          : "bg-white/5 border-white/20 text-gray-300 hover:bg-white/10 hover:border-white/30",
+                      )}
+                    >
+                      {type}
+                    </Button>
+                  ))}
+                </div>
+                {formData.supportNeeded.length > 0 && (
+                  <p className="text-sm text-gray-400 mt-2">
+                    {formData.supportNeeded.length} support type(s) selected
+                  </p>
+                )}
+              </div>
+              
+              <div>
+                <label className="text-white font-semibold mb-3 block">Describe your major challenges</label>
+                <Textarea
+                  name="majorChallenges"
+                  placeholder="Tell us about the biggest obstacles your startup is currently facing. Be specific about technical, financial, market, or operational challenges..."
+                  value={formData.majorChallenges}
+                  onChange={handleInputChange}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl min-h-[120px] px-4 py-3 focus-visible:ring-purple-500 focus-visible:border-purple-500 resize-none"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  {formData.majorChallenges.length}/500 characters
+                </p>
               </div>
             </div>
-            <Textarea
-              name="majorChallenges"
-              placeholder="Describe the major challenges your startup is currently facing."
-              value={formData.majorChallenges}
-              onChange={handleInputChange}
-              className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[120px] px-4 py-3 focus-visible:ring-purple-500"
-              required
-            />
-            <div className="flex justify-between items-center pt-4">
+            
+            <div className="flex justify-between pt-6">
               <Button
                 type="button"
                 onClick={() => setStep(step - 1)}
                 variant="outline"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
+                className="bg-transparent border-white/20 text-white hover:bg-white/10 rounded-xl px-6 h-12"
               >
-                Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button type="button" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button type="button" onClick={handleNext} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl px-8 h-12">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         );
+        
       case 4:
         return (
           <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Open-Ended Questions</h3>
-            <div className="space-y-2">
-              <p className="text-neutral-300 font-medium">Describe your startup in one concise sentence.</p>
-              <Textarea
-                name="oneSentenceDescription"
-                placeholder="E.g., 'We are building an AI-powered platform to revolutionize healthcare diagnostics.'"
-                value={formData.oneSentenceDescription}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[80px] px-4 py-3 focus-visible:ring-purple-500"
-                required
-              />
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <MessageSquare className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Tell Your Story</h3>
+              <p className="text-gray-400 text-sm">Help us understand your startup's mission and impact</p>
             </div>
-            <div className="space-y-2">
-              <p className="text-neutral-300 font-medium">
-                What specific problem are you solving in your country/region?
-              </p>
-              <Textarea
-                name="problemBeingSolved"
-                placeholder="Describe the problem and its impact. E.g., 'Lack of access to affordable mental health services in rural areas, leading to poor well-being.'"
-                value={formData.problemBeingSolved}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[120px] px-4 py-3 focus-visible:ring-purple-500"
-                required
-              />
+            
+            <div className="space-y-6">
+              <div>
+                <label className="text-white font-semibold mb-3 block">
+                  Describe your startup in one compelling sentence
+                </label>
+                <Textarea
+                  name="oneSentenceDescription"
+                  placeholder="Example: 'We're building an AI-powered platform that helps small farmers increase crop yields by 40% through predictive analytics and real-time monitoring.'"
+                  value={formData.oneSentenceDescription}
+                  onChange={handleInputChange}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl min-h-[100px] px-4 py-3 focus-visible:ring-purple-500 focus-visible:border-purple-500 resize-none"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  {formData.oneSentenceDescription.length}/300 characters
+                </p>
+              </div>
+              
+              <div>
+                <label className="text-white font-semibold mb-3 block">
+                  What specific problem are you solving?
+                </label>
+                <Textarea
+                  name="problemBeingSolved"
+                  placeholder="Describe the problem in detail - who faces it, why it matters, and what the current solutions are lacking. Include the market size and impact if possible..."
+                  value={formData.problemBeingSolved}
+                  onChange={handleInputChange}
+                  className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl min-h-[140px] px-4 py-3 focus-visible:ring-purple-500 focus-visible:border-purple-500 resize-none"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  {formData.problemBeingSolved.length}/500 characters
+                </p>
+              </div>
             </div>
-            <div className="flex justify-between items-center pt-4">
+            
+            <div className="flex justify-between pt-6">
               <Button
                 type="button"
                 onClick={() => setStep(step - 1)}
                 variant="outline"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
+                className="bg-transparent border-white/20 text-white hover:bg-white/10 rounded-xl px-6 h-12"
               >
-                Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button type="button" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button type="button" onClick={handleNext} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl px-8 h-12">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         );
+        
       case 5:
         return (
           <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Future Plans & Vision</h3>
-            <p className="text-neutral-300">
-              Share your vision for the next 1-3 years. What are your key milestones and long-term goals?
-            </p>
-            <div className="space-y-4">
-              <Textarea
-                name="futurePlans.goal1"
-                placeholder="What's your first goal?"
-                value={formData.futurePlans.goal1}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[80px] px-4 py-3 focus-visible:ring-purple-500"
-                required
-              />
-              <Textarea
-                name="futurePlans.goal2"
-                placeholder="What's your second goal?"
-                value={formData.futurePlans.goal2}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[80px] px-4 py-3 focus-visible:ring-purple-500"
-                required
-              />
-              <Textarea
-                name="futurePlans.goal3"
-                placeholder="What's your third and last goal?"
-                value={formData.futurePlans.goal3}
-                onChange={handleInputChange}
-                className="bg-[rgba(255,255,255,0.15)] border-[rgba(255,255,255,0.4)] text-white placeholder:text-neutral-400 rounded-lg min-h-[80px] px-4 py-3 focus-visible:ring-purple-500"
-                required
-              />
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Target className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Future Vision</h3>
+              <p className="text-gray-400 text-sm">What are your key milestones and long-term goals?</p>
             </div>
-            <div className="flex justify-between items-center pt-4">
+            
+            <div className="space-y-6">
+              <p className="text-gray-300 text-center">
+                Share your vision for the next 1-3 years. What are the three most important goals that will define your success?
+              </p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-white font-semibold mb-3 block flex items-center gap-2">
+                    <span className="w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                    First Priority Goal
+                  </label>
+                  <Textarea
+                    name="futurePlans.goal1"
+                    placeholder="Example: Launch our MVP and acquire 1,000 active users within 6 months"
+                    value={formData.futurePlans.goal1}
+                    onChange={handleInputChange}
+                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl min-h-[80px] px-4 py-3 focus-visible:ring-purple-500 focus-visible:border-purple-500 resize-none"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-white font-semibold mb-3 block flex items-center gap-2">
+                    <span className="w-6 h-6 bg-pink-600 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                    Second Priority Goal
+                  </label>
+                  <Textarea
+                    name="futurePlans.goal2"
+                    placeholder="Example: Raise Series A funding and expand to 3 new markets"
+                    value={formData.futurePlans.goal2}
+                    onChange={handleInputChange}
+                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl min-h-[80px] px-4 py-3 focus-visible:ring-purple-500 focus-visible:border-purple-500 resize-none"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="text-white font-semibold mb-3 block flex items-center gap-2">
+                    <span className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">3</span>
+                    Third Priority Goal
+                  </label>
+                  <Textarea
+                    name="futurePlans.goal3"
+                    placeholder="Example: Build strategic partnerships and achieve profitability"
+                    value={formData.futurePlans.goal3}
+                    onChange={handleInputChange}
+                    className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl min-h-[80px] px-4 py-3 focus-visible:ring-purple-500 focus-visible:border-purple-500 resize-none"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex justify-between pt-6">
               <Button
                 type="button"
                 onClick={() => setStep(step - 1)}
                 variant="outline"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
+                className="bg-transparent border-white/20 text-white hover:bg-white/10 rounded-xl px-6 h-12"
               >
-                Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
-              <Button type="button" onClick={handleNext} className="bg-purple-600 hover:bg-purple-700 text-white">
+              <Button type="button" onClick={handleNext} className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl px-8 h-12">
                 Next <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </div>
         );
+        
       case 6:
         return (
           <div className="space-y-6">
-            <h3 className="text-[30px] font-semibold text-white">Review & Submit</h3>
-            <p className="text-neutral-300">Upload a thumbnail and logo for your profile.</p>
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-600 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Upload className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Final Step</h3>
+              <p className="text-gray-400 text-sm">Upload your media and review before submission</p>
+            </div>
             
-            {/* Thumbnail Upload */}
-            <div className="space-y-4">
-              <p className="text-neutral-300 font-semibold">1. Upload Thumbnail (16:9)</p>
-              <div className="flex items-center gap-4">
-                <input
-                  type="file"
-                  id="custom-thumbnail-upload"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleCustomThumbnailFileChange}
-                />
-                <Button
-                  type="button"
-                  onClick={() => document.getElementById("custom-thumbnail-upload")?.click()}
-                  className="flex items-center justify-center gap-2 bg-neutral-800 border-neutral-700 text-neutral-50 hover:bg-neutral-700"
-                >
-                  <ImageIcon className="h-5 w-5" />
-                  {formData.selectedCustomThumbnailFile ? "Change Thumbnail" : formData.originalThumbnailPath ? "Change Existing" : "Upload Thumbnail"}
-                </Button>
-                {formData.selectedCustomThumbnailFile && (
-                  <span className="text-sm text-neutral-400 truncate max-w-[150px]">
-                    {formData.selectedCustomThumbnailFile.name}
-                  </span>
-                )}
-                {!formData.selectedCustomThumbnailFile && formData.originalThumbnailPath && (
-                  <span className="text-sm text-neutral-400 truncate max-w-[150px]">
-                    Existing: <a href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${formData.originalThumbnailPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
-                  </span>
-                )}
+            <div className="space-y-8">
+              {/* Thumbnail Upload */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <ImageIcon className="w-5 h-5 text-purple-400" />
+                  Thumbnail Image (16:9 ratio)
+                </h4>
+                
+                <div className="border-2 border-dashed border-white/20 rounded-xl p-6 hover:border-white/40 transition-colors">
+                  <div className="text-center">
+                    <input
+                      type="file"
+                      id="thumbnail-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleCustomThumbnailFileChange}
+                    />
+                    
+                    {previewThumbnailUrl && previewThumbnailUrl !== "/img/login.png" ? (
+                      <div className="space-y-4">
+                        <div className="relative w-full max-w-sm mx-auto h-32 rounded-lg overflow-hidden">
+                          <Image
+                            src={previewThumbnailUrl}
+                            alt="Thumbnail preview"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => document.getElementById("thumbnail-upload")?.click()}
+                          variant="outline"
+                          className="bg-white/5 border-white/20 text-white hover:bg-white/10 rounded-xl"
+                        >
+                          Change Thumbnail
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto">
+                          <ImageIcon className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <div>
+                          <Button
+                            type="button"
+                            onClick={() => document.getElementById("thumbnail-upload")?.click()}
+                            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl"
+                          >
+                            Upload Thumbnail
+                          </Button>
+                          <p className="text-xs text-gray-400 mt-2">
+                            Recommended: 1600x900px or any 16:9 ratio image
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-neutral-400">
-                * Thumbnail must be 16:9 ratio. A crop tool will appear if needed.
-              </p>
-            </div>
 
-            {/* Logo Upload */}
-            <div className="space-y-4 mt-6">
-              <p className="text-neutral-300 font-semibold">2. Upload Logo (Circular)</p>
-              <div className="flex items-center gap-4">
-                <input
-                  type="file"
-                  id="custom-logo-upload"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleCustomLogoFileChange}
-                />
-                <Button
-                  type="button"
-                  onClick={() => document.getElementById("custom-logo-upload")?.click()}
-                  className="flex items-center justify-center gap-2 bg-neutral-800 border-neutral-700 text-neutral-50 hover:bg-neutral-700"
-                >
-                  <ImageIcon className="h-5 w-5" />
-                  {formData.selectedCustomLogoFile ? "Change Logo" : formData.originalLogoPath ? "Change Existing" : "Upload Logo"}
-                </Button>
-                {formData.selectedCustomLogoFile && (
-                  <span className="text-sm text-neutral-400 truncate max-w-[150px]">
-                    {formData.selectedCustomLogoFile.name}
-                  </span>
-                )}
-                 {!formData.selectedCustomLogoFile && formData.originalLogoPath && (
-                  <span className="text-sm text-neutral-400 truncate max-w-[150px]">
-                    Existing: <a href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}${formData.originalLogoPath}`} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">View</a>
-                  </span>
-                )}
+              {/* Logo Upload */}
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-400" />
+                  Company Logo (Square/Circle)
+                </h4>
+                
+                <div className="border-2 border-dashed border-white/20 rounded-xl p-6 hover:border-white/40 transition-colors">
+                  <div className="text-center">
+                    <input
+                      type="file"
+                      id="logo-upload"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleCustomLogoFileChange}
+                    />
+                    
+                    {previewLogoUrl && previewLogoUrl !== "/img/login.png" ? (
+                      <div className="space-y-4">
+                        <div className="relative w-20 h-20 mx-auto rounded-full overflow-hidden border-2 border-white/20">
+                          <Image
+                            src={previewLogoUrl}
+                            alt="Logo preview"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => document.getElementById("logo-upload")?.click()}
+                          variant="outline"
+                          className="bg-white/5 border-white/20 text-white hover:bg-white/10 rounded-xl"
+                        >
+                          Change Logo
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto">
+                          <Sparkles className="w-8 h-8 text-gray-400" />
+                        </div>
+                        <div>
+                          <Button
+                            type="button"
+                            onClick={() => document.getElementById("logo-upload")?.click()}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 rounded-xl"
+                          >
+                            Upload Logo
+                          </Button>
+                          <p className="text-xs text-gray-400 mt-2">
+                            Will be automatically cropped to circle shape
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-              <p className="text-sm text-neutral-400">
-                * Logo will be cropped to a circle automatically.
-              </p>
-            </div>
 
+              {/* Consent */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <div className="flex items-start space-x-3">
+                  <Checkbox
+                    id="consent"
+                    checked={formData.consentAgreed}
+                    onCheckedChange={(checked) => setFormData({ ...formData, consentAgreed: checked as boolean })}
+                    className="mt-1 border-white/30 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                  />
+                  <div>
+                    <Label htmlFor="consent" className="text-white font-medium cursor-pointer text-sm">
+                      I agree to the terms and privacy policy
+                    </Label>
+                    <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                      By submitting this form, you consent to your data being used for platform features, research, and collaboration opportunities. We respect your privacy and will never share your personal information without permission.
+                    </p>
+                  </div>
+                </div>
+              </div>
 
-            <div className="flex items-center space-x-2 pt-4">
-              <Checkbox
-                id="consent"
-                checked={formData.consentAgreed}
-                onCheckedChange={(checked) => setFormData({ ...formData, consentAgreed: checked as boolean })}
-                className="border-neutral-700 data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
-              />
-              <Label htmlFor="consent" className="text-neutral-300 text-sm cursor-pointer">
-                I agree that my data can be used for research and collaboration under the platform's privacy policy.
-              </Label>
+              {submissionError && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                  <p className="text-red-400 text-sm">{submissionError}</p>
+                </div>
+              )}
             </div>
-            {submissionError && <p className="text-red-500 text-sm mt-4">{submissionError}</p>}
-            <div className="flex justify-between items-center pt-4">
+            
+            <div className="flex justify-between pt-6">
               <Button
                 type="button"
                 onClick={() => setStep(step - 1)}
                 variant="outline"
-                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 border-neutral-700"
+                className="bg-transparent border-white/20 text-white hover:bg-white/10 rounded-xl px-6 h-12"
               >
-                Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back
               </Button>
               <Button
                 type="submit"
-                className="bg-purple-600 text-white hover:bg-purple-700"
                 disabled={isSubmitting || !formData.consentAgreed}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl px-8 h-12 font-semibold"
               >
-                {isSubmitting ? "Submitting..." : (initialData ? "Update Profile" : "Submit for Review")}
+                {isSubmitting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    {initialData ? "Update Profile" : "Submit for Review"}
+                    <CheckCircle2 className="ml-2 h-4 w-4" />
+                  </>
+                )}
               </Button>
             </div>
           </div>
         );
+        
       default:
         return null;
     }
   };
 
-  const renderPreviewContent = () => (
-    <div className="p-6 lg:p-8 space-y-6 bg-[#1B0E2B] rounded-[8.95px] shadow-lg relative border border-[#4A0080] max-w-[441px] mx-auto lg:px-8 lg:pt-8">
-      <div className="relative w-[369px] h-[218px] rounded-[15px] overflow-hidden bg-neutral-900 flex items-center justify-center border border-neutral-700">
-        <Image
-          src={previewThumbnailUrl || "/img/login.png"}
-          alt="Video Thumbnail"
-          fill
-          style={{ objectFit: "cover" }}
-          className="opacity-70"
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          {previewLogoUrl && (
-            <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-white">
-               <Image
-                src={previewLogoUrl}
-                alt="Startup Logo"
-                fill
-                className="object-cover"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="space-y-4">
-        <h3 className="text-3xl font-bold text-white">{formData.startupName || "Your Startup Name"}</h3>
-        <p className="text-neutral-300 text-sm leading-relaxed">
-          {formData.oneSentenceDescription || "A brief description of your innovative startup goes here."}
-        </p>
-        {formData.problemBeingSolved && (
-          <p className="text-neutral-400 text-xs">
-            <span className="font-semibold">Problem:</span> {formData.problemBeingSolved}
-          </p>
-        )}
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-neutral-400 text-[17.9px]">
-          {formData.city && <span>{formData.city}</span>}
-          {formData.city && formData.language && <span>•</span>}
-          {formData.language && <span>{formData.language}</span>}
-          {(formData.city || formData.language) && formData.domain && <span>•</span>}
-          {formData.domain && <span>{formData.domain}</span>}
-          {!formData.city && !formData.language && !formData.domain && (
-            <>
-              <span>City</span>
-              <span>•</span>
-              <span>Language</span>
-              <span>•</span>
-              <span>Domain</span>
-            </>
-          )}
-        </div>
-        {formData.teamMembers.length > 0 && (
-          <div className="mt-4">
-            <h4 className="text-white font-semibold mb-2">Team</h4>
-            <div className="flex flex-wrap gap-2">
-              {formData.teamMembers.map((member: any, idx: number) => (
-                <span key={idx} className="bg-purple-700 text-white text-xs px-3 py-1 rounded-full">
-                  {member.name} ({member.designation})
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
   const steps = [
-    "Personal Details",
-    "Startup Overview",
-    "Needs & Challenges",
-    "Open-Ended Questions",
-    "Future Plans",
-    "Review & Submit",
+    { label: "Personal Details", icon: User },
+    { label: "Startup Overview", icon: Building2 },
+    { label: "Support & Challenges", icon: HelpCircle },
+    { label: "Tell Your Story", icon: MessageSquare },
+    { label: "Future Vision", icon: Target },
+    { label: "Final Step", icon: Upload },
   ];
 
   return (
-    <div className="min-h-screen bg-[#0E0617] py-8">
-      <div className="max-w-7xl mx-auto px-4 lg:px-8">
-        <header className="flex items-center mt-32 justify-between mb-10"></header>
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
-          <div className="p-6 lg:p-8 space-y-8 bg-[#0E0616] rounded-xl shadow-lg border border-[rgba(255,255,255,0.6)]">
-            <div className="relative flex justify-between items-center w-full mb-8 text-xs">
-              <div
-                className="absolute left-0 h-1 bg-purple-600 rounded-full transition-all duration-500 ease-in-out"
-                style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
-              />
-              <div className="absolute left-0 right-0 h-1 bg-neutral-700 rounded-full" />
-              {steps.map((label, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-center z-10 cursor-pointer group"
-                  onClick={() => setStep(index + 1)}
-                >
-                  <div
-                    className={cn(
-                      "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-300",
-                      step > index
-                        ? "border-white bg-white shadow-lg shadow-white/50"
-                        : "border-[#818181] bg-[#0E0617] group-hover:border-purple-500",
-                    )}
-                  >
-                    {step > index ? (
-                      <CheckCircle2 className="h-5 w-5 text-[#0E0617]" />
-                    ) : (
-                      <span
-                        className={cn(
-                          "text-base font-bold",
-                          step > index ? "text-[#0E0617]" : "text-neutral-400 group-hover:text-purple-300",
-                        )}
-                      >
-                        {index + 1}
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className={cn(
-                      "mt-3 text-base text-center font-medium hidden md:block transition-colors",
-                      step >= index + 1 ? "text-white" : "text-neutral-500 group-hover:text-neutral-300",
-                    )}
-                  >
-                    {label}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (step === steps.length) handleSubmit(e);
-              }}
-              className="mt-8"
+    <>
+      {/* Custom Styles */}
+      <style jsx global>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #a855f7;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 0 0 1px #a855f7;
+        }
+        
+        .slider::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: #a855f7;
+          cursor: pointer;
+          border: 2px solid #ffffff;
+          box-shadow: 0 0 0 1px #a855f7;
+        }
+      `}</style>
+
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-900">
+        <div className="container mx-auto px-4 py-8 pt-24">
+          {/* Mobile Preview Button */}
+          <div className="lg:hidden fixed top-24 right-4 z-40">
+            <Button
+              onClick={() => setShowMobilePreview(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full w-12 h-12 p-0 shadow-lg"
             >
-              {renderStep()}
-            </form>
-          </div>
-          <div className="hidden lg:block">
-            <h3 className="text-2xl font-bold text-white mb-4">Live Preview</h3>
-            {renderPreviewContent()}
-          </div>
-        </div>
-      </div>
-      {showAddMemberDialog && (
-        <AddTeamMembersDialog
-          isOpen={showAddMemberDialog}
-          onClose={() => setShowAddMemberDialog(false)}
-          teamMembers={formData.teamMembers}
-          setTeamMembers={(members) => setFormData({ ...formData, teamMembers: members })}
-        />
-      )}
-      {showThumbnailCropModal && cropImageUrl && (
-        <AspectRatioCropper
-          imageUrl={cropImageUrl}
-          onCropComplete={handleCroppedThumbnail}
-          onClose={() => setShowThumbnailCropModal(false)}
-        />
-      )}
-      {showLogoCropModal && cropLogoUrl && (
-        <CircularCropper
-          imageUrl={cropLogoUrl}
-          onCropComplete={handleCroppedLogo}
-          onClose={() => setShowLogoCropModal(false)}
-        />
-      )}
-      <Dialog open={showSuccessDialog}>
-        <DialogContent className="sm:max-w-[400px] bg-[#2A0050] text-white border-[#4A0080] rounded-xl">
-          <DialogHeader>
-            <DialogTitle className="text-white text-xl font-bold">Registration Successful!</DialogTitle>
-          </DialogHeader>
-          <div className="py-4 text-lg font-semibold text-center flex flex-col items-center gap-2">
-            <CheckCircle2 className="h-12 w-12 text-purple-400" />
-            Your registration has been submitted.
-            <span className="text-purple-400 mt-1">Wait for approval.</span>
-          </div>
-          <div className="flex justify-center">
-            <Button className="bg-purple-600 text-white" disabled>
-              Redirecting to My Profiles...
+              <Eye className="w-5 h-5" />
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8">
+            {/* Main Form */}
+            <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-3xl p-6 sm:p-8">
+              {/* Progress Bar */}
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white">
+                    {initialData ? "Update Startup Profile" : "Create Startup Profile"}
+                  </h2>
+                  <span className="text-sm text-gray-400">
+                    Step {step} of {steps.length}
+                  </span>
+                </div>
+                
+                {/* Desktop Step Indicators */}
+                <div className="hidden sm:flex justify-between items-center mb-8">
+                  <div className="absolute w-full h-0.5 bg-gray-700 top-6" />
+                  <div 
+                    className="absolute h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 top-6 transition-all duration-500"
+                    style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}
+                  />
+                  
+                  {steps.map((stepInfo, index) => {
+                    const StepIcon = stepInfo.icon;
+                    const isCompleted = step > index + 1;
+                    const isCurrent = step === index + 1;
+                    
+                    return (
+                      <div key={index} className="relative z-10 flex flex-col items-center">
+                        <div
+                          className={cn(
+                            "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all duration-300 cursor-pointer",
+                            isCompleted
+                              ? "bg-gradient-to-r from-purple-600 to-pink-600 border-purple-600 text-white"
+                              : isCurrent
+                              ? "bg-white/10 border-purple-500 text-purple-400"
+                              : "bg-gray-800 border-gray-600 text-gray-400"
+                          )}
+                          onClick={() => setStep(index + 1)}
+                        >
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-5 h-5" />
+                          ) : (
+                            <StepIcon className="w-5 h-5" />
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            "mt-2 text-xs text-center font-medium transition-colors max-w-20",
+                            isCurrent ? "text-white" : "text-gray-400"
+                          )}
+                        >
+                          {stepInfo.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Mobile Progress Bar */}
+                <div className="sm:hidden">
+                  <div className="w-full bg-gray-700 rounded-full h-2 mb-4">
+                    <div
+                      className="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${(step / steps.length) * 100}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <div className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+                        {/* <steps> </steps>[step - 1].icon className="w-4 h-4 text-white" /> */}
+                      </div>
+                      <span className="text-white font-medium text-sm">
+                        {steps[step - 1].label}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Content */}
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (step === steps.length) handleSubmit(e);
+                }}
+              >
+                {renderStep()}
+              </form>
+            </div>
+
+            {/* Desktop Preview Sidebar */}
+            <div className="hidden lg:block sticky top-24 h-fit">
+              <div className="bg-white/[0.02] backdrop-blur-xl border border-white/10 rounded-3xl p-6">
+                <div className="flex items-center gap-2 mb-6">
+                  <Eye className="w-5 h-5 text-purple-400" />
+                  <h3 className="text-lg font-bold text-white">Live Preview</h3>
+                </div>
+                
+                <div className="bg-gradient-to-br from-slate-900 to-purple-950/20 rounded-2xl p-4 space-y-4">
+                  {/* Thumbnail with Logo Overlay */}
+                  <div className="relative w-full h-48 rounded-xl overflow-hidden bg-slate-800 border border-white/10">
+                    <Image
+                      src={previewThumbnailUrl || "/img/login.png"}
+                      alt="Thumbnail Preview"
+                      fill
+                      className="object-cover opacity-80"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    {previewLogoUrl && previewLogoUrl !== "/img/login.png" && (
+                      <div className="absolute top-4 left-4">
+                        <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-white/80">
+                          <Image
+                            src={previewLogoUrl}
+                            alt="Logo Preview"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-3">
+                    <h3 className="text-xl font-bold text-white line-clamp-2">
+                      {formData.startupName || "Your Startup Name"}
+                    </h3>
+                    
+                    <p className="text-gray-300 text-sm leading-relaxed line-clamp-3">
+                      {formData.oneSentenceDescription || "A brief description of your innovative startup will appear here."}
+                    </p>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2">
+                      {formData.domain && (
+                        <span className="px-2 py-1 bg-purple-600/20 text-purple-300 rounded-full text-xs">
+                          {formData.domain}
+                        </span>
+                      )}
+                      {formData.startupStage && (
+                        <span className="px-2 py-1 bg-blue-600/20 text-blue-300 rounded-full text-xs">
+                          {formData.startupStage}
+                        </span>
+                      )}
+                      {formData.city && (
+                        <span className="px-2 py-1 bg-green-600/20 text-green-300 rounded-full text-xs">
+                          {formData.city}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Team Members */}
+                    {formData.teamMembers.length > 0 && (
+                      <div>
+                        <h4 className="text-white font-semibold text-sm mb-2">Team ({formData.teamMembers.length})</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {formData.teamMembers.slice(0, 3).map((member: any, idx: number) => (
+                            <span key={idx} className="bg-white/10 text-white text-xs px-2 py-1 rounded-full">
+                              {member.name}
+                            </span>
+                          ))}
+                          {formData.teamMembers.length > 3 && (
+                            <span className="bg-white/10 text-gray-400 text-xs px-2 py-1 rounded-full">
+                              +{formData.teamMembers.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Preview Dialog */}
+        <MobilePreviewDialog
+          isOpen={showMobilePreview}
+          onClose={() => setShowMobilePreview(false)}
+          formData={formData}
+          previewThumbnailUrl={previewThumbnailUrl}
+          previewLogoUrl={previewLogoUrl}
+        />
+
+        {/* Other Dialogs */}
+        {showAddMemberDialog && (
+          <AddTeamMembersDialog
+            isOpen={showAddMemberDialog}
+            onClose={() => setShowAddMemberDialog(false)}
+            teamMembers={formData.teamMembers}
+            setTeamMembers={(members) => setFormData({ ...formData, teamMembers: members })}
+          />
+        )}
+
+        {showThumbnailCropModal && cropImageUrl && (
+          <AspectRatioCropper
+            imageUrl={cropImageUrl}
+            onCropComplete={handleCroppedThumbnail}
+            onClose={() => setShowThumbnailCropModal(false)}
+          />
+        )}
+
+        {showLogoCropModal && cropLogoUrl && (
+          <CircularCropper
+            imageUrl={cropLogoUrl}
+            onCropComplete={handleCroppedLogo}
+            onClose={() => setShowLogoCropModal(false)}
+          />
+        )}
+
+        {/* Success Dialog */}
+        <Dialog open={showSuccessDialog}>
+          <DialogContent className="sm:max-w-[400px] bg-slate-950 text-white border border-green-500/30 rounded-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold text-center">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-white" />
+                </div>
+                Success!
+              </DialogTitle>
+            </DialogHeader>
+            <div className="text-center py-4 space-y-4">
+              <p className="text-lg font-semibold">
+                Your startup profile has been submitted successfully!
+              </p>
+              <p className="text-gray-400 text-sm">
+                Our team will review your submission and get back to you within 2-3 business days.
+              </p>
+              <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                <p className="text-green-400 text-sm">
+                  You'll receive an email confirmation shortly.
+                </p>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }

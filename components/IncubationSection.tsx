@@ -162,7 +162,7 @@ export default function IncubationSection() {
   }, []);
 
   return (
-    <section className="relative bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-900 w-full py-8 sm:py-12 overflow-hidden">
+    <section className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 w-full py-8 sm:py-12 overflow-hidden">
       {/* Enhanced CSS */}
       <style jsx>{`
         .glass-card {
@@ -230,8 +230,26 @@ export default function IncubationSection() {
       
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-to-l from-purple-600/5 to-transparent rounded-full blur-3xl" />
-        <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-gradient-to-r from-pink-600/5 to-transparent rounded-full blur-3xl" />
+        {/* Animated Background Orbs */}
+        <motion.div 
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1, 1.2, 1],
+            opacity: [0.3, 0.5, 0.3]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div 
+          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
+          animate={{ 
+            scale: [1.2, 1, 1.2],
+            opacity: [0.5, 0.3, 0.5]
+          }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
+        />
+        
+        {/* Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
@@ -313,7 +331,7 @@ export default function IncubationSection() {
         {loading ? (
           <div 
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scroll-container mobile-scroll-snap pb-4"
+            className="flex gap-4 overflow-x-auto scroll-container mobile-scroll-snap py-4"
             onScroll={checkScrollPosition}
           >
             {[...Array(4)].map((_, i) => <IncubationCardSkeleton key={i} />)}
@@ -321,7 +339,7 @@ export default function IncubationSection() {
         ) : (
           <div 
             ref={scrollContainerRef}
-            className="flex gap-4 sm:gap-6 overflow-x-auto scroll-container mobile-scroll-snap pb-4"
+            className="flex gap-4 sm:gap-6 overflow-x-auto scroll-container mobile-scroll-snap py-4"
             onScroll={checkScrollPosition}
           >
             <AnimatePresence>
