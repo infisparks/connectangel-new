@@ -55,6 +55,7 @@ const getFlagUrl = (country: string | null) => {
     'Switzerland': 'ch',
     'Sweden': 'se',
     'Israel': 'il',
+    'Indonesia': 'id'
   };
   
   const code = countryCodeMap[country] || country.toLowerCase().substring(0, 2);
@@ -64,7 +65,9 @@ const getFlagUrl = (country: string | null) => {
 // Get rating stars
 const getRatingStars = (rating: number | null) => {
   const stars = [];
-  const ratingValue = rating || 4.5;
+  // Convert the 1-100 rating to a 1-5 scale
+  const ratingValue = (rating || 0) / 20;
+  
   for (let i = 0; i < 5; i++) {
     stars.push(
       <Star
@@ -119,34 +122,46 @@ export default function IncubationSection() {
   };
 
   useEffect(() => {
-    const fetchIncubations = async () => {
+    const fetchIncubationsWithCounts = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      const { data: incubationData, error: incubationError } = await supabase
         .from('incubation')
-        .select('id, incubator_accelerator_name, country, logo_url, thumbnail_url')
+        .select('id, incubator_accelerator_name, country, logo_url, thumbnail_url, year_established, rating')
         .limit(8);
 
-      if (error) {
-        console.error("Error fetching incubations:", error);
+      if (incubationError) {
+        console.error("Error fetching incubations:", incubationError);
         setLoading(false);
         return;
       }
 
-      const formattedData = data.map((inc, index) => ({
-        id: inc.id,
-        incubator_accelerator_name: inc.incubator_accelerator_name,
-        country: inc.country,
-        logo_url: inc.logo_url || inc.thumbnail_url,
-        rating: 4.5 + (Math.random() * 0.5), // Mock rating
-        startups_count: Math.floor(Math.random() * 50) + 20, // Mock count
-        founded_year: (2010 + Math.floor(Math.random() * 14)).toString(), // Mock year
-      }));
+      // Fetch startup counts for each incubator
+      const incubationsWithCounts = await Promise.all(
+        incubationData.map(async (incubation) => {
+          const { count, error: countError } = await supabase
+            .from('creator')
+            .select('id', { count: 'exact', head: true })
+            .eq('incubation_id', incubation.id)
+            .eq('status', 'approved'); // Only count approved startups
 
-      setIncubations(formattedData);
+          if (countError) {
+            console.error(`Error counting startups for incubator ${incubation.id}:`, countError);
+          }
+
+          return {
+            ...incubation,
+            startups_count: count || 0, // Set the actual count, defaulting to 0 on error
+            founded_year: incubation.year_established?.toString() || 'N/A',
+          };
+        })
+      );
+      
+      setIncubations(incubationsWithCounts as IncubationData[]);
       setLoading(false);
     };
 
-    fetchIncubations();
+    fetchIncubationsWithCounts();
   }, []);
 
   useEffect(() => {
@@ -245,7 +260,7 @@ export default function IncubationSection() {
             >
               <ChevronRightIcon className="w-5 h-5" />
             </button>
-            <Link href="/all-incubations">
+            <Link href="/incubation">
               <div className="w-10 h-10 border border-purple-500/50 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-purple-500/20 hover:border-purple-500 ml-2">
                 <ArrowRightIcon className="w-5 h-5 text-purple-400" />
               </div>
@@ -254,7 +269,7 @@ export default function IncubationSection() {
 
           {/* Mobile View All */}
           <div className="sm:hidden">
-            <Link href="/all-incubations">
+            <Link href="/incubationupdateit">
               <Button variant="ghost" className="text-xs px-3 py-2 text-purple-400 hover:text-purple-300">
                 View All
                 <ArrowRightIcon className="w-3 h-3 ml-1" />
@@ -316,10 +331,12 @@ export default function IncubationSection() {
                         {/* Rating */}
                         <div className="flex items-center gap-2 mb-2">
                           <div className="flex items-center gap-0.5">
+                            {/* Pass the rating from the database */}
                             {getRatingStars(incubation.rating ?? null)}
                           </div>
                           <span className="text-xs text-gray-400">
-                            {(incubation.rating != null ? incubation.rating.toFixed(1) : '4.5')}
+                            {/* Display the original 1-100 rating value */}
+                            {(incubation.rating != null ? incubation.rating : 'N/A')}
                           </span>
                         </div>
                         
