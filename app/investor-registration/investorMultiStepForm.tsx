@@ -16,36 +16,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CountryCodeSelect } from "@/components/country-code-select";
 import { supabase } from "@/lib/supabaselib";
-
-// Placeholder for InvestorProfile, assuming it's structured like this
-interface InvestorProfile {
-  id: string;
-  user_id: string;
-  full_name: string | null;
-  email_address: string | null;
-  phone_country_code: string | null;
-  local_phone_number: string | null;
-  country: string | null;
-  city: string | null;
-  linkedin_profile: string | null;
-  investor_type: string | null;
-  typical_investment_range: string | null;
-  investment_stage_preference: string[] | null;
-  preferred_sectors_industries: string[] | null;
-  other_sector_industry: string | null;
-  has_invested_before: boolean | null;
-  number_of_startups_invested: number | null;
-  example_startups: string | null;
-  average_ticket_size: string | null;
-  looking_for_new_opportunities: boolean | null;
-  investment_criteria: string | null;
-  support_offered_apart_from_funding: string[] | null;
-  other_support_type: string | null;
-  require_specific_country_region: boolean | null;
-  specific_country_region: string | null;
-  bucket_amount: string | null;
-  status: string;
-}
+import { InvestorProfile } from "@/types";
 
 type InvestorMultiStepFormProps = {
   userId: string;

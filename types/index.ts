@@ -147,25 +147,25 @@ export interface InvestorProfile {
   local_phone_number: string;
   country: string;
   city: string;
-  linkedin_profile?: string;
+  linkedin_profile?: string | null;
   investor_type: string;
   typical_investment_range: string;
   investment_stage_preference: string[];
   preferred_sectors_industries: string[];
-  other_sector_industry?: string;
+  other_sector_industry?: string | null;
   has_invested_before: boolean;
-  number_of_startups_invested?: number;
-  example_startups?: string;
+  number_of_startups_invested?: number | string | null;
+  example_startups?: string | null;
   average_ticket_size?: string;
   looking_for_new_opportunities: boolean;
   investment_criteria: string;
   support_offered_apart_from_funding: string[];
-  other_support_type?: string;
+  other_support_type?: string | null;
   require_specific_country_region: boolean;
-  specific_country_region?: string;
+  specific_country_region?: string | null;
   status: "pending" | "approved" | "rejected" | "needs_update";
   reason?: string;
-  bucket_amount?: number;
+  bucket_amount?: number | string | null;
 }
 
 export interface MentorProfile {
