@@ -44,47 +44,6 @@ export default function HeroSection() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.9 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: {
-        duration: 0.8,
-        ease: [0.645, 0.045, 0.355, 1],
-        type: "spring",
-        stiffness: 100
-      }
-    },
-  };
-
-  const mobileButtonVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: {
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.6, ease: "easeOut" }
-    },
-    exit: {
-      opacity: 0,
-      x: 20,
-      transition: { duration: 0.3 }
-    }
-  };
-
   // Auto-rotate graphs
   useEffect(() => {
     const interval = setInterval(() => {
@@ -213,7 +172,6 @@ export default function HeroSection() {
 
   return (
     <section id="home" className="relative min-h-screen flex flex-col justify-center overflow-hidden">
-      {/* Enhanced CSS for animations and effects */}
       <style jsx>{`
         .shine-text {
           background: linear-gradient(
@@ -230,21 +188,6 @@ export default function HeroSection() {
           animation: shine 4s ease-in-out infinite;
         }
 
-        .shine-text-slow {
-          background: linear-gradient(
-            90deg,
-            #a020f0 0%,
-            #ff00ff 25%,
-            #00d4ff 50%,
-            #ff00ff 75%,
-            #a020f0 100%
-          );
-          background-size: 300% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine 6s ease-in-out infinite;
-        }
-
         @keyframes shine {
           0%, 100% {
             background-position: 0% center;
@@ -259,15 +202,6 @@ export default function HeroSection() {
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .floating-animation {
-          animation: floating 6s ease-in-out infinite;
-        }
-
-        @keyframes floating {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
         }
 
         .pulse-glow {
@@ -287,7 +221,7 @@ export default function HeroSection() {
         }
       `}</style>
 
-      {/* Enhanced Background with Gradient Overlay */}
+      {/* Background with Gradient Overlay */}
       <div
         className="absolute inset-0 bg-no-repeat bg-center bg-cover"
         style={{
@@ -295,21 +229,6 @@ export default function HeroSection() {
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-purple-900/30 to-black/90"></div>
-        {/* Animated particles effect */}
-        <div className="absolute inset-0 opacity-20">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-purple-400 rounded-full animate-pulse"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${3 + Math.random() * 2}s`
-              }}
-            />
-          ))}
-        </div>
       </div>
 
       {/* Main Content */}
@@ -317,16 +236,12 @@ export default function HeroSection() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 py-8 lg:py-16">
             
-            {/* Left Column: Enhanced Text and Search */}
-            <motion.div
+            {/* Left Column: Text and Search */}
+            <div
               className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:w-[60%] space-y-6 lg:space-y-8"
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.3 }}
             >
-              {/* Enhanced Main Heading */}
-              <motion.div className="space-y-3 lg:space-y-4" variants={itemVariants}>
+              {/* Main Heading */}
+              <div className="space-y-3 lg:space-y-4">
                 <div className="flex items-center justify-center lg:justify-start mb-4">
                   <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400 mr-2 animate-pulse" />
                   <span className="text-purple-300 text-sm sm:text-base font-medium tracking-wider uppercase">
@@ -342,59 +257,45 @@ export default function HeroSection() {
                     lineHeight: "1.1"
                   }}
                 >
-                  <motion.span
+                  <span
                     className="block"
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5, duration: 0.8 }}
                   >
                     Where Global Angels
-                  </motion.span>
-                  <motion.span
+                  </span>
+                  <span
                     className="block"
-                    initial={{ opacity: 0, x: -50 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7, duration: 0.8 }}
                   >
                     Discovers Tomorrow's
-                  </motion.span>
-                  <motion.span
+                  </span>
+                  <span
                     className="shine-text block"
                     style={{ fontFamily: "Poppins, sans-serif" }}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 0.9, duration: 1, type: "spring" }}
                   >
                     Unicorns.
-                  </motion.span>
+                  </span>
                 </h1>
 
-                {/* Enhanced Subheading */}
-                <motion.p
+                {/* Subheading */}
+                <p
                   className="font-light text-gray-200 leading-relaxed max-w-2xl mx-auto lg:mx-0"
                   style={{
                     fontFamily: "Poppins, sans-serif",
                     fontSize: "clamp(1rem, 3vw, 1.25rem)"
                   }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.1, duration: 0.8 }}
                 >
                   Stream stories, join events, invest in ideas – be part of the startup movement that's shaping the future.
-                </motion.p>
-              </motion.div>
+                </p>
+              </div>
 
-              {/* Enhanced Category Selection */}
-              <motion.div
+              {/* Category Selection */}
+              <div
                 className="w-full max-w-4xl"
-                variants={itemVariants}
               >
                 {/* Mobile Category Selector */}
                 <div className="block sm:hidden mb-6">
-                  <motion.button
-                    className="glass-morphism w-full p-4 rounded-2xl flex items-center justify-between text-white"
+                  <button
+                    className="glass-morphism w-full p-4 rounded-2xl flex items-center justify-between text-white transition-all"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                    whileTap={{ scale: 0.98 }}
                   >
                     <span className="font-medium">
                       {categoryButtons.find(btn => btn.active)?.label || 'Select Category'}
@@ -402,7 +303,7 @@ export default function HeroSection() {
                     <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${
                       isMobileMenuOpen ? 'rotate-180' : ''
                     }`} />
-                  </motion.button>
+                  </button>
                   
                   <AnimatePresence>
                     {isMobileMenuOpen && (
@@ -413,17 +314,12 @@ export default function HeroSection() {
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.3 }}
                       >
-                        {categoryButtons.map((button, index) => (
-                          <motion.button
+                        {categoryButtons.map((button) => (
+                          <button
                             key={button.id}
                             className={`w-full p-4 text-left border-b border-white/10 last:border-b-0 transition-colors duration-200 ${
                               button.active ? 'bg-purple-600/30 text-purple-300' : 'text-white hover:bg-white/10'
                             }`}
-                            variants={mobileButtonVariants}
-                            initial="hidden"
-                            animate="visible"
-                            exit="exit"
-                            custom={index}
                             onClick={() => {
                               if (button.id === 'startup' || button.id === 'incubation') {
                                 setActiveSearch(button.id as 'startup' | 'incubation');
@@ -434,7 +330,7 @@ export default function HeroSection() {
                             }}
                           >
                             {button.label}
-                          </motion.button>
+                          </button>
                         ))}
                       </motion.div>
                     )}
@@ -443,12 +339,9 @@ export default function HeroSection() {
 
                 {/* Desktop Category Buttons */}
                 <div className="hidden sm:flex flex-wrap justify-center lg:justify-start gap-3 mb-6">
-                  {categoryButtons.map((button, index) => (
-                    <motion.div
+                  {categoryButtons.map((button) => (
+                    <div
                       key={button.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 1.3 + index * 0.1, duration: 0.6 }}
                     >
                       <Button
                         className={`px-6 py-3 rounded-full text-sm sm:text-base font-medium transition-all duration-300 transform hover:scale-105 ${
@@ -467,17 +360,14 @@ export default function HeroSection() {
                       >
                         {button.label}
                       </Button>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
 
-                {/* Enhanced Search Input */}
-                <motion.div
+                {/* Search Input */}
+                <div
                   className="relative w-full"
                   ref={dropdownRef}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.6, duration: 0.8 }}
                 >
                   <div className="flex gap-3">
                     <div className="relative flex-1">
@@ -502,7 +392,7 @@ export default function HeroSection() {
                     </Button>
                   </div>
 
-                  {/* Enhanced Search Dropdown */}
+                  {/* Search Dropdown */}
                   <AnimatePresence>
                     {showDropdown && (
                       <motion.div
@@ -514,14 +404,10 @@ export default function HeroSection() {
                       >
                         {searchResults.length > 0 ? (
                           searchResults.map((item, index) => (
-                            <motion.div
+                            <div
                               key={item.id}
                               className="flex items-center gap-4 px-6 py-4 cursor-pointer hover:bg-white/10 transition-all duration-200 border-b border-white/5 last:border-b-0"
                               onClick={() => handleSelectResult(item.id)}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.05 }}
-                              whileHover={{ x: 5 }}
                             >
                               {item.logo_url && (
                                 <img
@@ -537,7 +423,7 @@ export default function HeroSection() {
                                     ? item.incubator_accelerator_name
                                     : ''}
                               </span>
-                            </motion.div>
+                            </div>
                           ))
                         ) : (
                           <div className="px-6 py-8 text-gray-400 text-center">
@@ -548,51 +434,38 @@ export default function HeroSection() {
                       </motion.div>
                     )}
                   </AnimatePresence>
-                </motion.div>
-              </motion.div>
-            </motion.div>
+                </div>
+              </div>
+            </div>
 
             {/* Right Column: Dynamic Graph Section - Desktop Only */}
-            <motion.div
-              className="hidden lg:flex flex-col items-center w-full lg:w-[40%] floating-animation"
-              initial={{ opacity: 0, x: 50, scale: 0.9 }}
-              whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              transition={{
-                duration: 1,
-                ease: [0.645, 0.045, 0.355, 1],
-                delay: 0.5
-              }}
-              viewport={{ once: true, amount: 0.5 }}
+            <div
+              className="hidden lg:flex flex-col items-center w-full lg:w-[40%]"
             >
-              {/* Enhanced Heading */}
-              <motion.h2
+              {/* Heading */}
+              <h2
                 className="text-gray-100 text-lg lg:text-xl font-semibold mb-6 text-center leading-tight"
                 style={{ fontFamily: "Poppins, sans-serif" }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.8 }}
               >
                 The Global Symphony of{" "}
-                <span className="shine-text-slow">Capacity Building</span>
-              </motion.h2>
+                <span className="shine-text">Capacity Building</span>
+              </h2>
 
               {/* Dynamic Graph Container */}
-              <motion.div
+              <div
                 className="relative group w-full max-w-[590px] h-auto aspect-[590/390] rounded-3xl shadow-2xl border border-purple-500/30 object-cover transition-all duration-500 p-4 glass-morphism"
-                whileHover={{ scale: 1.02 }}
-                transition={{ duration: 0.3 }}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-300" />
                 
                 {/* The dynamically loaded chart component */}
                 <DynamicGraph currentGraphIndex={currentGraphIndex} />
 
-              </motion.div>
+              </div>
 
-              {/* Enhanced Dot Slider */}
+              {/* Dot Slider */}
               <div className="flex justify-center mt-8 space-x-3">
                 {graphTitles.map((_, index) => (
-                  <motion.button
+                  <button
                     key={index}
                     className={`w-3 h-3 rounded-full transition-all duration-300 ${
                       currentGraphIndex === index
@@ -601,12 +474,10 @@ export default function HeroSection() {
                     }`}
                     onClick={() => setCurrentGraphIndex(index)}
                     aria-label={`Go to graph ${index + 1}`}
-                    whileHover={{ scale: 1.2 }}
-                    whileTap={{ scale: 0.9 }}
                   />
                 ))}
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { ArrowRightIcon, MapPin, Sparkles, Crown, ChevronLeftIcon, ChevronRightIcon, Star, TrendingUpIcon } from "lucide-react";
 import Image from "next/image";
@@ -194,72 +194,18 @@ export default function IncubationSection() {
           transform: translateY(-4px);
           box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
         }
-
-        .shine-text {
-          background: linear-gradient(90deg, #a855f7 0%, #ec4899 50%, #a855f7 100%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine 2s ease-in-out infinite;
-        }
-
-        @keyframes shine {
-          0%, 100% { background-position: 0% center; }
-          50% { background-position: 200% center; }
-        }
-
-        .pulse-border {
-          animation: pulse-border 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-border {
-          0%, 100% { border-color: rgba(255, 215, 0, 0.3); }
-          50% { border-color: rgba(255, 215, 0, 0.6); }
-        }
-
-        @media (max-width: 640px) {
-          .mobile-scroll-snap {
-            scroll-snap-type: x mandatory;
-          }
-          
-          .mobile-scroll-snap > * {
-            scroll-snap-align: start;
-          }
-        }
       `}</style>
       
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Animated Background Orbs */}
-        <motion.div 
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-        />
-        
         {/* Grid Overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6">
         {/* Header Section */}
-        <motion.div 
+        <div 
           className="flex justify-between items-center mb-6 sm:mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
         >
           <div>
             <div className="flex items-center gap-3 mb-2">
@@ -315,7 +261,7 @@ export default function IncubationSection() {
               </Button>
             </Link>
           </div>
-        </motion.div>
+        </div>
 
         {/* Mobile Scroll Hint */}
         <div className="sm:hidden mb-4 flex items-center gap-2 text-gray-500">
@@ -342,115 +288,97 @@ export default function IncubationSection() {
             className="flex gap-4 sm:gap-6 overflow-x-auto scroll-container mobile-scroll-snap py-4"
             onScroll={checkScrollPosition}
           >
-            <AnimatePresence>
-              {incubations.map((incubation, index) => (
-                <motion.div
-                  key={incubation.id}
-                  initial={{ opacity: 0, x: 50 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ 
-                    duration: 0.5, 
-                    delay: index * 0.1,
-                    ease: [0.4, 0.0, 0.2, 1] 
-                  }}
-                  viewport={{ once: true }}
-                  className="flex-shrink-0"
-                >
-                  <Link href={`/incubation/${incubation.id}`}>
-                    <div className="group glass-card rounded-2xl p-4 card-hover-effect w-[280px] sm:w-[300px]">
-                      {/* Image Container */}
-                      <div className="relative w-full h-[140px] sm:h-[160px] mb-4 overflow-hidden rounded-xl">
-                        <Image
-                          src={getPublicImageUrl(incubation.logo_url)}
-                          alt={incubation.incubator_accelerator_name}
-                          fill
-                          className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                      </div>
+            {incubations.map((incubation, index) => (
+              <div
+                key={incubation.id}
+                className="flex-shrink-0"
+              >
+                <Link href={`/incubation/${incubation.id}`}>
+                  <div className="group glass-card rounded-2xl p-4 card-hover-effect w-[280px] sm:w-[300px]">
+                    {/* Image Container */}
+                    <div className="relative w-full h-[140px] sm:h-[160px] mb-4 overflow-hidden rounded-xl">
+                      <Image
+                        src={getPublicImageUrl(incubation.logo_url)}
+                        alt={incubation.incubator_accelerator_name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </div>
 
-                      {/* Content */}
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="text-white font-bold text-lg sm:text-xl mb-2 line-clamp-2 group-hover:text-purple-300 transition-colors duration-300 leading-tight">
-                            {incubation.incubator_accelerator_name}
-                          </h3>
-                          
-                          {/* Rating */}
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className="flex items-center gap-0.5">
-                              {getRatingStars(incubation.rating ?? null)}
-                            </div>
-                            <span className="text-xs text-gray-400">
-                              {(incubation.rating != null ? incubation.rating.toFixed(1) : '4.5')}
-                            </span>
+                    {/* Content */}
+                    <div className="space-y-3">
+                      <div>
+                        <h3 className="text-white font-bold text-lg sm:text-xl mb-2 line-clamp-2 group-hover:text-purple-300 transition-colors duration-300 leading-tight">
+                          {incubation.incubator_accelerator_name}
+                        </h3>
+                        
+                        {/* Rating */}
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center gap-0.5">
+                            {getRatingStars(incubation.rating ?? null)}
                           </div>
-                          
-                          {/* Location */}
-                          <div className="flex items-center gap-2 text-gray-400 mb-3">
-                            <MapPin className="w-3 h-3" />
-                            <Image
-                              src={getFlagUrl(incubation.country)}
-                              alt={`${incubation.country} flag`}
-                              width={14}
-                              height={10}
-                              className="rounded-sm"
-                            />
-                            <span className="text-xs">
-                              {incubation.country || "Global"}
-                            </span>
+                          <span className="text-xs text-gray-400">
+                            {(incubation.rating != null ? incubation.rating.toFixed(1) : '4.5')}
+                          </span>
+                        </div>
+                        
+                        {/* Location */}
+                        <div className="flex items-center gap-2 text-gray-400 mb-3">
+                          <MapPin className="w-3 h-3" />
+                          <Image
+                            src={getFlagUrl(incubation.country)}
+                            alt={`${incubation.country} flag`}
+                            width={14}
+                            height={10}
+                            className="rounded-sm"
+                          />
+                          <span className="text-xs">
+                            {incubation.country || "Global"}
+                          </span>
+                        </div>
+                        
+                        {/* Stats */}
+                        <div className="flex items-center gap-4 text-xs">
+                          <div className="flex items-center gap-1 text-gray-400">
+                            <TrendingUpIcon className="w-3 h-3" />
+                            <span>{incubation.startups_count}+ startups</span>
                           </div>
-                          
-                          {/* Stats */}
-                          <div className="flex items-center gap-4 text-xs">
-                            <div className="flex items-center gap-1 text-gray-400">
-                              <TrendingUpIcon className="w-3 h-3" />
-                              <span>{incubation.startups_count}+ startups</span>
-                            </div>
-                            <div className="text-gray-500">
-                              Since {incubation.founded_year}
-                            </div>
+                          <div className="text-gray-500">
+                            Since {incubation.founded_year}
                           </div>
                         </div>
                       </div>
                     </div>
-                  </Link>
-                </motion.div>
-              ))}
+                  </div>
+                </Link>
+              </div>
+            ))}
 
-              {/* Premium CTA Card */}
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ 
-                  duration: 0.5, 
-                  delay: incubations.length * 0.1,
-                  ease: [0.4, 0.0, 0.2, 1] 
-                }}
-                viewport={{ once: true }}
-                className="flex-shrink-0"
-              >
-                <div className="premium-card rounded-2xl p-6 card-hover-effect w-[280px] sm:w-[300px] h-full flex flex-col items-center justify-center text-center gap-4 pulse-border">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center">
-                    <Crown className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
-                  </div>
-                  
-                  <div>
-                    <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">
-                      <span className="shine-text">Go Premium</span>
-                    </h3>
-                    <p className="text-gray-400 text-sm leading-relaxed">
-                      Unlock exclusive insights, detailed analytics, and premium networking opportunities.
-                    </p>
-                  </div>
-                  
-                  <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Upgrade Now
-                  </Button>
+            {/* Premium CTA Card */}
+            <div
+              className="flex-shrink-0"
+            >
+              <div className="premium-card rounded-2xl p-6 card-hover-effect w-[280px] sm:w-[300px] h-full flex flex-col items-center justify-center text-center gap-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-2xl flex items-center justify-center">
+                  <Crown className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
                 </div>
-              </motion.div>
-            </AnimatePresence>
+                
+                <div>
+                  <h3 className="text-white text-xl sm:text-2xl font-bold mb-2">
+                    Go Premium
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Unlock exclusive insights, detailed analytics, and premium networking opportunities.
+                  </p>
+                </div>
+                
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-6 py-2.5 text-sm font-semibold transition-all duration-300 hover:scale-105 shadow-lg">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Upgrade Now
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 

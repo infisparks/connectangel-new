@@ -4,7 +4,7 @@ import { ArrowRightIcon, TrendingUpIcon, ChevronRightIcon } from "lucide-react"
 import Image from "next/image"
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { categories } from "@/lib/data" 
 
 export default function CategoriesSection() {
@@ -20,7 +20,7 @@ export default function CategoriesSection() {
   const animationFrameId = useRef<number | null>(null)
   const scrollDirection = useRef(1)
 
-  // Enhanced intersection observer
+  // Intersection observer
   useEffect(() => {
     const scrollElement = scrollRef.current
     if (!scrollElement) return
@@ -124,36 +124,17 @@ export default function CategoriesSection() {
       
       {/* Updated Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div 
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-        />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
       <div className="relative z-20 w-full max-w-7xl mx-auto px-4 lg:px-8">
         <div className="flex flex-col gap-8 lg:gap-12">
           
-          {/* Section Header with Updated Colors */}
+          {/* Section Header */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-4">
-              <motion.div
+              <div
                 className="flex items-center gap-3"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
               >
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
@@ -162,36 +143,26 @@ export default function CategoriesSection() {
                 <span className="text-purple-300 text-sm font-semibold tracking-wider uppercase letter-spacing-wide">
                   Popular Categories
                 </span>
-              </motion.div>
+              </div>
               
-              <motion.h2
+              <h2
                 className="font-bold text-white text-3xl lg:text-4xl xl:text-5xl leading-tight tracking-tight"
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
               >
                 Explore Industries
-              </motion.h2>
+              </h2>
               
-              <motion.p
+              <p
                 className="text-slate-300 text-lg leading-relaxed max-w-2xl"
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
               >
                 Discover innovative startups across the most dynamic sectors driving global transformation.
-              </motion.p>
+              </p>
             </div>
           </div>
 
           {/* Categories Scroller */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
+          <div>
             <div
               ref={scrollRef}
               className="flex overflow-x-auto gap-4 lg:gap-6 pb-6 scroll-smooth"
@@ -206,34 +177,21 @@ export default function CategoriesSection() {
             >
               {loopedCategories.map(({ name, image }, idx) => {
                 const originalIndex = idx % categories.length
-                const isHovered = hoveredIndex === originalIndex
                 
                 return (
-                  <motion.div
+                  <div
                     key={`${name}-${idx}`}
                     ref={(el) => (cardRefs.current[idx] = el)}
                     data-original-index={originalIndex}
                     className="group flex-shrink-0 cursor-pointer"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: Math.min(idx * 0.05, 1) }}
-                    onMouseEnter={() => setHoveredIndex(originalIndex)}
-                    onMouseLeave={() => setHoveredIndex(null)}
                     onClick={() => handleCategoryClick(name)}
                   >
-                    <motion.div
-                      className="relative flex items-center gap-4 w-[220px] lg:w-[240px] h-[80px] px-5 py-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-300"
-                      whileHover={{
-                        scale: 1.02,
-                        y: -4,
-                        boxShadow: "0 20px 40px rgba(0, 0, 0, 0.3)",
-                      }}
-                      whileTap={{ scale: 0.98 }}
+                    <div
+                      className="relative flex items-center gap-4 w-[220px] lg:w-[240px] h-[80px] px-5 py-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-300 transform hover:scale-[1.02] hover:translate-y-[-4px] hover:shadow-2xl"
                     >
                       <div className="relative flex-shrink-0">
-                        <motion.div
-                          className="relative w-12 h-12 rounded-xl overflow-hidden ring-1 ring-white/20 bg-gradient-to-br from-white/10 to-white/5"
-                          whileHover={{ rotate: 3, scale: 1.05 }}
+                        <div
+                          className="relative w-12 h-12 rounded-xl overflow-hidden ring-1 ring-white/20 bg-gradient-to-br from-white/10 to-white/5 transition-transform duration-300 group-hover:rotate-3 group-hover:scale-105"
                         >
                           <Image 
                             src={image || "/placeholder.svg"} 
@@ -243,7 +201,7 @@ export default function CategoriesSection() {
                             sizes="48px"
                           />
                           <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
-                        </motion.div>
+                        </div>
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -260,35 +218,13 @@ export default function CategoriesSection() {
                         </p>
                       </div>
 
-                      <motion.div
-                        className="flex-shrink-0"
-                        initial={{ x: 0, opacity: 0.5 }}
-                        animate={{ x: isHovered ? 4 : 0, opacity: isHovered ? 1 : 0.5 }}
-                        transition={{ duration: 0.2 }}
+                      <div
+                        className="flex-shrink-0 transition-transform duration-200 group-hover:translate-x-1"
                       >
-                        <ChevronRightIcon className="w-5 h-5 text-slate-400" />
-                      </motion.div>
-
-                      {/* Hover Effect with Updated Colors */}
-                      <AnimatePresence>
-                        {isHovered && (
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-2xl pointer-events-none"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                          />
-                        )}
-                      </AnimatePresence>
-
-                      <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/3 to-transparent -translate-x-full rounded-2xl"
-                        animate={{ x: isHovered ? "240px" : "-240px" }}
-                        transition={{ duration: 0.8, ease: "easeInOut" }}
-                      />
-                    </motion.div>
-                  </motion.div>
+                        <ChevronRightIcon className="w-5 h-5 text-slate-400 transition-colors duration-200 group-hover:text-white" />
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
             </div>
@@ -298,22 +234,17 @@ export default function CategoriesSection() {
                 display: none;
               }
             `}</style>
-          </motion.div>
+          </div>
 
-          {/* Pagination Dots with Updated Colors */}
-          <motion.div 
+          {/* Pagination Dots */}
+          <div 
             className="flex justify-center items-center gap-3 pt-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
           >
             {categories.map((_, index) => (
-              <motion.button
+              <button
                 key={index}
                 onClick={() => scrollToCard(index)}
                 className="group relative"
-                whileHover={{ scale: 1.2 }}
-                whileTap={{ scale: 0.9 }}
                 aria-label={`Go to category ${index + 1}`}
               >
                 <div
@@ -323,9 +254,9 @@ export default function CategoriesSection() {
                       : "w-2 h-2 bg-white/30 hover:bg-white/50"
                   }`}
                 />
-              </motion.button>
+              </button>
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

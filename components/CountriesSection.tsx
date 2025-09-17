@@ -5,13 +5,10 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { motion } from "framer-motion"
 import { countries } from "@/lib/data"
-import ParticleEffect from "./particle-effect"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
 
 const domainFilters = [
   "All",
@@ -29,7 +26,6 @@ export default function CountriesSection() {
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
   const router = useRouter()
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   const sectionRef = useRef<HTMLElement>(null)
 
   const [showFilterDialog, setShowFilterDialog] = useState(false)
@@ -39,35 +35,6 @@ export default function CountriesSection() {
   const animationFrameId = useRef<number | null>(null)
   const scrollSpeed = 1
   const isScrollingPaused = useRef(false)
-
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (sectionRef.current) {
-        const rect = sectionRef.current.getBoundingClientRect()
-        setMousePosition({
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top,
-        })
-      }
-    }
-
-    const handleMouseLeave = () => {
-      setMousePosition({ x: -9999, y: -9999 })
-    }
-
-    const currentSectionRef = sectionRef.current
-    if (currentSectionRef) {
-      currentSectionRef.addEventListener("mousemove", handleMouseMove)
-      currentSectionRef.addEventListener("mouseleave", handleMouseLeave)
-    }
-
-    return () => {
-      if (currentSectionRef) {
-        currentSectionRef.removeEventListener("mousemove", handleMouseMove)
-        currentSectionRef.removeEventListener("mouseleave", handleMouseLeave)
-      }
-    }
-  }, [])
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -178,26 +145,15 @@ export default function CountriesSection() {
 
   return (
     <section ref={sectionRef} className="relative py-8 sm:py-12 lg:py-16 bg-[#000A18] overflow-hidden">
-      <ParticleEffect />
-      <motion.div
-        className="absolute inset-0 pointer-events-none z-10"
-        style={{
-          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(135, 0, 255, 0.12) 0%, transparent 40%)`,
-          filter: "blur(60px)",
-          opacity: mousePosition.x === -9999 ? 0 : 1,
-          transition: "opacity 0.3s ease-out",
-        }}
-      />
       <div className="relative z-20 container mx-auto px-3 sm:px-4 lg:px-6 max-w-7xl">
         <div className="flex flex-col space-y-4 sm:space-y-6 lg:space-y-8">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0">
-            <motion.h2
+            <h2
               className="font-semibold text-xl sm:text-2xl lg:text-3xl xl:text-4xl text-white leading-tight"
               style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              initial={{ opacity: 1, y: 0 }}
             >
               Explore by Countries
-            </motion.h2>
+            </h2>
             <Button
               variant="link"
               className="text-white/90 flex items-center gap-1.5 text-sm sm:text-base lg:text-lg hover:text-purple-400 transition-colors duration-200 p-0 h-auto font-medium self-start sm:self-center"
@@ -221,17 +177,11 @@ export default function CountriesSection() {
               onMouseLeave={startAutoScroll}
             >
               {loopedCountries.map(({ name, image }, idx) => (
-                <motion.div
+                <div
                   key={`${name}-${idx}`}
                   ref={(el) => (cardRefs.current[idx] = el)}
                   data-original-index={idx % countries.length}
-                  className="flex-shrink-0 flex items-center gap-2 sm:gap-3 w-[140px] sm:w-[160px] lg:w-[180px] h-[52px] sm:h-[60px] lg:h-[68px] px-3 sm:px-4 lg:px-[15px] py-2 sm:py-2.5 lg:py-[10px] rounded-lg sm:rounded-xl border border-white/20 cursor-pointer bg-white/[0.08] hover:bg-white/[0.12] backdrop-blur-sm transition-all duration-200"
-                  whileHover={{
-                    scale: 1.02,
-                    borderColor: "rgba(255, 255, 255, 0.35)",
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ duration: 0.15 }}
+                  className="flex-shrink-0 flex items-center gap-2 sm:gap-3 w-[140px] sm:w-[160px] lg:w-[180px] h-[52px] sm:h-[60px] lg:h-[68px] px-3 sm:px-4 lg:px-[15px] py-2 sm:py-2.5 lg:py-[10px] rounded-lg sm:rounded-xl border border-white/20 cursor-pointer bg-white/[0.08] hover:bg-white/[0.12] hover:border-white/35 backdrop-blur-sm transition-all duration-200"
                   onClick={() => handleCountryCardClick(name)}
                 >
                   <div className="relative w-[32px] sm:w-[36px] lg:w-[40px] h-[32px] sm:h-[36px] lg:h-[40px] rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10">
@@ -249,7 +199,7 @@ export default function CountriesSection() {
                   >
                     {name}
                   </span>
-                </motion.div>
+                </div>
               ))}
               <style jsx>{`
                 div[ref="scrollRef"]::-webkit-scrollbar {

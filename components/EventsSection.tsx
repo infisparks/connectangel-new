@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { useRef, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import ParticleEffect from "./particle-effect"
 
 // Enhanced dummy data with more realistic information
 const events = [
@@ -28,7 +26,7 @@ const events = [
     id: 2,
     title: "AI & The Future of Design",
     organizer: "Pixel Perfect Inc.",
-    organizerImage: "https://images.unsplash.com/photo-1494790108755-2616b5a6a111?w=40&h=40&fit=crop&crop=face",
+    organizerImage: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face",
     location: "San Francisco, USA",
     timeAgo: "1 day ago",
     eventImage: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400&h=250&fit=crop",
@@ -109,40 +107,7 @@ export default function EventsSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
   const [activeIndex, setActiveIndex] = useState(0)
-  const [hoveredCard, setHoveredCard] = useState<number | null>(null)
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
-  const sectionRef = useRef<HTMLElement>(null)
   const router = useRouter()
-
-  // Unified mouse move effect for both background and cinematic effects
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (sectionRef.current) {
-        const rect = sectionRef.current.getBoundingClientRect()
-        setMousePosition({
-          x: event.clientX - rect.left,
-          y: event.clientY - rect.top,
-        })
-      }
-    }
-
-    const handleMouseLeave = () => {
-      setMousePosition({ x: -9999, y: -9999 })
-    }
-
-    const currentSectionRef = sectionRef.current
-    if (currentSectionRef) {
-      currentSectionRef.addEventListener("mousemove", handleMouseMove)
-      currentSectionRef.addEventListener("mouseleave", handleMouseLeave)
-    }
-
-    return () => {
-      if (currentSectionRef) {
-        currentSectionRef.removeEventListener("mousemove", handleMouseMove)
-        currentSectionRef.removeEventListener("mouseleave", handleMouseLeave)
-      }
-    }
-  }, [])
 
   useEffect(() => {
     const scrollElement = scrollRef.current
@@ -197,43 +162,11 @@ export default function EventsSection() {
 
   return (
     <section 
-      ref={sectionRef}
       id="events" 
       className="relative w-full py-16 lg:py-24 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 overflow-hidden"
     >
-      {/* Enhanced Particle Effect */}
-      <ParticleEffect />
-
-      {/* Cinematic Background Effects */}
+      {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div
-          className="absolute inset-0 pointer-events-none z-10"
-          style={{
-            background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.08) 30%, transparent 60%)`,
-            filter: "blur(80px)",
-            opacity: mousePosition.x === -9999 ? 0 : 1,
-            transition: "opacity 0.6s ease-out",
-          }}
-        />
-        
-        {/* Animated Background Orbs */}
-        <motion.div 
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-        />
-        
         {/* Grid Overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
@@ -241,37 +174,27 @@ export default function EventsSection() {
       <div className="relative z-20 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col gap-12 lg:gap-16">
           
-          {/* Enhanced Section Header */}
+          {/* Section Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-6">
             <div className="space-y-2 sm:space-y-3">
-              <motion.h2 
+              <h2 
                 className="font-black text-white text-4xl lg:text-6xl xl:text-7xl leading-tight tracking-tight"
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
               >
                 <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
                   Trending
                 </span>{" "}
                 Events
-              </motion.h2>
-              <motion.p
+              </h2>
+              <p
                 className="text-white/70 text-sm sm:text-base lg:text-lg max-w-md"
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
               >
                 Discover amazing events happening in your tech community
-              </motion.p>
+              </p>
             </div>
             
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
+            <div>
               <Button
                 variant="ghost"
                 className="group text-white/90 flex items-center gap-2 sm:gap-3 text-sm sm:text-base lg:text-lg hover:text-white transition-all duration-300 hover:bg-white/10 rounded-full px-4 sm:px-6 py-2 sm:py-3 backdrop-blur-sm border border-white/20 hover:border-white/40"
@@ -281,15 +204,11 @@ export default function EventsSection() {
                 Explore More
                 <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 transition-transform duration-300 group-hover:translate-x-1" />
               </Button>
-            </motion.div>
+            </div>
           </div>
 
           {/* Events Scrollable Container */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
+          <div>
             <div
               ref={scrollRef}
               className="flex overflow-x-auto gap-4 sm:gap-6 lg:gap-8 pb-4 sm:pb-6 scroll-smooth snap-x snap-mandatory"
@@ -299,59 +218,35 @@ export default function EventsSection() {
               }}
             >
               {events.map((event, index) => (
-                <motion.div
+                <div
                   key={event.id}
                   ref={(el) => (cardRefs.current[index] = el)}
                   className="group flex-shrink-0 snap-center"
                   style={{ width: "min(340px, 85vw)" }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                  onMouseEnter={() => setHoveredCard(event.id)}
-                  onMouseLeave={() => setHoveredCard(null)}
                 >
                   <div className="relative h-full">
                     {/* Card Container */}
-                    <motion.div
-                      className="relative h-full bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/10 group-hover:border-white/20 overflow-hidden shadow-2xl transition-all duration-500"
-                      whileHover={{ 
-                        scale: 1.02,
-                        borderColor: "rgba(255, 255, 255, 0.4)",
-                      }}
-                      transition={{ duration: 0.3 }}
+                    <div
+                      className="relative h-full bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-white/10 group-hover:border-white/20 overflow-hidden shadow-2xl transition-all duration-500 transform hover:scale-[1.02] hover:shadow-2xl"
                     >
                       {/* Featured Badge */}
-                      <AnimatePresence>
-                        {event.featured && (
-                          <motion.div
-                            className="absolute top-3 sm:top-4 right-3 sm:right-4 z-20"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                          >
-                            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-2 sm:px-3 py-1 rounded-full shadow-lg">
-                              Featured
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {event.featured && (
+                        <div className="absolute top-3 sm:top-4 right-3 sm:right-4 z-20">
+                          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black text-xs font-bold px-2 sm:px-3 py-1 rounded-full shadow-lg">
+                            Featured
+                          </div>
+                        </div>
+                      )}
 
                       {/* Live Indicator */}
-                      <AnimatePresence>
-                        {event.isLive && (
-                          <motion.div
-                            className="absolute top-3 sm:top-4 left-3 sm:left-4 z-20"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                          >
-                            <div className="flex items-center gap-1.5 sm:gap-2 bg-red-500/90 text-white text-xs font-bold px-2 sm:px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
-                              <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
-                              LIVE
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      {event.isLive && (
+                        <div className="absolute top-3 sm:top-4 left-3 sm:left-4 z-20">
+                          <div className="flex items-center gap-1.5 sm:gap-2 bg-red-500/90 text-white text-xs font-bold px-2 sm:px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
+                            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
+                            LIVE
+                          </div>
+                        </div>
+                      )}
 
                       <div className="p-4 sm:p-5 lg:p-6 flex flex-col h-full min-h-[420px] sm:min-h-[450px] lg:min-h-[480px]">
                         {/* Event Image */}
@@ -419,37 +314,19 @@ export default function EventsSection() {
 
                         {/* Action Button */}
                         <div className="mt-auto">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
+                          <Button 
+                            className="w-full h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-sm sm:text-base rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 group"
+                            onClick={() => handleRegisterClick(event.id)}
+                            style={{ fontFamily: "Inter, system-ui, sans-serif" }}
                           >
-                            <Button 
-                              className="w-full h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-sm sm:text-base rounded-xl shadow-lg hover:shadow-blue-500/25 transition-all duration-300 group"
-                              onClick={() => handleRegisterClick(event.id)}
-                              style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-                            >
-                              Register Now
-                              <ExternalLinkIcon className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                            </Button>
-                          </motion.div>
+                            Register Now
+                            <ExternalLinkIcon className="w-4 h-4 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                          </Button>
                         </div>
                       </div>
-
-                      {/* Hover Glow Effect */}
-                      <AnimatePresence>
-                        {hoveredCard === event.id && (
-                          <motion.div
-                            className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 pointer-events-none rounded-2xl sm:rounded-3xl"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                          />
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
+                    </div>
                   </div>
-                </motion.div>
+                </div>
               ))}
 
               {/* Hide scrollbar */}
@@ -459,17 +336,14 @@ export default function EventsSection() {
                 }
               `}</style>
             </div>
-          </motion.div>
+          </div>
 
           {/* Enhanced Pagination Dots */}
-          <motion.div 
+          <div 
             className="flex justify-center items-center gap-2 sm:gap-3 mt-4 sm:mt-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
           >
             {events.map((_, index) => (
-              <motion.button
+              <button
                 key={index}
                 onClick={() => scrollToCard(index)}
                 className={`transition-all duration-300 rounded-full ${
@@ -477,12 +351,10 @@ export default function EventsSection() {
                     ? "w-8 sm:w-10 h-2 sm:h-2.5 bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg" 
                     : "w-2 sm:w-2.5 h-2 sm:h-2.5 bg-white/30 hover:bg-white/50 hover:scale-110"
                 }`}
-                whileHover={{ scale: index === activeIndex ? 1 : 1.2 }}
-                whileTap={{ scale: 0.9 }}
                 aria-label={`Go to event ${index + 1}`}
               />
             ))}
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

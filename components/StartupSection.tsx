@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { ArrowRightIcon, Star, TrendingUp, MapPin, Sparkles, Crown } from "lucide-react";
 import Image from "next/image";
@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaselib";
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 
 // Define the type for the startup data
 interface Startup {
@@ -100,54 +99,7 @@ export default function StartupSection() {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.9 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      scale: 1,
-      transition: { 
-        duration: 0.6, 
-        ease: [0.645, 0.045, 0.355, 1]
-      } 
-    },
-  };
-
-  const checkScrollButtons = () => {
-    if (scrollRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-    }
-  };
-
-  const scrollLeft = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: -320, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 320, behavior: 'smooth' });
-    }
-  };
-
+  
   useEffect(() => {
     async function getTopStartups() {
       try {
@@ -168,7 +120,7 @@ export default function StartupSection() {
           `)
           .eq("status", "approved")
           .order("rating", { ascending: false })
-          .limit(3);
+          .limit(3); // Changed limit to 3
 
         if (error) {
           throw error;
@@ -197,18 +149,9 @@ export default function StartupSection() {
     getTopStartups();
   }, []);
 
-  useEffect(() => {
-    checkScrollButtons();
-    const scrollElement = scrollRef.current;
-    if (scrollElement) {
-      scrollElement.addEventListener('scroll', checkScrollButtons);
-      return () => scrollElement.removeEventListener('scroll', checkScrollButtons);
-    }
-  }, [startups]);
-
   return (
     <section className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 w-full py-12 md:py-16 overflow-hidden">
-      {/* Enhanced CSS */}
+      {/* CSS for simple transitions and styling */}
       <style jsx>{`
         .glass-card {
           background: rgba(255, 255, 255, 0.03);
@@ -222,25 +165,13 @@ export default function StartupSection() {
           border: 1px solid rgba(255, 215, 0, 0.3);
         }
 
-        .glow-effect {
-          box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+        .hover-effect {
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        .hover-glow:hover {
-          box-shadow: 0 0 30px rgba(168, 85, 247, 0.5), 0 0 60px rgba(168, 85, 247, 0.2);
-        }
-
-        .shine-text {
-          background: linear-gradient(90deg, #a855f7 0%, #ec4899 50%, #a855f7 100%);
-          background-size: 200% auto;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          animation: shine 3s ease-in-out infinite;
-        }
-
-        @keyframes shine {
-          0%, 100% { background-position: 0% center; }
-          50% { background-position: 200% center; }
+        .hover-effect:hover {
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
         }
 
         .scroll-container {
@@ -251,55 +182,16 @@ export default function StartupSection() {
         .scroll-container::-webkit-scrollbar {
           display: none;
         }
-
-        .card-hover-effect {
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-
-        .card-hover-effect:hover {
-          transform: translateY(-8px) scale(1.02);
-        }
-
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
-          50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); }
-        }
-
-        .pulse-glow-animation {
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
       `}</style>
 
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden">
-        <motion.div 
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div 
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"
-          animate={{ 
-            scale: [1.2, 1, 1.2],
-            opacity: [0.5, 0.3, 0.5]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-        />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
-        <motion.div 
-          className="flex items-center justify-between sm:flex-row sm:items-center mb-8 gap-4"
-          initial={{ opacity: 0, y: -20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-        >
+        <div className="flex items-center justify-between sm:flex-row sm:items-center mb-8 gap-4">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl">
               <TrendingUp className="w-6 h-6 text-white" />
@@ -317,16 +209,14 @@ export default function StartupSection() {
           {/* Navigation Controls */}
           <div className="flex items-center gap-3">
             <Link href="/allstartup">
-              <motion.div 
-                className="group w-10 h-10 border-2 border-purple-500/50 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-purple-500/20 hover:border-purple-500 glow-effect"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
+              <div 
+                className="group w-10 h-10 border-2 border-purple-500/50 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-purple-500/20 hover:border-purple-500"
               >
                 <ArrowRightIcon className="w-5 h-5 text-purple-400 transition-all duration-300 group-hover:text-purple-300" />
-              </motion.div>
+              </div>
             </Link>
           </div>
-        </motion.div>
+        </div>
 
         {/* Loading State */}
         {loading && (
@@ -342,129 +232,117 @@ export default function StartupSection() {
 
         {/* Startup Cards Container */}
         {!loading && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
+          <div
+            ref={scrollRef}
+            className="flex gap-6 overflow-x-auto scroll-container py-4"
           >
-            <div 
-              ref={scrollRef}
-              className="flex gap-6 overflow-x-auto scroll-container py-4"
-              onScroll={checkScrollButtons}
-            >
-              <AnimatePresence>
-                {startups.map((startup, index) => (
-                  <motion.div
-                    key={startup.id}
-                    variants={cardVariants}
-                    className="flex-shrink-0 w-[300px]"
-                  >
-                    <Link href={`/startup/${startup.id}`}>
-                      <div className="group glass-card rounded-3xl p-5 card-hover-effect hover-glow h-[380px] flex flex-col">
-                        {/* Image Container */}
-                        <div className="relative w-full h-48 mb-4 overflow-hidden rounded-2xl">
-                          <Image
-                            src={getAbsoluteUrl(startup.thumbnail_url)}
-                            alt={startup.startup_name}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                          />
-                          
-                          {/* Overlay Effects */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          
-                          {/* Top Badge */}
-                          <div className="absolute top-3 left-3 flex gap-2">
-                            {startup.is_incubation && (
-                              <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 pulse-glow-animation">
-                                <Crown className="w-3 h-3" />
-                                {startup.incubator_accelerator_name || "Incubated"}
-                              </span>
-                            )}
-                            {index === 0 && (
-                              <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                                <Sparkles className="w-3 h-3" />
-                                #1
-                              </span>
-                            )}
-                          </div>
+            {startups.map((startup, index) => (
+              <div
+                key={startup.id}
+                className="flex-shrink-0 w-[300px]"
+              >
+                <Link href={`/startup/${startup.id}`}>
+                  <div className="group glass-card rounded-3xl p-5 hover-effect h-[380px] flex flex-col">
+                    {/* Image Container */}
+                    <div className="relative w-full h-48 mb-4 overflow-hidden rounded-2xl">
+                      <Image
+                        src={getAbsoluteUrl(startup.thumbnail_url)}
+                        alt={startup.startup_name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      
+                      {/* Overlay Effects */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      
+                      {/* Top Badge */}
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        {startup.is_incubation && (
+                          <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                            <Crown className="w-3 h-3" />
+                            {startup.incubator_accelerator_name || "Incubated"}
+                          </span>
+                        )}
+                        {index === 0 && (
+                          <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            #1
+                          </span>
+                        )}
+                      </div>
 
-                          {/* Rating Badge */}
-                          {startup.rating && (
-                            <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1">
-                              {renderStarRating(startup.rating)}
-                            </div>
-                          )}
+                      {/* Rating Badge */}
+                      {startup.rating && (
+                        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1">
+                          {renderStarRating(startup.rating)}
                         </div>
+                      )}
+                    </div>
 
-                        {/* Content */}
-                        <div className="flex-1 flex flex-col justify-between">
-                          <div>
-                            <h3 className="text-white font-bold text-xl mb-2 line-clamp-1 group-hover:text-purple-300 transition-colors duration-300">
-                              {startup.startup_name}
-                            </h3>
-                            
-                            <div className="flex items-center gap-2 text-gray-400 mb-3">
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4" />
-                                <Image
-                                  src={getFlagUrl(startup.country)}
-                                  alt={`${startup.country} flag`}
-                                  width={16}
-                                  height={12}
-                                  className="rounded-sm"
-                                />
-                                <span className="text-sm">
-                                  {startup.country || "Global"}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Action Area */}
-                          <div className="flex items-center justify-between pt-3 border-t border-gray-800 group-hover:border-purple-800 transition-colors duration-300">
-                            <span className="text-xs text-gray-500 uppercase tracking-wider">
-                              View Details
+                    {/* Content */}
+                    <div className="flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-white font-bold text-xl mb-2 line-clamp-1 group-hover:text-purple-300 transition-colors duration-300">
+                          {startup.startup_name}
+                        </h3>
+                        
+                        <div className="flex items-center gap-2 text-gray-400 mb-3">
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            <Image
+                              src={getFlagUrl(startup.country)}
+                              alt={`${startup.country} flag`}
+                              width={16}
+                              height={12}
+                              className="rounded-sm"
+                            />
+                            <span className="text-sm">
+                              {startup.country || "Global"}
                             </span>
-                            <div className="w-8 h-8 rounded-full bg-purple-600/20 flex items-center justify-center group-hover:bg-purple-600 transition-all duration-300">
-                              <ArrowRightIcon className="w-4 h-4 text-purple-400 group-hover:text-white transition-colors duration-300" />
-                            </div>
                           </div>
                         </div>
                       </div>
-                    </Link>
-                  </motion.div>
-                ))}
 
-                {/* Premium CTA Card */}
-                <motion.div
-                  variants={cardVariants}
-                  className="flex-shrink-0 w-[300px] md:w-auto md:flex-shrink"
-                >
-                  <div className="premium-card rounded-3xl p-6 card-hover-effect h-[380px] flex flex-col items-center justify-center text-center gap-6 pulse-glow-animation">
-                    <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mb-2">
-                      <Crown className="w-8 h-8 text-white" />
+                      {/* Action Area */}
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-800 group-hover:border-purple-800 transition-colors duration-300">
+                        <span className="text-xs text-gray-500 uppercase tracking-wider">
+                          View Details
+                        </span>
+                        <div className="w-8 h-8 rounded-full bg-purple-600/20 flex items-center justify-center group-hover:bg-purple-600 transition-all duration-300">
+                          <ArrowRightIcon className="w-4 h-4 text-purple-400 group-hover:text-white transition-colors duration-300" />
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div>
-                      <h3 className="text-white text-2xl font-bold mb-2">
-                        <span className="shine-text">Discover More</span>
-                      </h3>
-                      <p className="text-gray-400 text-sm leading-relaxed">
-                        Unlock premium features and get access to exclusive startup insights, detailed analytics, and investment opportunities.
-                      </p>
-                    </div>
-                    
-                    <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-bold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-500/25">
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Get Premium
-                    </Button>
                   </div>
-                </motion.div>
-              </AnimatePresence>
+                </Link>
+              </div>
+            ))}
+
+            {/* Premium CTA Card */}
+            <div
+              className="flex-shrink-0 w-[300px] md:w-auto md:flex-shrink"
+            >
+              <div className="premium-card rounded-3xl p-6 hover-effect h-[380px] flex flex-col items-center justify-center text-center gap-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mb-2">
+                  <Crown className="w-8 h-8 text-white" />
+                </div>
+                
+                <div>
+                  <h3 className="text-white text-2xl font-bold mb-2">
+                    Discover More
+                  </h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">
+                    Unlock premium features and get access to exclusive startup insights, detailed analytics, and investment opportunities.
+                  </p>
+                </div>
+                
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-bold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-500/25">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Get Premium
+                </Button>
+              </div>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Mobile Scroll Indicator */}
