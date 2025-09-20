@@ -724,16 +724,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
 
   // Load data from localStorage or initialData on first render
   useEffect(() => {
-    const savedData = localStorage.getItem('startupFormData');
-    if (savedData) {
-      const parsedData = JSON.parse(savedData);
-      setFormData(prev => ({
-        ...prev,
-        ...parsedData,
-        teamMembers: parsedData.teamMembers || []
-      }));
-      setStep(parsedData.step || 1);
-    } else if (initialData) {
+    if (initialData) {
       setFormData({
         fullName: initialData.full_name || "",
         emailAddress: initialData.email_address || "",
@@ -771,8 +762,26 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
       });
       setPreviewThumbnailUrl(initialData.thumbnail_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.thumbnail_url}` : "/img/login.png");
       setPreviewLogoUrl(initialData.logo_url ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}${initialData.logo_url}` : "/img/login.png");
+    } else {
+      const savedData = localStorage.getItem('startupFormData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        setFormData(prev => ({
+          ...prev,
+          ...parsedData,
+          teamMembers: parsedData.teamMembers || []
+        }));
+        setStep(parsedData.step || 1);
+        // Also update preview URLs if data was loaded from localStorage
+        if (parsedData.originalThumbnailPath) {
+          setPreviewThumbnailUrl(`${process.env.NEXT_PUBLIC_SUPABASE_URL}${parsedData.originalThumbnailPath}`);
+        }
+        if (parsedData.originalLogoPath) {
+          setPreviewLogoUrl(`${process.env.NEXT_PUBLIC_SUPABASE_URL}${parsedData.originalLogoPath}`);
+        }
+      }
     }
-  }, [initialData]);
+  }, [initialData, setPreviewThumbnailUrl, setPreviewLogoUrl]);
 
   // Save data to localStorage whenever formData or step changes
   useEffect(() => {
