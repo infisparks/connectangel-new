@@ -166,6 +166,7 @@ export default function AllStartupsPage() {
   const searchParams = useSearchParams();
   const countryFilter = searchParams.get("country");
   const domainFilter = searchParams.get("domain");
+  const categoryFilter = searchParams.get("category");
 
   useEffect(() => {
     async function fetchAllStartups() {
@@ -195,6 +196,9 @@ export default function AllStartupsPage() {
         if (selectedDomain && selectedDomain !== "All") {
           query = query.eq("domain", selectedDomain);
         }
+        if (categoryFilter) {
+          query = query.eq("Category", categoryFilter.replace(/-/g, ' '));
+        }
 
         const { data, error } = await query;
 
@@ -217,7 +221,7 @@ export default function AllStartupsPage() {
       }
     }
     fetchAllStartups();
-  }, [countryFilter, selectedDomain]);
+  }, [countryFilter, selectedDomain, categoryFilter]);
 
   // Filter startups based on search term
   const filteredStartups = startups.filter(startup =>

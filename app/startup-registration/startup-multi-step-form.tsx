@@ -1,11 +1,10 @@
 "use client";
 
-import type React from "react";
-import { useState, useRef, useCallback, useEffect } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import Cropper from "react-easy-crop";
-import { Plus, ImageIcon, ArrowRight, CheckCircle2, Eye, X, ArrowLeft, Upload, User, Building2, HelpCircle, MessageSquare, Target, Camera, Sparkles } from "lucide-react";
+import { Plus, ImageIcon, ArrowRight, CheckCircle2, Eye, X, ArrowLeft, Upload, User, Building2, HelpCircle, MessageSquare, Target, Camera, Sparkles, Wand2, RefreshCw } from "lucide-react";
 import { countryCodes } from "@/lib/country-codes";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,6 +85,73 @@ const categories = [
   "Education",
   "Environment",
 ];
+
+const domains = [
+  "AI/ML",
+  "Healthcare",
+  "Education",
+  "Fintech",
+  "E-commerce",
+  "SaaS",
+  "IoT",
+  "Blockchain",
+];
+
+const employeeCounts = ["1-10", "11-50", "51-200", "200+"];
+
+const languages = ["English", "Hindi", "Spanish", "French", "German", "Mandarin"];
+
+const startupStages = ["Idea", "Prototype", "MVP", "Growth", "Scale-up"];
+
+const revenueModels = ["B2B", "B2C", "B2B2C", "Subscription", "Freemium", "Transaction-based"];
+
+const fundingStages = ["Bootstrapped", "Pre-Seed", "Seed", "Series A", "Series B", "Series C+"];
+
+const supportNeededOptions = [
+  "Funding",
+  "Mentorship",
+  "Technical Support",
+  "Legal Support",
+  "Market Access",
+  "Talent Acquisition",
+  "Infrastructure",
+  "Networking",
+  "Other",
+];
+
+const defaultDummyData = {
+  fullName: "Jane Doe",
+  emailAddress: "jane.doe@example.com",
+  phoneCountryCode: "+1",
+  localPhoneNumber: "555-1234",
+  country: "United States",
+  city: "San Francisco",
+  startupName: "Innovate AI",
+  yearOfEstablishment: "2023",
+  numberOfEmployees: "1-10",
+  domain: "AI/ML",
+  language: "English",
+  startupType: "Technology",
+  startupStage: "MVP",
+  revenueModel: "Subscription",
+  fundingStage: "Bootstrapped",
+  instagramUrl: "https://instagram.com/innovateai",
+  linkedinUrl: "https://linkedin.com/company/innovateai",
+  websiteUrl: "https://innovateai.com",
+  teamMembers: [
+    { name: "John Smith", designation: "Founder", phoneCountryCode: "+1", localPhoneNumber: "555-5678", linkedinUrl: "https://linkedin.com/in/johnsmith" },
+  ],
+  supportNeeded: ["Funding", "Mentorship"],
+  majorChallenges: "Scaling our user base and securing seed funding.",
+  oneSentenceDescription: "Innovate AI is a revolutionary platform that uses machine learning to create personalized educational content for students.",
+  problemBeingSolved: "Existing educational tools are one-size-fits-all, failing to adapt to individual learning styles and paces, which leads to disengagement and poor learning outcomes. Our platform addresses this by providing dynamic, personalized content.",
+  futurePlans: {
+    goal1: "Launch a public beta and attract 1,000 active users within 6 months.",
+    goal2: "Secure $500K in seed funding to expand our engineering team.",
+    goal3: "Achieve a 90% user retention rate within the first year.",
+  },
+};
+
 
 function getCroppedImg(imageSrc: string, croppedAreaPixels: any, options: { isCircular?: boolean; aspectRatio?: number }): Promise<Blob> {
   return new Promise(async (resolve) => {
@@ -522,6 +588,84 @@ const MobilePreviewDialog = ({
   );
 };
 
+const AIDialog = ({
+  isOpen,
+  onClose,
+  onFill,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onFill: (text: string) => void;
+}) => {
+  const [inputText, setInputText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (isOpen && textareaRef.current) {
+      textareaRef.current.focus();
+    }
+  }, [isOpen]);
+
+  const handleFill = async () => {
+    if (!inputText.trim()) {
+      toast.error("Please enter some text to fill the form.");
+      return;
+    }
+    setIsLoading(true);
+    try {
+      await onFill(inputText);
+      onClose();
+    } catch (error) {
+      console.error("AI fill operation failed:", error);
+      toast.error("Failed to process AI request. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px] max-w-[95vw] bg-slate-950 text-white border border-green-500/30 rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-bold flex items-center gap-2">
+            <Wand2 className="w-5 h-5 text-green-400" />
+            AI Form Filler
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          <p className="text-sm text-gray-400">
+            Enter a startup name, a description, or paste full details. The AI will try to extract and fill the form for you. Unspecified fields will be filled with dummy data.
+          </p>
+          <Textarea
+            ref={textareaRef}
+            placeholder="E.g., 'Innovate AI is a technology startup...' or 'Innovate AI'"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            className="bg-white/5 border-white/20 text-white placeholder:text-gray-400 rounded-xl min-h-[120px] px-4 py-3 focus-visible:ring-green-500 focus-visible:border-green-500 resize-none"
+          />
+          <Button
+            onClick={handleFill}
+            disabled={isLoading}
+            className="w-full bg-green-600 hover:bg-green-700 rounded-xl h-12"
+          >
+            {isLoading ? (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Filling...
+              </>
+            ) : (
+              <>
+                <Wand2 className="w-4 h-4 mr-2" /> Fill with AI
+              </>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFormProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -576,6 +720,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
   const [cropLogoUrl, setCropLogoUrl] = useState<string | null>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [showAddMemberDialog, setShowAddMemberDialog] = useState(false);
+  const [showAIDialog, setShowAIDialog] = useState(false);
 
   // Load data from localStorage or initialData on first render
   useEffect(() => {
@@ -875,6 +1020,80 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     }
   };
 
+  const fetchStartupDetails = useCallback(async (startupName: string) => {
+    // Calling the new server-side API route instead of the public Gemini endpoint
+    try {
+      const res = await fetch('/api/ai-fill-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: startupName }),
+      });
+  
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("API route error:", errorData.error);
+        return null;
+      }
+  
+      const { data } = await res.json();
+      return data;
+  
+    } catch (err: any) {
+      console.error("An unexpected error occurred while fetching from API route:", err);
+      return null;
+    }
+  }, []);
+
+  const fillFormData = useCallback((aiData: any) => {
+    const getVal = (key: keyof typeof defaultDummyData) => {
+      // Check if aiData has a non-empty string for the key, otherwise use dummy data
+      return aiData[key] && aiData[key] !== '' ? aiData[key] : defaultDummyData[key];
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      fullName: getVal('fullName'),
+      emailAddress: getVal('emailAddress'),
+      phoneCountryCode: getVal('phoneCountryCode'),
+      localPhoneNumber: getVal('localPhoneNumber'),
+      country: getVal('country'),
+      city: getVal('city'),
+      startupName: getVal('startupName'),
+      yearOfEstablishment: getVal('yearOfEstablishment'),
+      numberOfEmployees: employeeCounts.includes(aiData.numberOfEmployees) ? aiData.numberOfEmployees : defaultDummyData.numberOfEmployees,
+      domain: domains.includes(aiData.domain) ? aiData.domain : defaultDummyData.domain,
+      language: languages.includes(aiData.language) ? aiData.language : defaultDummyData.language,
+      startupType: categories.includes(aiData.startupType) ? aiData.startupType : defaultDummyData.startupType,
+      startupStage: startupStages.includes(aiData.startupStage) ? aiData.startupStage : defaultDummyData.startupStage,
+      revenueModel: revenueModels.includes(aiData.revenueModel) ? aiData.revenueModel : defaultDummyData.revenueModel,
+      fundingStage: fundingStages.includes(aiData.fundingStage) ? aiData.fundingStage : defaultDummyData.fundingStage,
+      instagramUrl: getVal('instagramUrl'),
+      linkedinUrl: getVal('linkedinUrl'),
+      websiteUrl: getVal('websiteUrl'),
+      teamMembers: Array.isArray(aiData.teamMembers) && aiData.teamMembers.length > 0 ? aiData.teamMembers : defaultDummyData.teamMembers,
+      supportNeeded: Array.isArray(aiData.supportNeeded) && aiData.supportNeeded.every((s: string) => supportNeededOptions.includes(s)) ? aiData.supportNeeded : defaultDummyData.supportNeeded,
+      majorChallenges: getVal('majorChallenges'),
+      oneSentenceDescription: getVal('oneSentenceDescription'),
+      problemBeingSolved: getVal('problemBeingSolved'),
+      futurePlans: {
+        goal1: aiData.futurePlans?.goal1 || defaultDummyData.futurePlans.goal1,
+        goal2: aiData.futurePlans?.goal2 || defaultDummyData.futurePlans.goal2,
+        goal3: aiData.futurePlans?.goal3 || defaultDummyData.futurePlans.goal3,
+      },
+    }));
+  }, []);
+
+  const onAIInput = useCallback(async (text: string) => {
+    const aiData = await fetchStartupDetails(text);
+    if (aiData) {
+      fillFormData(aiData);
+      toast.success("Form filled with AI-generated data! ✨");
+    } else {
+      toast.info("Could not find data. Filling with dummy information.");
+      fillFormData(defaultDummyData);
+    }
+  }, [fetchStartupDetails, fillFormData]);
+
   const renderStep = () => {
     switch (step) {
       case 1:
@@ -996,14 +1215,9 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Domain" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
-                  <SelectItem value="AI/ML">AI/ML</SelectItem>
-                  <SelectItem value="Healthcare">Healthcare</SelectItem>
-                  <SelectItem value="Education">Education</SelectItem>
-                  <SelectItem value="Fintech">Fintech</SelectItem>
-                  <SelectItem value="E-commerce">E-commerce</SelectItem>
-                  <SelectItem value="SaaS">SaaS</SelectItem>
-                  <SelectItem value="IoT">IoT</SelectItem>
-                  <SelectItem value="Blockchain">Blockchain</SelectItem>
+                  {domains.map((domain) => (
+                    <SelectItem key={domain} value={domain}>{domain}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               
@@ -1027,10 +1241,9 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Team Size" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
-                  <SelectItem value="1-10">1-10 employees</SelectItem>
-                  <SelectItem value="11-50">11-50 employees</SelectItem>
-                  <SelectItem value="51-200">51-200 employees</SelectItem>
-                  <SelectItem value="200+">200+ employees</SelectItem>
+                  {employeeCounts.map((count) => (
+                    <SelectItem key={count} value={count}>{count} employees</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               
@@ -1043,12 +1256,9 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Primary Language" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
-                  <SelectItem value="English">English</SelectItem>
-                  <SelectItem value="Hindi">Hindi</SelectItem>
-                  <SelectItem value="Spanish">Spanish</SelectItem>
-                  <SelectItem value="French">French</SelectItem>
-                  <SelectItem value="German">German</SelectItem>
-                  <SelectItem value="Mandarin">Mandarin</SelectItem>
+                  {languages.map((lang) => (
+                    <SelectItem key={lang} value={lang}>{lang}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               
@@ -1061,11 +1271,9 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Startup Stage" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
-                  <SelectItem value="Idea">Idea Stage</SelectItem>
-                  <SelectItem value="Prototype">Prototype</SelectItem>
-                  <SelectItem value="MVP">MVP</SelectItem>
-                  <SelectItem value="Growth">Growth</SelectItem>
-                  <SelectItem value="Scale-up">Scale-up</SelectItem>
+                  {startupStages.map((stage) => (
+                    <SelectItem key={stage} value={stage}>{stage} Stage</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               
@@ -1078,12 +1286,9 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Revenue Model" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
-                  <SelectItem value="B2B">B2B</SelectItem>
-                  <SelectItem value="B2C">B2C</SelectItem>
-                  <SelectItem value="B2B2C">B2B2C</SelectItem>
-                  <SelectItem value="Subscription">Subscription</SelectItem>
-                  <SelectItem value="Freemium">Freemium</SelectItem>
-                  <SelectItem value="Transaction-based">Transaction-based</SelectItem>
+                  {revenueModels.map((model) => (
+                    <SelectItem key={model} value={model}>{model}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               
@@ -1096,12 +1301,9 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <SelectValue placeholder="Funding Stage" />
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 text-white border-slate-700 rounded-xl">
-                  <SelectItem value="Bootstrapped">Bootstrapped</SelectItem>
-                  <SelectItem value="Pre-Seed">Pre-Seed</SelectItem>
-                  <SelectItem value="Seed">Seed</SelectItem>
-                  <SelectItem value="Series A">Series A</SelectItem>
-                  <SelectItem value="Series B">Series B</SelectItem>
-                  <SelectItem value="Series C+">Series C+</SelectItem>
+                  {fundingStages.map((stage) => (
+                    <SelectItem key={stage} value={stage}>{stage}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               
@@ -1199,17 +1401,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
               <div>
                 <label className="text-white font-semibold mb-4 block">What kind of support are you seeking?</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {[
-                    "Funding",
-                    "Mentorship", 
-                    "Technical Support",
-                    "Legal Support",
-                    "Market Access",
-                    "Talent Acquisition",
-                    "Infrastructure",
-                    "Networking",
-                    "Other",
-                  ].map((type) => (
+                  {supportNeededOptions.map((type) => (
                     <Button
                       key={type}
                       type="button"
@@ -1600,14 +1792,14 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
     }
   };
 
-  const steps = [
+  const steps = useMemo(() => [
     { label: "Personal Details", icon: User },
     { label: "Startup Overview", icon: Building2 },
     { label: "Support & Challenges", icon: HelpCircle },
     { label: "Tell Your Story", icon: MessageSquare },
     { label: "Future Vision", icon: Target },
     { label: "Final Step", icon: Upload },
-  ];
+  ], []);
 
   return (
     <>
@@ -1637,6 +1829,17 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
 
       <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950/20 to-slate-900">
         <div className="container mx-auto px-4 py-8 pt-24">
+          {/* AI Floating Button */}
+          <div className="fixed bottom-8 right-8 z-50">
+            <Button
+              onClick={() => setShowAIDialog(true)}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-full w-14 h-14 p-0 shadow-lg animate-pulse"
+              aria-label="Fill form with AI"
+            >
+              <Wand2 className="w-6 h-6" />
+            </Button>
+          </div>
+
           {/* Mobile Preview Button */}
           <div className="lg:hidden fixed top-24 right-4 z-40">
             <Button
@@ -1717,7 +1920,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                   <div className="flex justify-center">
                     <div className="flex items-center gap-2 bg-white/10 rounded-full px-4 py-2">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
-                        {/* <steps> </steps>[step - 1].icon className="w-4 h-4 text-white" /> */}
+                        <User className="w-4 h-4 text-white" />
                       </div>
                       <span className="text-white font-medium text-sm">
                         {steps[step - 1].label}
@@ -1831,6 +2034,13 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
           formData={formData}
           previewThumbnailUrl={previewThumbnailUrl}
           previewLogoUrl={previewLogoUrl}
+        />
+
+        {/* AI Dialog */}
+        <AIDialog
+          isOpen={showAIDialog}
+          onClose={() => setShowAIDialog(false)}
+          onFill={onAIInput}
         />
 
         {/* Other Dialogs */}

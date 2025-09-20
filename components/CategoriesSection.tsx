@@ -56,7 +56,9 @@ export default function CategoriesSection() {
   }, [categories.length])
 
   const handleCategoryClick = (categoryName: string) => {
-    router.push(`/categories/${categoryName.toLowerCase().replace(/\s+/g, '-')}`)
+    const currentSearchParams = new URLSearchParams(window.location.search)
+    currentSearchParams.set('category', categoryName.replace(/\s+/g, '-'))
+    router.push(`/allstartup?${currentSearchParams.toString()}`)
   }
 
   // Improved auto-scroll with seamless looping
