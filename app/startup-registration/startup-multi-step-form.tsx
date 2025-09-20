@@ -823,6 +823,7 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
         startup_stage: formData.startupStage,
         team_members: formData.teamMembers,
         one_sentence_description: formData.oneSentenceDescription,
+        Category: formData.startupType,
       };
 
       let dbOperationError = null;

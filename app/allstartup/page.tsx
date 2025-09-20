@@ -20,6 +20,7 @@ interface Startup {
   is_incubation: boolean;
   incubation_id: string | null;
   domain: string | null;
+  one_sentence_description: string | null;
   incubation: { incubator_accelerator_name: string | null } | null;
 }
 
@@ -69,32 +70,41 @@ const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMod
   if (viewMode === "list") {
     return (
       <Link href={`/startup/${startup.id}`}>
-        <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex items-center gap-4 transition-all duration-300 ease-in-out hover:bg-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 cursor-pointer">
-          <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
+        <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex items-start gap-4 transition-all duration-300 ease-in-out hover:bg-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 cursor-pointer">
+          {/* Image container for list view with increased size and object-cover */}
+          <div className="relative w-40 h-24 sm:w-48 sm:h-28 flex-shrink-0 border border-white/10 rounded-lg p-1 bg-white/[0.03] overflow-hidden">
             <Image
               src={thumbnailUrl}
               alt={startup.startup_name}
               fill
-              className="rounded-lg object-cover"
+              className="rounded-lg object-cover" // Changed to object-cover
             />
             {startup.is_incubation && (
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
+              <div className="absolute top-2 right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-xs text-white">✓</span>
               </div>
             )}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 pt-1">
             <h3 className="text-white font-semibold text-base sm:text-lg truncate mb-1">
               {startup.startup_name}
             </h3>
-            <div className="flex items-center gap-2 mb-2">
+            <p className="text-gray-400 text-xs sm:text-sm mb-2 truncate">
+              {startup.one_sentence_description || "One sentence description not available."}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-xs sm:text-sm">{getFlagEmoji(startup.country)}</span>
               <span className="text-gray-400 text-xs sm:text-sm">
                 {startup.country || "Global"}
               </span>
+              {startup.domain && (
+                <span className="inline-block bg-white/10 text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium truncate">
+                  {startup.domain}
+                </span>
+              )}
             </div>
             {startup.is_incubation && (
-              <span className="inline-block bg-purple-600/20 text-purple-300 px-2 py-1 rounded-full text-xs font-medium">
+              <span className="inline-block mt-2 bg-purple-600/20 text-purple-300 px-2 py-1 rounded-full text-xs font-medium">
                 {startup.incubation?.incubator_accelerator_name || "Incubation"}
               </span>
             )}
@@ -107,7 +117,8 @@ const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMod
   return (
     <Link href={`/startup/${startup.id}`}>
       <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden transition-all duration-300 ease-in-out hover:scale-[1.02] hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer">
-        <div className="relative w-full h-32 sm:h-40 lg:h-44">
+        {/* Image container for grid view: increased height and using object-cover */}
+        <div className="relative w-full h-40 sm:h-48 border-b border-white/10 bg-white/[0.03] overflow-hidden">
           <Image
             src={thumbnailUrl}
             alt={startup.startup_name}
@@ -115,21 +126,28 @@ const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMod
             className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
           {startup.is_incubation && (
-            <span className="absolute top-2 left-2 bg-purple-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
+            <span className="absolute top-3 left-3 bg-purple-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
               {startup.incubation?.incubator_accelerator_name || "Incubation"}
             </span>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
         <div className="p-3 sm:p-4">
-          <h3 className="text-white font-semibold text-sm sm:text-base lg:text-lg truncate mb-2">
+          <h3 className="text-white font-semibold text-base sm:text-lg lg:text-xl truncate mb-1">
             {startup.startup_name}
           </h3>
+          <p className="text-gray-400 text-xs sm:text-sm mb-2 truncate">
+            {startup.one_sentence_description || "One sentence description not available."}
+          </p>
           <div className="flex items-center gap-2">
             <span className="text-xs sm:text-sm">{getFlagEmoji(startup.country)}</span>
             <span className="text-gray-400 text-xs sm:text-sm truncate">
               {startup.country || "Global"}
             </span>
+            {startup.domain && (
+              <span className="inline-block bg-white/10 text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium truncate">
+                {startup.domain}
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -163,6 +181,7 @@ export default function AllStartupsPage() {
             is_incubation,
             incubation_id, 
             domain,
+            one_sentence_description,
             incubation:incubation_id (
               incubator_accelerator_name
             )
@@ -173,8 +192,8 @@ export default function AllStartupsPage() {
         if (countryFilter) {
           query = query.eq("country", countryFilter);
         }
-        if (domainFilter && domainFilter !== "All") {
-          query = query.eq("domain", domainFilter);
+        if (selectedDomain && selectedDomain !== "All") {
+          query = query.eq("domain", selectedDomain);
         }
 
         const { data, error } = await query;
@@ -198,7 +217,7 @@ export default function AllStartupsPage() {
       }
     }
     fetchAllStartups();
-  }, [countryFilter, domainFilter]);
+  }, [countryFilter, selectedDomain]);
 
   // Filter startups based on search term
   const filteredStartups = startups.filter(startup =>

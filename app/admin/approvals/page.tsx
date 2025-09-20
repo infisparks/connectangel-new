@@ -219,7 +219,7 @@ export type AdminApprovalProfile =
   | CreatorApproval
   | IncubationApproval
   | InvestorApproval
-  | MentorApproval;
+  | MentorProfile;
 
 export type ProfileRoleType = "startup" | "incubation" | "investor" | "mentor";
 // --- END: All Profile types consolidated here ---
@@ -263,140 +263,72 @@ export default function AdminApprovalsPage() {
   const [activeRoleTab, setActiveRoleTab] =
     useState<ProfileRoleType>("startup");
   const [activeStatusTab, setActiveStatusTab] = useState<StatusKey>("pending");
-  const [approvals, setApprovals] = useState<
-    Record<ProfileRoleType, Record<StatusKey, AdminApprovalProfile[]>>
-  >({
-    startup: { approved: [], pending: [], rejected: [], needs_update: [] },
-    incubation: { approved: [], pending: [], rejected: [], needs_update: [] },
-    investor: { approved: [], pending: [], rejected: [], needs_update: [] },
-    mentor: { approved: [], pending: [], rejected: [], needs_update: [] },
-  });
+  const [approvals, setApprovals] = useState<AdminApprovalProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchAllApprovals = useCallback(async (currentUserId: string | null) => {
-    if (!currentUserId) {
-      throw new Error("Not authenticated. Cannot fetch data.");
-    }
-
-    const newApprovals: Record<
-      ProfileRoleType,
-      Record<StatusKey, AdminApprovalProfile[]>
-    > = {
-      startup: { approved: [], pending: [], rejected: [], needs_update: [] },
-      incubation: { approved: [], pending: [], rejected: [], needs_update: [] },
-      investor: { approved: [], pending: [], rejected: [], needs_update: [] },
-      mentor: { approved: [], pending: [], rejected: [], needs_update: [] },
-    };
-    let hasError = false;
-    let errorMessage = "";
-
-    for (const roleTab of ROLE_TABS) {
-      for (const statusTab of STATUS_TABS) {
-        let fetchedData: AdminApprovalProfile[] = [];
-        let dataError: any = null;
-
-        if (statusTab.key === "approved") {
-          const mainTableName = MAIN_TABLE_MAP[roleTab.key];
-          const { data, error } = await supabase
-            .from(mainTableName)
-            .select("*")
-            .order("created_at", { ascending: false });
-          fetchedData = (data as AdminApprovalProfile[]) || [];
-          dataError = error;
-        } else {
-          const approvalTableName = APPROVAL_TABLE_MAP[roleTab.key];
-          const { data, error } = await supabase
-            .from(approvalTableName)
-            .select("*")
-            .eq("status", statusTab.key)
-            .order("created_at", { ascending: false });
-          fetchedData = (data as AdminApprovalProfile[]) || [];
-          dataError = error;
-        }
-
-        if (dataError) {
-          console.error(
-            `Error fetching ${roleTab.key} ${statusTab.key} approvals:`,
-            dataError.message
-          );
-          errorMessage += `Error loading ${roleTab.key} ${statusTab.key}: ${dataError.message}\n`;
-          hasError = true;
-        } else {
-          newApprovals[roleTab.key][statusTab.key] = fetchedData;
-        }
-      }
-    }
-    if (hasError) {
-      throw new Error(errorMessage);
-    }
-    return newApprovals;
-  }, []);
-
-  const loadData = useCallback(
-    async (userId: string | null) => {
-      setLoading(true);
-      setError(null);
-      try {
-        const fetchedApprovals = await fetchAllApprovals(userId);
-        setApprovals(fetchedApprovals);
-      } catch (err: any) {
-        console.error("Error loading approvals:", err);
-        setError(err.message || "Failed to load approvals.");
-      } finally {
-        setLoading(false);
-      }
-    },
-    [fetchAllApprovals]
-  );
-
-  useEffect(() => {
-    const checkUserAndLoad = async () => {
-      const {
-        data: { user: currentUser },
-        error: userError,
-      } = await supabase.auth.getUser();
+  const fetchApprovals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
 
       if (userError || !currentUser) {
         setUser(null);
-        setError("User not authenticated. Please log in with an admin account.");
-        setLoading(false);
-        return;
+        throw new Error("User not authenticated. Please log in with an admin account.");
       }
       setUser(currentUser);
-      await loadData(currentUser.id);
-    };
 
-    checkUserAndLoad();
+      let fetchedData: AdminApprovalProfile[] = [];
+      let dataError: any = null;
+
+      if (activeStatusTab === "approved") {
+        const mainTableName = MAIN_TABLE_MAP[activeRoleTab];
+        const { data, error } = await supabase
+          .from(mainTableName)
+          .select("*")
+          .order("created_at", { ascending: false });
+        fetchedData = (data as AdminApprovalProfile[]) || [];
+        dataError = error;
+      } else {
+        const approvalTableName = APPROVAL_TABLE_MAP[activeRoleTab];
+        const { data, error } = await supabase
+          .from(approvalTableName)
+          .select("*")
+          .eq("status", activeStatusTab)
+          .order("created_at", { ascending: false });
+        fetchedData = (data as AdminApprovalProfile[]) || [];
+        dataError = error;
+      }
+
+      if (dataError) {
+        throw new Error(dataError.message);
+      }
+      setApprovals(fetchedData);
+    } catch (err: any) {
+      console.error("Error loading approvals:", err);
+      setError(err.message || "Failed to load approvals.");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeRoleTab, activeStatusTab]);
+
+  useEffect(() => {
+    fetchApprovals();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          setUser(session.user);
-          await loadData(session.user.id);
+      (_event, session) => {
+        if (!session?.user) {
+          router.push("/login");
         } else {
-          setUser(null);
-          setApprovals({
-            startup: { approved: [], pending: [], rejected: [], needs_update: [] },
-            incubation: { approved: [], pending: [], rejected: [], needs_update: [] },
-            investor: { approved: [], pending: [], rejected: [], needs_update: [] },
-            mentor: { approved: [], pending: [], rejected: [], needs_update: [] },
-          });
-          setError("You have been logged out or your session expired. Please log in.");
-          setLoading(false);
+          fetchApprovals();
         }
       }
     );
 
-    const handleWindowFocus = async () => {
-      console.log("Window focused, re-fetching data...");
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser();
-      if (currentUser) {
-        await loadData(currentUser.id);
-      }
+    const handleWindowFocus = () => {
+      fetchApprovals();
     };
 
     window.addEventListener("focus", handleWindowFocus);
@@ -405,7 +337,7 @@ export default function AdminApprovalsPage() {
       authListener?.subscription.unsubscribe();
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [loadData]);
+  }, [fetchApprovals, router]);
 
   const handleApprovalAction = useCallback(
     async (
@@ -417,9 +349,7 @@ export default function AdminApprovalsPage() {
       setLoading(true);
       setError(null);
       try {
-        const approvalProfile = approvals[activeRoleTab][activeStatusTab].find(
-          (p) => p.id === profileId
-        );
+        const approvalProfile = approvals.find((p) => p.id === profileId);
         if (!approvalProfile) {
           throw new Error("Profile not found in current list for action.");
         }
@@ -441,6 +371,10 @@ export default function AdminApprovalsPage() {
 
           if (activeRoleTab === "startup" || activeRoleTab === "incubation") {
               payloadForMainTable.rating = rating || (approvalProfile as CreatorApproval | IncubationApproval).rating || null;
+          }
+
+          if (activeRoleTab === "startup") {
+            payloadForMainTable.Category = (approvalProfile as CreatorApproval).startup_type; // Include Category for startup profiles
           }
 
           const { error: insertError } = await supabase.from(mainTableName).insert(payloadForMainTable);
@@ -498,22 +432,17 @@ export default function AdminApprovalsPage() {
             `${activeRoleTab} profile status updated to ${statusToStore.replace("_", " ")}!`
           );
         }
-
-        const {
-          data: { user: currentUser },
-        } = await supabase.auth.getUser();
-        if (currentUser) {
-          await loadData(currentUser.id);
-        }
+        
+        // Re-fetch only the current tab's data after a successful action
+        fetchApprovals();
       } catch (err: any) {
         console.error("Admin action error:", err);
         setError(err.message || "An unexpected error occurred during the action.");
         toast.error(err.message || "Action failed. Check console for details.");
-      } finally {
-        setLoading(false);
+        setLoading(false); // Make sure to turn off loading state on failure
       }
     },
-    [activeRoleTab, activeStatusTab, approvals, loadData]
+    [activeRoleTab, approvals, fetchApprovals]
   );
 
   const renderApprovalList = (
@@ -576,7 +505,11 @@ export default function AdminApprovalsPage() {
       </div>
       <Tabs
         value={activeRoleTab}
-        onValueChange={(value) => setActiveRoleTab(value as ProfileRoleType)}
+        onValueChange={(value) => {
+          setActiveRoleTab(value as ProfileRoleType);
+          // Reset status tab to pending to show new data
+          setActiveStatusTab("pending");
+        }}
         className="w-full"
       >
         <TabsList className="grid w-full grid-cols-4 bg-gray-800 text-gray-300">
@@ -586,14 +519,14 @@ export default function AdminApprovalsPage() {
               value={roleTab.key}
               className="data-[state=active]:bg-purple-600 data-[state=active]:text-white"
             >
-              {roleTab.label} ({Object.values(approvals[roleTab.key]).flat().length})
+              {roleTab.label}
             </TabsTrigger>
           ))}
         </TabsList>
         {ROLE_TABS.map((roleTab) => (
           <TabsContent key={roleTab.key} value={roleTab.key} className="mt-6">
             <Tabs
-              defaultValue={activeStatusTab}
+              value={activeStatusTab}
               onValueChange={(value) => setActiveStatusTab(value as StatusKey)}
               className="w-full"
             >
@@ -606,15 +539,14 @@ export default function AdminApprovalsPage() {
                       statusTab.key === "rejected" ? "data-[state=active]:bg-red-600" : ""
                     }`}
                   >
-                    {statusTab.label} (
-                    {approvals[roleTab.key][statusTab.key]?.length || 0})
+                    {statusTab.label}
                   </TabsTrigger>
                 ))}
               </TabsList>
               {STATUS_TABS.map((statusTab) => (
                 <TabsContent key={statusTab.key} value={statusTab.key} className="mt-6">
                   {renderApprovalList(
-                    approvals[roleTab.key][statusTab.key],
+                    approvals.filter(a => a.status === statusTab.key), // Filter data based on the current tab
                     roleTab.key,
                     statusTab.key
                   )}

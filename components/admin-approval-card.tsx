@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -228,7 +229,7 @@ export type AdminApprovalProfile =
   | CreatorApproval
   | IncubationApproval
   | InvestorApproval
-  | MentorApproval;
+  | MentorProfile;
 
 export type ProfileRoleType = "startup" | "incubation" | "investor" | "mentor";
 
