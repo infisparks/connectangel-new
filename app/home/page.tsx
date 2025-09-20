@@ -12,19 +12,23 @@ import Footer from '@/components/Footer'
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#000a18] text-white overflow-x-hidden">
-      {/* Navigation component added here as seen in the image */}
       <Navigation />
 
       <div className="">
         <HeroSection />
         <CountriesSection />
-        <StartupSection />
+        {/* Added id="startups" here */}
+        <div id="startups">
+          <StartupSection />
+        </div>
         <CategoriesSection />
-        <IncubationSection />
+        {/* Added id="incubations" here */}
+        <div id="incubations">
+          <IncubationSection />
+        </div>
         <EventsSection />
         <TrainingSection />
       </div>
-      {/* Assuming Footer should be rendered at the end of the page */}
       {/* <Footer /> */}
     </main>
   )

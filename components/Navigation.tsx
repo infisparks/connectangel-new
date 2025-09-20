@@ -2,26 +2,25 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { GlobeIcon, MenuIcon, XIcon, LogOutIcon } from "lucide-react"; // Import LogOutIcon
+import { GlobeIcon, MenuIcon, XIcon, LogOutIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import logo from "@/public/img/logo.png";
-import { supabase } from "@/lib/supabaselib"; // Assuming this is your client-side Supabase client
+import { supabase } from "@/lib/supabaselib";
 
 const navigationItems = [
   { label: "Home", href: "/home" },
-  { label: "Startups", href: "/startups" }, // Updated
-  { label: "Incubations", href: "/incubations" }, // Updated
+  { label: "Startups", href: "#startups" }, // Updated to use anchor link
+  { label: "Incubations", href: "#incubations" }, // Updated to use anchor link
 ];
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [user, setUser] = useState<any | null>(null); // State to hold user info
+  const [user, setUser] = useState<any | null>(null);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Determine if the current page is the admin approvals page
   const isAdminPage = pathname === "/admin/approvals";
 
   useEffect(() => {
@@ -41,7 +40,6 @@ export default function Navigation() {
     };
     fetchUser();
 
-    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user || null);
@@ -49,7 +47,6 @@ export default function Navigation() {
     );
 
     return () => {
-      // Correctly unsubscribe from the auth listener
       authListener?.subscription.unsubscribe();
     };
   }, []);
@@ -67,7 +64,7 @@ export default function Navigation() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/my-startups`, // Redirect to my-startups after login
+        redirectTo: `${window.location.origin}/my-startups`,
       },
     });
     if (error) {
@@ -82,13 +79,24 @@ export default function Navigation() {
       console.error("Error logging out:", error.message);
       alert("Error logging out: " + error.message);
     } else {
-      // Conditional redirection based on the current page
       if (isAdminPage) {
-        router.push("/login"); // Redirect admin to login page
+        router.push("/login");
       } else {
-        router.push("/"); // Default redirect for other users
+        router.push("/");
       }
     }
+  };
+
+  const handleNavigationClick = (href: string) => {
+    if (href.startsWith("#")) {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } else {
+      router.push(href);
+    }
+    setIsMenuOpen(false); // Close mobile menu after click
   };
 
   return (
@@ -135,17 +143,7 @@ export default function Navigation() {
                   {navigationItems.map((item) => (
                     <button
                       key={item.label}
-                      onClick={() => {
-                        if (item.href.startsWith("/")) {
-                          router.push(item.href);
-                        } else {
-                          // Handle anchor links (scroll to section)
-                          const element = document.querySelector(item.href);
-                          if (element) {
-                            element.scrollIntoView({ behavior: "smooth" });
-                          }
-                        }
-                      }}
+                      onClick={() => handleNavigationClick(item.href)}
                       className="font-poppins font-normal text-white text-base lg:text-lg hover:text-purple-400 transition-colors duration-200"
                     >
                       {item.label}
@@ -255,17 +253,7 @@ export default function Navigation() {
                     {navigationItems.map((item) => (
                       <button
                         key={item.label}
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          if (item.href.startsWith("/")) {
-                            router.push(item.href);
-                          } else {
-                            const element = document.querySelector(item.href);
-                            if (element) {
-                              element.scrollIntoView({ behavior: "smooth" });
-                            }
-                          }
-                        }}
+                        onClick={() => handleNavigationClick(item.href)}
                         className="font-poppins font-normal text-white text-xl hover:text-purple-400 transition-colors duration-200 py-2 text-left"
                       >
                         {item.label}
