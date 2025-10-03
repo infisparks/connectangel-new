@@ -393,7 +393,7 @@ export default function IncubationDashboardPage({ params }: { params: { id: stri
           </div>
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
             <Link href={incubation.website || "#"} target="_blank" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full px-6 py-5 sm:px-8 sm:py-6 rounded-full text-sm sm:text-base font-bold text-white border-white/50 hover:bg-white/10 transition-colors">
+              <Button variant="outline" className="w-full px-6 py-5 sm:px-8 sm:py-6 rounded-full text-sm sm:text-base font-bold text-white border-white/50 hover:bg-white/10 transition-colors bg-transparent-100">
                 Visit Website
               </Button>
             </Link>

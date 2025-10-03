@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import Head from 'next/head';
-
+import Tranisng from "@/components/Traningstartup"
 // Define the types for the fetched data
 interface Startup {
   email_address: string;
@@ -294,7 +294,7 @@ export default function StartupInfoPage({ params }: { params: { id: string } }) 
             <Link href={startup.website_url || "#"} target="_blank" className="w-full sm:w-auto">
               <Button
                 variant="outline"
-                className="w-full px-6 py-5 sm:px-8 sm:py-6 rounded-full text-sm sm:text-base font-bold text-white border-white/50 hover:bg-white/10 transition-colors"
+                className="w-full px-6 py-5 sm:px-8 sm:py-6 rounded-full text-sm sm:text-base font-bold text-white border-white/50 hover:bg-white/10 transition-colors bg-transparent-100"
               >
                 Visit Website
               </Button>
@@ -370,9 +370,9 @@ export default function StartupInfoPage({ params }: { params: { id: string } }) 
             </div>
           </section>
         )}
-
+<Tranisng />
         {/* Free Training Series Section */}
-        <section>
+        {/* <section>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl sm:text-3xl font-bold">Free Training Series</h2>
             <div className="group w-10 h-10 sm:w-12 sm:h-12 border-2 border-white/50 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-white/10 hover:border-white">
@@ -396,7 +396,7 @@ export default function StartupInfoPage({ params }: { params: { id: string } }) 
               </div>
             ))}
           </div>
-        </section>
+        </section> */}
       </main>
     </div>
   );
