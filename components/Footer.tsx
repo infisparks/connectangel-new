@@ -177,13 +177,15 @@ export default function Footer() {
                 <p className={`text-sm ${MUTED_TEXT_COLOR}`}>
                   Stay updated with our latest insights
                 </p>
-                <div className="flex flex-col sm:flex-row gap-2">
+                {/* FIX: Removed sm:flex-row. The flex-col (stacked) approach works better within the narrow lg:col-span-2 on smaller desktop/tablet views. */}
+                <div className="flex flex-col gap-2"> 
                   <input
                     type="email"
                     placeholder="Enter your email"
                     className="flex-1 px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
                   />
-                  <button className={`px-4 py-2 ${BUTTON_BG_COLOR} ${BUTTON_HOVER_COLOR} text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg whitespace-nowrap`}>
+                  {/* Made button full width to match stacked layout on small screens */}
+                  <button className={`w-full px-4 py-2 ${BUTTON_BG_COLOR} ${BUTTON_HOVER_COLOR} text-white text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg whitespace-nowrap`}>
                     Subscribe
                   </button>
                 </div>
