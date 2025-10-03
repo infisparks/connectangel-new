@@ -35,7 +35,7 @@ const legalLinks = [
 
 const contactInfo = [
   { icon: Mail, text: "hello@connectangelsott.com", href: "mailto:hello@connectangelsott.com" },
-  { icon: Phone, text: "+1 (555) 123-4567", href: "tel:+15551234567" },
+  { icon: Phone, text: "+91 84220 60195", href: "tel:+918422060195" },
   { icon: MapPin, text: "Mumbai, Maharashtra, India", href: "#location" },
 ]
 
@@ -202,7 +202,7 @@ export default function Footer() {
                 </p>
                 <div className="hidden sm:block w-1 h-1 bg-slate-600 rounded-full"></div>
                 <p className={`text-sm ${MUTED_TEXT_COLOR}`}>
-                  Made with ❤️ in India
+                  Developed by Infispark Technologies LLP
                 </p>
               </div>
 

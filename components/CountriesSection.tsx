@@ -36,6 +36,7 @@ export default function CountriesSection() {
   const scrollSpeed = 1
   const isScrollingPaused = useRef(false)
 
+  // Intersection Observer for active state
   useEffect(() => {
     const scrollElement = scrollRef.current
     if (!scrollElement) return
@@ -44,6 +45,7 @@ export default function CountriesSection() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            // Find the original index from the data-original-index attribute
             const originalIndex = cardRefs.current.findIndex(
               (ref) => ref === entry.target && ref?.dataset.originalIndex !== undefined,
             )
@@ -56,7 +58,7 @@ export default function CountriesSection() {
       {
         root: scrollElement,
         rootMargin: "0px",
-        threshold: 0.7,
+        threshold: 0.7, // Adjust threshold for better detection
       },
     )
 
@@ -75,14 +77,17 @@ export default function CountriesSection() {
     router.push("/allstartup")
   }
 
+  // Auto-scroll animation logic
   const animateScroll = useCallback(() => {
     if (scrollRef.current && !isScrollingPaused.current) {
       scrollRef.current.scrollLeft += scrollSpeed
 
       const scrollWidth = scrollRef.current.scrollWidth
+      // We loop the content by duplicating the countries array, so the original content width is half of the total scrollWidth
       const originalContentWidth = scrollWidth / 2
 
       if (scrollRef.current.scrollLeft >= originalContentWidth) {
+        // Jump back to the start of the duplicated content seamlessly
         scrollRef.current.scrollLeft = scrollRef.current.scrollLeft - originalContentWidth
       }
     }
@@ -105,10 +110,33 @@ export default function CountriesSection() {
     isScrollingPaused.current = true
   }, [])
 
+  // Start and cleanup auto-scroll on mount
   useEffect(() => {
     startAutoScroll()
     return () => stopAutoScroll()
   }, [startAutoScroll, stopAutoScroll])
+
+  // Handlers for manual interaction (Touch and Mouse)
+
+  // Mobile/Touch Handlers
+  const handleTouchStart = () => {
+    stopAutoScroll()
+  }
+
+  const handleTouchEnd = () => {
+    // Resume auto-scroll after a short delay to allow for finger lift/scroll momentum
+    setTimeout(startAutoScroll, 3000) 
+  }
+  
+  // PC/Mouse Drag Handlers (New addition for better manual control)
+  const handleMouseDown = () => {
+    stopAutoScroll()
+  }
+  
+  const handleMouseUp = () => {
+    // Resume auto-scroll after a short delay to allow for scroll momentum
+    setTimeout(startAutoScroll, 3000)
+  }
 
   const loopedCountries = [...countries, ...countries]
 
@@ -120,7 +148,7 @@ export default function CountriesSection() {
         inline: "center",
         block: "nearest",
       })
-      setTimeout(startAutoScroll, 3000)
+      setTimeout(startAutoScroll, 3000) // Resume auto-scroll after navigation
     }
   }
   
@@ -131,14 +159,26 @@ export default function CountriesSection() {
   };
   
   const handleFilterSubmit = () => {
+    const isCountryFiltered = selectedCountry && selectedCountry !== "All";
+    const isDomainFiltered = selectedDomain && selectedDomain !== "All";
+    
     let query = "";
-    if (selectedCountry && selectedCountry !== "All") {
+
+    if (isCountryFiltered) {
         query += `country=${encodeURIComponent(selectedCountry)}`;
     }
-    if (selectedDomain && selectedDomain !== "All") {
+    if (isDomainFiltered) {
         query += query ? `&domain=${encodeURIComponent(selectedDomain)}` : `domain=${encodeURIComponent(selectedDomain)}`;
     }
-    const path = query ? `/allstartup?${query}` : `/startups`;
+    
+    // Determine the base path
+    let path = "/allstartup"; // Default path
+
+    // Append query if filters are applied
+    if (query) {
+        path = `${path}?${query}`;
+    }
+    
     router.push(path);
     setShowFilterDialog(false);
   };
@@ -173,12 +213,18 @@ export default function CountriesSection() {
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
               }}
-              onMouseEnter={stopAutoScroll}
-              onMouseLeave={startAutoScroll}
+              // Interaction handlers for auto-scroll
+              onMouseEnter={stopAutoScroll} // PC: Pause on hover
+              onMouseLeave={startAutoScroll} // PC: Resume on un-hover
+              onTouchStart={handleTouchStart} // Mobile: Pause on touch start (scroll/drag)
+              onTouchEnd={handleTouchEnd} // Mobile: Resume on touch end
+              onMouseDown={handleMouseDown} // PC: Pause on mouse click down (start of drag/scroll)
+              onMouseUp={handleMouseUp} // PC: Resume on mouse click up (end of drag/scroll)
             >
               {loopedCountries.map(({ name, image }, idx) => (
                 <div
                   key={`${name}-${idx}`}
+                  // The original content has countries.length cards. The duplicated content starts at countries.length.
                   ref={(el) => (cardRefs.current[idx] = el)}
                   data-original-index={idx % countries.length}
                   className="flex-shrink-0 flex items-center gap-2 sm:gap-3 w-[140px] sm:w-[160px] lg:w-[180px] h-[52px] sm:h-[60px] lg:h-[68px] px-3 sm:px-4 lg:px-[15px] py-2 sm:py-2.5 lg:py-[10px] rounded-lg sm:rounded-xl border border-white/20 cursor-pointer bg-white/[0.08] hover:bg-white/[0.12] hover:border-white/35 backdrop-blur-sm transition-all duration-200"
@@ -202,6 +248,7 @@ export default function CountriesSection() {
                 </div>
               ))}
               <style jsx>{`
+                /* Hide scrollbar for compliant browsers */
                 div[ref="scrollRef"]::-webkit-scrollbar {
                   display: none;
                 }

@@ -1,11 +1,12 @@
 "use client";
 
-import { ArrowRightIcon, Star, TrendingUp, MapPin, Sparkles, Crown } from "lucide-react";
+import { ArrowRightIcon, Star, TrendingUp, MapPin, Sparkles, Crown, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaselib";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // Define the type for the startup data
 interface Startup {
@@ -27,9 +28,8 @@ const getAbsoluteUrl = (path: string | null | undefined): string => {
   if (path.startsWith("http://") || path.startsWith("https://")) {
     return path;
   }
-  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL; 
   if (!baseUrl) {
-    console.error("NEXT_PUBLIC_SUPABASE_URL is not defined");
     return "https://placehold.co/320x200/1a1a1a/ffffff?text=No+Image";
   }
   const fullUrl = `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}${path.startsWith('/') ? path : '/' + path}`;
@@ -40,7 +40,6 @@ const getAbsoluteUrl = (path: string | null | undefined): string => {
 const getFlagUrl = (country: string | null) => {
   if (!country) return "https://flagcdn.com/w20/xx.png";
   
-  // Country code mapping for better flag display
   const countryCodeMap: { [key: string]: string } = {
     'India': 'in',
     'United States': 'us',
@@ -57,7 +56,6 @@ const getFlagUrl = (country: string | null) => {
     'Switzerland': 'ch',
     'Sweden': 'se',
     'Israel': 'il',
-    // Add more as needed
   };
   
   const code = countryCodeMap[country] || country.toLowerCase().substring(0, 2);
@@ -69,7 +67,7 @@ const renderStarRating = (rating: number | null) => {
   if (!rating) return null;
   const stars = Math.round(rating);
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-0.5">
       {[...Array(5)].map((_, i) => (
         <Star
           key={i}
@@ -85,12 +83,12 @@ const renderStarRating = (rating: number | null) => {
 
 // Skeleton loading component
 const StartupCardSkeleton = () => (
-  <div className="flex-shrink-0 w-[300px] md:w-[320px] h-[380px] bg-gradient-to-br from-gray-900/50 to-gray-800/50 backdrop-blur-sm border border-gray-700/50 rounded-3xl p-4 animate-pulse">
-    <div className="w-full h-48 bg-gray-700/50 rounded-2xl mb-4"></div>
+  <div className="flex-shrink-0 w-[300px] md:w-[320px] h-[380px] bg-gray-800/70 border border-gray-700/50 rounded-2xl p-4 animate-pulse">
+    <div className="w-full h-48 bg-gray-700/50 rounded-xl mb-4"></div>
     <div className="space-y-3">
-      <div className="h-6 bg-gray-700/50 rounded-lg w-3/4"></div>
-      <div className="h-4 bg-gray-700/50 rounded-lg w-1/2"></div>
-      <div className="h-4 bg-gray-700/50 rounded-lg w-2/3"></div>
+      <div className="h-6 bg-gray-700/50 rounded-md w-3/4"></div>
+      <div className="h-4 bg-gray-700/50 rounded-md w-1/2"></div>
+      <div className="h-4 bg-gray-700/50 rounded-md w-2/3"></div>
     </div>
   </div>
 );
@@ -98,8 +96,13 @@ const StartupCardSkeleton = () => (
 export default function StartupSection() {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [isAtStart, setIsAtStart] = useState(true);
+  const [isAtEnd, setIsAtEnd] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   
+  // Fetch data
   useEffect(() => {
     async function getTopStartups() {
       try {
@@ -120,7 +123,7 @@ export default function StartupSection() {
           `)
           .eq("status", "approved")
           .order("rating", { ascending: false })
-          .limit(3); // Changed limit to 3
+          .limit(10); 
 
         if (error) {
           throw error;
@@ -149,146 +152,198 @@ export default function StartupSection() {
     getTopStartups();
   }, []);
 
+  // Scroll handler to check position and set button states
+  const handleScroll = useCallback(() => {
+    if (scrollRef.current) {
+      const scrollElement = scrollRef.current;
+      const scrollLeft = scrollElement.scrollLeft;
+      const scrollWidth = scrollElement.scrollWidth;
+      const clientWidth = scrollElement.clientWidth;
+      
+      // Check if scrolled past a threshold to show the "View All" button
+      if (scrollLeft > 50) {
+        setHasScrolled(true);
+      } else {
+        setHasScrolled(false);
+      }
+      
+      // Check for start/end position (allowing a small buffer for fractional scrolling)
+      setIsAtStart(scrollLeft < 10);
+      setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - 10);
+    }
+  }, []);
+
+  useEffect(() => {
+    const scrollElement = scrollRef.current;
+    if (scrollElement) {
+      scrollElement.addEventListener('scroll', handleScroll);
+      // Run once on load to set initial state
+      handleScroll(); 
+      return () => scrollElement.removeEventListener('scroll', handleScroll);
+    }
+  }, [handleScroll]);
+
+  // Function to scroll by a specific amount
+  const scrollByAmount = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      // Scroll by the width of approximately one card plus gap (300px + 24px gap)
+      const scrollAmount = 324; 
+      
+      scrollRef.current.scrollBy({
+        left: direction === 'right' ? scrollAmount : -scrollAmount,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  const showScrollHint = !loading && startups.length > 3;
+
   return (
-    <section className="relative bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 w-full py-12 md:py-16 overflow-hidden">
-      {/* CSS for simple transitions and styling */}
+    <section className="relative bg-slate-950 w-full py-12 md:py-16 overflow-hidden">
+      {/* Professional CSS Styling */}
       <style jsx>{`
-        .glass-card {
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(20px);
-          -webkit-backdrop-filter: blur(20px);
+        .glass-card-pro {
+          background: rgba(255, 255, 255, 0.04);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .premium-card {
-          background: linear-gradient(135deg, rgba(139, 69, 19, 0.1) 0%, rgba(255, 215, 0, 0.05) 100%);
-          border: 1px solid rgba(255, 215, 0, 0.3);
+        .hover-effect-pro {
+          transition: all 0.3s cubic-bezier(0.2, 0.6, 0.3, 1.1);
         }
 
-        .hover-effect {
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        .hover-effect-pro:hover {
+          transform: translateY(-4px); 
+          box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+          border-color: rgba(168, 85, 247, 0.5); 
         }
 
-        .hover-effect:hover {
-          transform: translateY(-8px) scale(1.02);
-          box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-        }
-
-        .scroll-container {
+        .hide-scrollbar {
           scrollbar-width: none;
           -ms-overflow-style: none;
         }
         
-        .scroll-container::-webkit-scrollbar {
+        .hide-scrollbar::-webkit-scrollbar {
           display: none;
         }
       `}</style>
 
-      {/* Background Effects */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:100px_100px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
+      {/* Background Effects (Subtle) */}
+      <div className="absolute inset-0 overflow-hidden opacity-10">
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff20_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="flex items-center justify-between sm:flex-row sm:items-center mb-8 gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl">
-              <TrendingUp className="w-6 h-6 text-white" />
+            <div className="flex items-center justify-center w-10 h-10 bg-purple-600 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-xl md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+              <h2 className="text-2xl md:text-3xl lg:text-4xl font-extrabold text-white">
                 Top Startups
               </h2>
-              <p className="text-gray-400 text-sm md:text-base mt-1 line-clamp-1">
-                Discover the next unicorns shaping tomorrow
+              <p className="text-gray-400 text-sm md:text-base mt-1">
+                Discover the best innovators by ratings and traction.
               </p>
             </div>
           </div>
-
-          {/* Navigation Controls */}
-          <div className="flex items-center gap-3">
-            <Link href="/allstartup">
-              <div 
-                className="group w-10 h-10 border-2 border-purple-500/50 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:bg-purple-500/20 hover:border-purple-500"
-              >
-                <ArrowRightIcon className="w-5 h-5 text-purple-400 transition-all duration-300 group-hover:text-purple-300" />
-              </div>
-            </Link>
-          </div>
+          
+          {/* Default Explore Button */}
+          <Link href="/allstartup" className="hidden sm:block">
+            <Button variant="link" className="text-purple-400 hover:text-purple-300 transition-colors duration-200">
+              View All Startups
+              <ArrowRightIcon className="w-4 h-4 ml-2" />
+            </Button>
+          </Link>
         </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div 
-            ref={scrollRef}
-            className="flex gap-6 overflow-x-auto scroll-container py-4"
-          >
-            {[...Array(4)].map((_, i) => (
-              <StartupCardSkeleton key={i} />
-            ))}
-          </div>
-        )}
+        {/* Slider Container with Arrows (PC Only) */}
+        <div className="relative">
+          {/* Left Arrow (Hidden on Mobile/Small Screens) */}
+          {!loading && startups.length > 3 && (
+            <button
+              onClick={() => scrollByAmount('left')}
+              disabled={isAtStart}
+              className={`hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl transition-opacity duration-300 hover:bg-white/20
+                ${isAtStart ? 'opacity-0 pointer-events-none' : 'opacity-100'}
+              `}
+              aria-label="Previous card"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </button>
+          )}
 
-        {/* Startup Cards Container */}
-        {!loading && (
-          <div
-            ref={scrollRef}
-            className="flex gap-6 overflow-x-auto scroll-container py-4"
-          >
-            {startups.map((startup, index) => (
-              <div
-                key={startup.id}
-                className="flex-shrink-0 w-[300px]"
-              >
-                <Link href={`/startup/${startup.id}`}>
-                  <div className="group glass-card rounded-3xl p-5 hover-effect h-[380px] flex flex-col">
-                    {/* Image Container */}
-                    <div className="relative w-full h-48 mb-4 overflow-hidden rounded-2xl">
-                      <Image
-                        src={getAbsoluteUrl(startup.thumbnail_url)}
-                        alt={startup.startup_name}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-                      
-                      {/* Overlay Effects */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                      
-                      {/* Top Badge */}
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        {startup.is_incubation && (
-                          <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                            <Crown className="w-3 h-3" />
-                            {startup.incubator_accelerator_name || "Incubated"}
-                          </span>
-                        )}
-                        {index === 0 && (
-                          <span className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            #1
-                          </span>
+          {/* Loading State */}
+          {loading && (
+            <div 
+              ref={scrollRef}
+              className="flex overflow-x-auto gap-6 hide-scrollbar py-4"
+            >
+              {[...Array(3)].map((_, i) => (
+                <StartupCardSkeleton key={i} />
+              ))}
+            </div>
+          )}
+
+          {/* Startup Cards Container */}
+          {!loading && (
+            <div
+              ref={scrollRef}
+              className="flex overflow-x-auto gap-6 hide-scrollbar py-4 px-1 md:px-0" /* Added px-1 for mobile edge-to-edge feel */
+            >
+              {startups.map((startup, index) => (
+                <div
+                  key={startup.id}
+                  className="flex-shrink-0 w-[300px]"
+                >
+                  <Link href={`/startup/${startup.id}`}>
+                    <div className="group glass-card-pro rounded-2xl p-4 hover-effect-pro h-[380px] flex flex-col">
+                      {/* Image Container */}
+                      <div className="relative w-full h-48 mb-4 overflow-hidden rounded-xl">
+                        <Image
+                          src={getAbsoluteUrl(startup.thumbnail_url)}
+                          alt={startup.startup_name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="(max-width: 768px) 300px, 320px"
+                        />
+                        
+                        {/* Top Badges */}
+                        <div className="absolute top-3 left-3 flex gap-2">
+                          {index === 0 && (
+                            <span className="bg-yellow-500 text-slate-900 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 shadow-md">
+                              <Sparkles className="w-3 h-3" />
+                              #1 Top Rated
+                            </span>
+                          )}
+                          {startup.is_incubation && (
+                            <span className="bg-slate-700/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 border border-slate-600">
+                              <Crown className="w-3 h-3 text-purple-400" />
+                              {startup.incubator_accelerator_name || "Incubated"}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Rating Badge */}
+                        {startup.rating && (
+                          <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md rounded-full px-2 py-1 border border-gray-700">
+                            {renderStarRating(startup.rating)}
+                          </div>
                         )}
                       </div>
 
-                      {/* Rating Badge */}
-                      {startup.rating && (
-                        <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1">
-                          {renderStarRating(startup.rating)}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <h3 className="text-white font-bold text-xl mb-2 line-clamp-1 group-hover:text-purple-300 transition-colors duration-300">
-                          {startup.startup_name}
-                        </h3>
-                        
-                        <div className="flex items-center gap-2 text-gray-400 mb-3">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
+                      {/* Content */}
+                      <div className="flex-1 flex flex-col justify-between pt-1">
+                        <div>
+                          <h3 className="text-white font-bold text-xl mb-2 line-clamp-2 group-hover:text-purple-400 transition-colors duration-300">
+                            {startup.startup_name}
+                          </h3>
+                          
+                          <div className="flex items-center gap-2 text-gray-400 mb-3">
+                            <MapPin className="w-4 h-4 text-purple-500" />
                             <Image
                               src={getFlagUrl(startup.country)}
                               alt={`${startup.country} flag`}
@@ -301,60 +356,66 @@ export default function StartupSection() {
                             </span>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Action Area */}
-                      <div className="flex items-center justify-between pt-3 border-t border-gray-800 group-hover:border-purple-800 transition-colors duration-300">
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">
-                          View Details
-                        </span>
-                        <div className="w-8 h-8 rounded-full bg-purple-600/20 flex items-center justify-center group-hover:bg-purple-600 transition-all duration-300">
-                          <ArrowRightIcon className="w-4 h-4 text-purple-400 group-hover:text-white transition-colors duration-300" />
+                        {/* Action Area */}
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-800">
+                          <span className="text-xs text-gray-500 uppercase tracking-wider">
+                            View Profile
+                          </span>
+                          <div className="w-8 h-8 rounded-full bg-purple-600/10 flex items-center justify-center group-hover:bg-purple-600 transition-all duration-300">
+                            <ArrowRightIcon className="w-4 h-4 text-purple-400 group-hover:text-white transition-colors duration-300" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
-
-            {/* Premium CTA Card */}
-            <div
-              className="flex-shrink-0 w-[300px] md:w-auto md:flex-shrink"
-            >
-              <div className="premium-card rounded-3xl p-6 hover-effect h-[380px] flex flex-col items-center justify-center text-center gap-6">
-                <div className="w-16 h-16 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center mb-2">
-                  <Crown className="w-8 h-8 text-white" />
+                  </Link>
                 </div>
-                
-                <div>
-                  <h3 className="text-white text-2xl font-bold mb-2">
-                    Discover More
-                  </h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Unlock premium features and get access to exclusive startup insights, detailed analytics, and investment opportunities.
-                  </p>
-                </div>
-                
-                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-bold transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-purple-500/25">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Get Premium
-                </Button>
-              </div>
+              ))}
             </div>
-          </div>
-        )}
-
-        {/* Mobile Scroll Indicator */}
-        <div className="md:hidden flex justify-center mt-6">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
-            <span className="text-xs text-gray-400">
-              Scroll horizontally to explore
-            </span>
-            <ArrowRightIcon className="w-4 h-4 text-purple-400" />
-          </div>
+          )}
+          
+          {/* Right Arrow (Hidden on Mobile/Small Screens) */}
+          {!loading && startups.length > 3 && (
+            <button
+              onClick={() => scrollByAmount('right')}
+              disabled={isAtEnd}
+              className={`hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-20 w-10 h-10 items-center justify-center bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl transition-opacity duration-300 hover:bg-white/20
+                ${isAtEnd ? 'opacity-0 pointer-events-none' : 'opacity-100'}
+              `}
+              aria-label="Next card"
+            >
+              <ChevronRight className="w-5 h-5 text-white" />
+            </button>
+          )}
         </div>
+
+        {/* Scroll-based "Show All Startups" CTA Button */}
+        <div className="flex justify-center mt-8">
+            <Button 
+                onClick={() => router.push("/allstartup")}
+                className={`w-full max-w-sm md:max-w-md bg-purple-600 hover:bg-purple-700 text-white rounded-full px-8 py-3 text-base font-bold transition-all duration-300 ease-in-out shadow-lg shadow-purple-500/30 ${
+                    hasScrolled || loading || startups.length <= 3 
+                        ? 'opacity-100 translate-y-0' 
+                        : 'opacity-0 translate-y-4 pointer-events-none sm:opacity-100 sm:translate-y-0 sm:pointer-events-auto' 
+                }`}
+            >
+                {startups.length > 3 ? `View All ${startups.length}+ Startups` : "View All Startups"}
+                <ArrowRightIcon className="w-4 h-4 ml-2" />
+            </Button>
+        </div>
+
+        {/* Mobile Scroll Hint (Only if more than 3 cards exist) */}
+        {showScrollHint && (
+            <div className="md:hidden flex justify-center mt-6">
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                    <span className="text-xs text-gray-400">
+                        Scroll horizontally for more
+                    </span>
+                    <ArrowRightIcon className="w-4 h-4 text-purple-400" />
+                </div>
+            </div>
+        )}
       </div>
     </section>
   );
