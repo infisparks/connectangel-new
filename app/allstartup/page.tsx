@@ -1,15 +1,18 @@
 "use client";
 
-import { ArrowRightIcon, SearchIcon, FilterIcon, GridIcon, ListIcon } from "lucide-react";
+import { ArrowRightIcon, SearchIcon, GridIcon, ListIcon } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabaselib";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 // Define the type for the startup data, now with the incubator name.
 interface Startup {
@@ -22,23 +25,23 @@ interface Startup {
   domain: string | null;
   one_sentence_description: string | null;
   incubation: { incubator_accelerator_name: string | null } | null;
+  founder_names: string[] | null; // Added founder_names
 }
 
-// Helper function to get the absolute URL from a relative path
+// --- Helper Functions ---
+
 const getAbsoluteUrl = (path: string | null | undefined): string => {
   if (!path || path.startsWith("http")) {
-    return path || "/placeholder.svg";
+    return path || "https://placehold.co/192x96/1a1a1a/ffffff?text=Image"; 
   }
   const baseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!baseUrl) {
-    console.error("NEXT_PUBLIC_SUPABASE_URL is not defined");
-    return "/placeholder.svg";
+    return "https://placehold.co/192x96/1a1a1a/ffffff?text=Image";
   }
   const fullUrl = `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}${path.startsWith('/') ? path : '/' + path}`;
   return fullUrl;
 };
 
-// Function to get a dummy flag emoji based on the country
 const getFlagEmoji = (countryName: string | null) => {
   const countryCodeMap: { [key: string]: string } = {
     "Indonesia": "🇮🇩",
@@ -46,11 +49,26 @@ const getFlagEmoji = (countryName: string | null) => {
     "Serbia": "🇷🇸",
     "India": "🇮🇳",
     "United States": "🇺🇸",
+    "Canada": "🇨🇦",
+    "Germany": "🇩🇪",
+    "Qatar": "🇶🇦",
+    "Iran": "🇮🇷",
+    "Turkey": "🇹🇷",
   };
   return countryName ? countryCodeMap[countryName] || "🌍" : "🌍";
 };
 
-// Domain filters for the tabs
+// Dummy list of countries for the filter dialog
+const allCountries = [
+    { name: "All Countries", code: "All" },
+    { name: "Bahrain", code: "Bahrain" },
+    { name: "Turkey", code: "Turkey" },
+    { name: "Qatar", code: "Qatar" },
+    { name: "Iran", code: "Iran" },
+    { name: "India", code: "India" },
+    { name: "United States", code: "United States" },
+];
+
 const domainFilters = [
   "All",
   "IT & SaaS",
@@ -64,23 +82,71 @@ const domainFilters = [
 
 const sortFilters = ["Startups", "Founder", "Countries"];
 
-const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMode?: "grid" | "list" }) => {
+// --- StartupCard Component ---
+
+const StartupCard = ({ startup, viewMode = "grid", activeSort }: { startup: Startup; viewMode?: "grid" | "list"; activeSort: string }) => {
   const thumbnailUrl = getAbsoluteUrl(startup.thumbnail_url);
+  const primaryFounder = startup.founder_names?.[0] ? startup.founder_names[0].split('(')[0].trim() : 'Unknown Founder';
+
+  // --- Founder View Mode ---
+  if (activeSort === "Founder") {
+    return (
+      <Link href={`/startup/${startup.id}`}>
+        <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center h-56 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer">
+          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mb-3">
+            <span className="text-3xl text-white font-bold">{primaryFounder.charAt(0)}</span>
+          </div>
+          <h3 className="text-white font-semibold text-xl truncate mb-1 text-center">
+            {primaryFounder}
+          </h3>
+          <p className="text-gray-400 text-sm truncate text-center">
+            {startup.startup_name} ({startup.country || 'Global'})
+          </p>
+        </div>
+      </Link>
+    );
+  }
+  
+  // --- Country View Mode ---
+  if (activeSort === "Countries") {
+    const flagEmoji = getFlagEmoji(startup.country);
+    return (
+      <Link href={`/startup/${startup.id}`}>
+        <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center h-56 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer">
+          
+          <div className="text-5xl mb-3">{flagEmoji}</div> {/* Big flag emoji */}
+          
+          <h3 className="text-white font-semibold text-xl truncate mb-1 text-center">
+            {startup.country || 'Global'}
+          </h3>
+          <p className="text-gray-400 text-sm truncate text-center">
+            {startup.startup_name}
+          </p>
+          <p className="text-purple-400 text-xs mt-2">
+            {startup.domain || 'General'}
+          </p>
+        </div>
+      </Link>
+    );
+  }
+
+
+  // --- Default (Startups) View Mode (Grid/List) ---
 
   if (viewMode === "list") {
     return (
       <Link href={`/startup/${startup.id}`}>
         <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex items-start gap-4 transition-all duration-300 ease-in-out hover:bg-white/10 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 cursor-pointer">
-          {/* Image container for list view with increased size and object-cover */}
-          <div className="relative w-40 h-24 sm:w-48 sm:h-28 flex-shrink-0 border border-white/10 rounded-lg p-1 bg-white/[0.03] overflow-hidden">
+          {/* Image container for list view, fixed width/height for uniformity */}
+          <div className="relative w-32 h-20 sm:w-40 sm:h-24 flex-shrink-0 border border-white/10 rounded-lg p-1 bg-white/[0.03] overflow-hidden">
             <Image
               src={thumbnailUrl}
               alt={startup.startup_name}
               fill
-              className="rounded-lg object-cover" // Changed to object-cover
+              className="rounded-lg object-cover" 
             />
             {startup.is_incubation && (
-              <div className="absolute top-2 right-2 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center">
+              <div className="absolute top-1 right-1 w-5 h-5 bg-purple-600 rounded-full flex items-center justify-center">
                 <span className="text-xs text-white">✓</span>
               </div>
             )}
@@ -93,18 +159,18 @@ const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMod
               {startup.one_sentence_description || "One sentence description not available."}
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs sm:text-sm">{getFlagEmoji(startup.country)}</span>
-              <span className="text-gray-400 text-xs sm:text-sm">
+              <span className="text-xs sm:text-sm flex-shrink-0">{getFlagEmoji(startup.country)}</span>
+              <span className="text-gray-400 text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] flex-shrink-0"> 
                 {startup.country || "Global"}
               </span>
               {startup.domain && (
-                <span className="inline-block bg-white/10 text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium truncate">
+                <span className="inline-block bg-white/10 text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium truncate flex-shrink-0">
                   {startup.domain}
                 </span>
               )}
             </div>
             {startup.is_incubation && (
-              <span className="inline-block mt-2 bg-purple-600/20 text-purple-300 px-2 py-1 rounded-full text-xs font-medium">
+              <span className="inline-block mt-2 bg-purple-600/20 text-purple-300 px-2 py-1 rounded-full text-xs font-medium truncate max-w-full">
                 {startup.incubation?.incubator_accelerator_name || "Incubation"}
               </span>
             )}
@@ -114,11 +180,12 @@ const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMod
     );
   }
 
+  // Default Grid View
   return (
     <Link href={`/startup/${startup.id}`}>
       <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl overflow-hidden transition-all duration-300 ease-in-out hover:scale-[1.02] hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer">
-        {/* Image container for grid view: increased height and using object-cover */}
-        <div className="relative w-full h-40 sm:h-48 border-b border-white/10 bg-white/[0.03] overflow-hidden">
+        {/* Image container for grid view: uniform height and using object-cover */}
+        <div className="relative w-full h-36 sm:h-48 border-b border-white/10 bg-white/[0.03] overflow-hidden">
           <Image
             src={thumbnailUrl}
             alt={startup.startup_name}
@@ -139,12 +206,12 @@ const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMod
             {startup.one_sentence_description || "One sentence description not available."}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm">{getFlagEmoji(startup.country)}</span>
-            <span className="text-gray-400 text-xs sm:text-sm truncate">
+            <span className="text-xs sm:text-sm flex-shrink-0">{getFlagEmoji(startup.country)}</span>
+            <span className="text-gray-400 text-xs sm:text-sm truncate max-w-[100px] flex-shrink-0">
               {startup.country || "Global"}
             </span>
             {startup.domain && (
-              <span className="inline-block bg-white/10 text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium truncate">
+              <span className="inline-block bg-white/10 text-gray-300 px-2 py-0.5 rounded-full text-xs font-medium truncate max-w-[100px]">
                 {startup.domain}
               </span>
             )}
@@ -155,6 +222,9 @@ const StartupCard = ({ startup, viewMode = "grid" }: { startup: Startup; viewMod
   );
 };
 
+
+// --- AllStartupsPage Component ---
+
 export default function AllStartupsPage() {
   const [startups, setStartups] = useState<Startup[]>([]);
   const [loading, setLoading] = useState(true);
@@ -162,11 +232,33 @@ export default function AllStartupsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDomain, setSelectedDomain] = useState("All");
+  
+  // New state for sorting and country filter dialog
+  const [activeSort, setActiveSort] = useState("Startups");
+  const [showCountryDialog, setShowCountryDialog] = useState(false);
+  const [selectedCountryFilter, setSelectedCountryFilter] = useState("All");
 
   const searchParams = useSearchParams();
-  const countryFilter = searchParams.get("country");
+  const router = useRouter();
   const domainFilter = searchParams.get("domain");
   const categoryFilter = searchParams.get("category");
+  
+  // Use a state variable for the country filter applied by the dialog
+  const [appliedCountryFilter, setAppliedCountryFilter] = useState<string | null>(null);
+
+  // Define featuredStartup data needed for the Hero Section
+  const featuredStartup = {
+    name: "DSD Soft",
+    country: "Indonesia",
+    background: "/img/bgcover.png",
+  };
+
+  useEffect(() => {
+    // Set initial domain filter from URL query
+    if (domainFilter) {
+      setSelectedDomain(domainFilter);
+    }
+  }, [domainFilter]);
 
   useEffect(() => {
     async function fetchAllStartups() {
@@ -183,6 +275,7 @@ export default function AllStartupsPage() {
             incubation_id, 
             domain,
             one_sentence_description,
+            founder_names,
             incubation:incubation_id (
               incubator_accelerator_name
             )
@@ -190,9 +283,12 @@ export default function AllStartupsPage() {
           .eq("status", "approved")
           .order("created_at", { ascending: false });
 
-        if (countryFilter) {
-          query = query.eq("country", countryFilter);
+        // Apply country filter from state
+        if (appliedCountryFilter && appliedCountryFilter !== "All") {
+          query = query.eq("country", appliedCountryFilter);
         }
+        
+        // Apply local domain filter state
         if (selectedDomain && selectedDomain !== "All") {
           query = query.eq("domain", selectedDomain);
         }
@@ -221,19 +317,34 @@ export default function AllStartupsPage() {
       }
     }
     fetchAllStartups();
-  }, [countryFilter, selectedDomain, categoryFilter]);
+  }, [appliedCountryFilter, selectedDomain, categoryFilter]); // Depend on appliedCountryFilter
 
   // Filter startups based on search term
   const filteredStartups = startups.filter(startup =>
     startup.startup_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (startup.country && startup.country.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-
-  const featuredStartup = {
-    name: "DSD Soft",
-    country: "Indonesia",
-    background: "/img/bgcover.png",
+  
+  // Handle country filter submission from dialog
+  const handleApplyCountryFilter = () => {
+    setAppliedCountryFilter(selectedCountryFilter);
+    setShowCountryDialog(false);
   };
+  
+  // Determine grid layout based on active sort mode and view mode
+  const getGridLayout = useMemo(() => {
+    // Special views (Founder/Countries) always use a uniform 4-column grid
+    if (activeSort === "Founder" || activeSort === "Countries") {
+        return "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6";
+    }
+    // Default 'Startups' view uses standard grid/list mode
+    if (viewMode === "grid") {
+        return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6";
+    }
+    // If viewMode is 'list', the outer container shouldn't be a grid, it should be a simple space-y list.
+    return "";
+  }, [activeSort, viewMode]);
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1B0E2B] via-[#2A1B3D] to-[#1B0E2B] text-white font-sans">
@@ -282,6 +393,11 @@ export default function AllStartupsPage() {
           <p className="text-gray-400 text-sm sm:text-base">
             Explore innovative startups from around the world
           </p>
+          {appliedCountryFilter && appliedCountryFilter !== "All" && (
+            <p className="text-purple-400 text-sm mt-1 font-medium">
+                Active Filter: {getFlagEmoji(appliedCountryFilter)} {appliedCountryFilter}
+            </p>
+          )}
         </div>
 
         {/* Search and Filter Controls */}
@@ -298,11 +414,11 @@ export default function AllStartupsPage() {
             />
           </div>
 
-          {/* Filter Controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 justify-between">
+          {/* Filter Controls (Domain/Categories, View Mode, Sort, Countries Button) */}
+          <div className="flex flex-wrap items-center gap-4"> 
             
-            {/* Domain Filters */}
-            <div className="w-full sm:w-auto">
+            {/* Domain Filters (Categories) - Takes up full width, scrolls horizontally if needed */}
+            <div className="w-full"> 
               <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
                 {domainFilters.map((filter) => (
                   <Button
@@ -313,7 +429,7 @@ export default function AllStartupsPage() {
                       "whitespace-nowrap px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all flex-shrink-0",
                       selectedDomain === filter
                         ? "bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-600/25"
-                        : "bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 text-gray-300 hover:text-white"
+                        : "bg-[#2A1B3D] border-purple-500/50 hover:bg-[#3A2B4D] text-gray-300 hover:text-white"
                     )}
                   >
                     {filter}
@@ -322,7 +438,7 @@ export default function AllStartupsPage() {
               </div>
             </div>
 
-            {/* View Mode and Sort Controls */}
+            {/* View Mode and Sort Controls Container */}
             <div className="flex items-center gap-3">
               
               {/* View Mode Toggle */}
@@ -355,29 +471,33 @@ export default function AllStartupsPage() {
                 </Button>
               </div>
 
-              {/* Sort Tabs */}
+              {/* Sort Tabs (Updated to use activeSort state) */}
               <Tabs defaultValue="Startups" className="hidden sm:block">
                 <TabsList className="bg-white/5 backdrop-blur-sm border-white/10 rounded-full p-1 h-10">
                   {sortFilters.map(filter => (
                     <TabsTrigger
                       key={filter}
                       value={filter}
-                      className="data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-sm rounded-full text-xs font-medium px-4 py-2 transition-all"
+                      onClick={() => setActiveSort(filter)}
+                      className={cn(
+                        "data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-sm rounded-full text-xs font-medium px-4 py-2 transition-all",
+                        activeSort === filter && "bg-purple-600 text-white shadow-sm"
+                      )}
                     >
                       {filter}
                     </TabsTrigger>
                   ))}
                 </TabsList>
               </Tabs>
-
-              {/* Countries Button */}
+              
+              {/* Countries Button (Opens Dialog) */}
               <Button
-                variant="outline"
+                onClick={() => setShowCountryDialog(true)}
+                className="bg-[#2A1B3D] border border-purple-500/50 text-white hover:bg-[#3A2B4D] px-5 py-3 rounded-full text-sm font-medium transition-all shadow-md"
                 size="sm"
-                className="bg-white/5 backdrop-blur-sm border-white/10 text-white hover:bg-white/10 hover:border-purple-500/50 px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all"
               >
-                <span className="hidden sm:inline">Countries</span>
-                <ArrowRightIcon className="ml-1 sm:ml-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="mr-1">Countries</span>
+                <ArrowRightIcon className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -393,16 +513,15 @@ export default function AllStartupsPage() {
         {/* Startups Grid/List */}
         {loading ? (
           <div className={cn(
-            viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
-              : "space-y-4"
+            getGridLayout,
+            viewMode === "list" && activeSort === "Startups" && "space-y-4" // Use list spacing when in list mode and default sort
           )}>
-            {[...Array(8)].map((_, i) => (
+            {[...Array(activeSort === 'Countries' || activeSort === 'Founder' ? 4 : 8)].map((_, i) => (
               <div 
                 key={i} 
                 className={cn(
                   "bg-white/5 border border-white/10 rounded-xl animate-pulse",
-                  viewMode === "grid" ? "h-48 sm:h-56" : "h-20 sm:h-24"
+                  viewMode === "grid" || activeSort !== "Startups" ? "h-40 sm:h-56" : "h-20 sm:h-24"
                 )}
               />
             ))}
@@ -425,16 +544,68 @@ export default function AllStartupsPage() {
         ) : (
           <div className={cn(
             "transition-all duration-300",
-            viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
-              : "space-y-3 sm:space-y-4"
+            getGridLayout, // Apply grid layout for Founder/Countries/Default Grid view
+            viewMode === "list" && activeSort === "Startups" ? "space-y-3 sm:space-y-4" : "" // Apply list spacing for Default List view
           )}>
             {filteredStartups.map((startup) => (
-              <StartupCard key={startup.id} startup={startup} viewMode={viewMode} />
+              <StartupCard 
+                key={startup.id} 
+                startup={startup} 
+                viewMode={viewMode}
+                activeSort={activeSort} 
+              />
             ))}
           </div>
         )}
       </section>
+      
+      {/* --- Country Filter Dialog --- */}
+      <Dialog open={showCountryDialog} onOpenChange={setShowCountryDialog}>
+        <DialogContent className="sm:max-w-[425px] bg-[#1B0E2B] border-purple-500/50 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-white text-xl font-bold">Filter by Country</DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <Label htmlFor="country-select" className="text-sm text-gray-300">Select a Country</Label>
+            <Select
+              value={selectedCountryFilter}
+              onValueChange={setSelectedCountryFilter}
+            >
+              <SelectTrigger className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400 h-11">
+                <SelectValue placeholder="Select a country" />
+              </SelectTrigger>
+              <SelectContent className="bg-[#2A1B3D] text-white border-white/10">
+                {allCountries.map((c) => (
+                  <SelectItem 
+                    key={c.code} 
+                    value={c.code}
+                    className="hover:bg-purple-600/20 focus:bg-purple-600/20"
+                  >
+                    {c.name} {getFlagEmoji(c.name)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setShowCountryDialog(false)}
+              className="bg-transparent border-gray-600 hover:bg-gray-700/50 text-white"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button" 
+              onClick={handleApplyCountryFilter}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              Apply Filter
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
