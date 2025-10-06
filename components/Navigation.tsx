@@ -98,6 +98,11 @@ export default function Navigation() {
     }
     setIsMenuOpen(false); // Close mobile menu after click
   };
+  
+  // New handler for logo click
+  const handleLogoClick = () => {
+      router.push("/home");
+  };
 
   return (
     <>
@@ -110,8 +115,11 @@ export default function Navigation() {
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Logo */}
-            <div className="flex-shrink-0">
+            {/* Logo - UPDATED to include onClick for /home redirection */}
+            <div
+              className="flex-shrink-0 cursor-pointer"
+              onClick={handleLogoClick} // <--- Added onClick handler here
+            >
               <Image
                 src={logo || "/placeholder.svg"}
                 alt="ConnectAngles Logo"
