@@ -2,10 +2,10 @@
 
 import { ArrowRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
+import Image from "next/image" // Keep Image import for future use, but won't be used for flags
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { countries } from "@/lib/data"
+import { countries } from "@/lib/countryflag" // Ensure this path is correct
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
@@ -62,8 +62,9 @@ export default function CountriesSection() {
       },
     )
 
-    cardRefs.current.forEach((ref) => {
-      if (ref) observer.observe(ref)
+    cardRefs.current.forEach((ref, index) => {
+      // Only observe the original set of cards to calculate the active index correctly
+      if (ref && index < countries.length) observer.observe(ref)
     })
 
     return () => {
@@ -230,14 +231,11 @@ export default function CountriesSection() {
                   className="flex-shrink-0 flex items-center gap-2 sm:gap-3 w-[140px] sm:w-[160px] lg:w-[180px] h-[52px] sm:h-[60px] lg:h-[68px] px-3 sm:px-4 lg:px-[15px] py-2 sm:py-2.5 lg:py-[10px] rounded-lg sm:rounded-xl border border-white/20 cursor-pointer bg-white/[0.08] hover:bg-white/[0.12] hover:border-white/35 backdrop-blur-sm transition-all duration-200"
                   onClick={() => handleCountryCardClick(name)}
                 >
-                  <div className="relative w-[32px] sm:w-[36px] lg:w-[40px] h-[32px] sm:h-[36px] lg:h-[40px] rounded-full overflow-hidden flex-shrink-0 ring-1 ring-white/10">
-                    <Image 
-                      src={image || "/placeholder.svg"} 
-                      alt={name} 
-                      fill 
-                      className="object-cover"
-                      sizes="40px"
-                    />
+                  <div className="relative w-[32px] sm:w-[36px] lg:w-[40px] h-[32px] sm:h-[36px] lg:h-[40px] rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    {/* UPDATED: Display flag emoji directly as text */}
+                    <span className="text-2xl sm:text-3xl leading-none">
+                      {image}
+                    </span>
                   </div>
                   <span
                     className="font-medium text-white text-xs sm:text-sm lg:text-base whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0"
@@ -300,7 +298,11 @@ export default function CountriesSection() {
                       value={c.name}
                       className="hover:bg-white/10 focus:bg-white/10 text-sm sm:text-base"
                     >
-                      {c.name}
+                      <div className="flex items-center gap-2">
+                         {/* Display flag emoji in the select item */}
+                        <span className="text-xl leading-none">{c.image}</span> 
+                        {c.name}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

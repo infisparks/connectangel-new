@@ -38,8 +38,10 @@ const getAbsoluteUrl = (path: string | null | undefined): string => {
   if (!baseUrl) {
     return "https://placehold.co/192x96/1a1a1a/ffffff?text=Image";
   }
-  const fullUrl = `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}${path.startsWith('/') ? path : '/' + path}`;
-  return fullUrl;
+  const fullUrl = `${baseUrl.endsWith('/') ? baseUrl.slice(0, 1) : baseUrl}${path.startsWith('/') ? path : '/' + path}`;
+  // NOTE: Assuming path is in the format /storage/v1/object/public/bucket_name/image_path
+  // If your path from Supabase is just 'bucket_name/image_path', you might need adjustment here.
+  return fullUrl.includes('/storage/v1/object/public') ? fullUrl : `${baseUrl}/storage/v1/object/public${path}`;
 };
 
 const getFlagEmoji = (countryName: string | null) => {
@@ -54,7 +56,6 @@ const getFlagEmoji = (countryName: string | null) => {
     "Qatar": "🇶🇦",
     "Iran": "🇮🇷",
     "Turkey": "🇹🇷",
-    // Added Countries
     "United Kingdom": "🇬🇧",
     "France": "🇫🇷",
     "Italy": "🇮🇹",
@@ -78,6 +79,8 @@ const getFlagEmoji = (countryName: string | null) => {
     "Belgium": "🇧🇪",
     "Austria": "🇦🇹",
     "Greece": "🇬🇷",
+    "Malaysia": "🇲🇾", // Added Malaysia for your example
+    "Philippines": "🇵🇭", // Added Philippines for your example
   };
   return countryName ? countryCodeMap[countryName] || "🌍" : "🌍";
 };
@@ -91,6 +94,8 @@ const allCountries = [
     { name: "Iran", code: "Iran" },
     { name: "India", code: "India" },
     { name: "United States", code: "United States" },
+    { name: "Malaysia", code: "Malaysia" },
+    { name: "Philippines", code: "Philippines" },
 ];
 
 const domainFilters = [
@@ -255,35 +260,47 @@ export default function AllStartupsPage() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDomain, setSelectedDomain] = useState("All");
   
-  // New state for sorting and country filter dialog
+  // State for sorting and country filter dialog
   const [activeSort, setActiveSort] = useState("Startups");
   const [showCountryDialog, setShowCountryDialog] = useState(false);
   const [selectedCountryFilter, setSelectedCountryFilter] = useState("All");
 
   const searchParams = useSearchParams();
   const router = useRouter();
-  const domainFilter = searchParams.get("domain");
+
+  // 1. Initialize state from URL params
+  const initialCountry = searchParams.get("country") || "All";
+  const initialDomain = searchParams.get("domain") || "All";
   const categoryFilter = searchParams.get("category");
   
-  // Use a state variable for the country filter applied by the dialog
-  const [appliedCountryFilter, setAppliedCountryFilter] = useState<string | null>(null);
-
-  // Define featuredStartup data needed for the Hero Section
+  // Use state variables initialized from URL
+  const [selectedDomain, setSelectedDomain] = useState(initialDomain);
+  const [appliedCountryFilter, setAppliedCountryFilter] = useState<string>(initialCountry);
+  
+  // Define featuredStartup data needed for the Hero Section (MOVED INSIDE COMPONENT)
   const featuredStartup = {
     name: "DSD Soft",
     country: "Indonesia",
     background: "/img/bgcover.png",
   };
 
-  useEffect(() => {
-    // Set initial domain filter from URL query
-    if (domainFilter) {
-      setSelectedDomain(domainFilter);
-    }
-  }, [domainFilter]);
 
+  // 2. Sync state with URL only on mount/param change
+  useEffect(() => {
+    // This ensures the local state matches the URL when the component loads or the URL is changed externally
+    const urlCountry = searchParams.get("country") || "All";
+    const urlDomain = searchParams.get("domain") || "All";
+
+    if (urlCountry !== appliedCountryFilter) {
+      setAppliedCountryFilter(urlCountry);
+    }
+    if (urlDomain !== selectedDomain) {
+      setSelectedDomain(urlDomain);
+    }
+  }, [searchParams, appliedCountryFilter, selectedDomain]); 
+  
+  // 3. Data Fetching Logic
   useEffect(() => {
     async function fetchAllStartups() {
       try {
@@ -307,15 +324,17 @@ export default function AllStartupsPage() {
           .eq("status", "approved")
           .order("created_at", { ascending: false });
 
-        // Apply country filter from state
+        // Apply Country Filter
         if (appliedCountryFilter && appliedCountryFilter !== "All") {
           query = query.eq("country", appliedCountryFilter);
         }
         
-        // Apply local domain filter state
+        // Apply Domain Filter
         if (selectedDomain && selectedDomain !== "All") {
           query = query.eq("domain", selectedDomain);
         }
+        
+        // Apply Category Filter (if still needed)
         if (categoryFilter) {
           query = query.eq("Category", categoryFilter.replace(/-/g, ' '));
         }
@@ -341,19 +360,52 @@ export default function AllStartupsPage() {
       }
     }
     fetchAllStartups();
-  }, [appliedCountryFilter, selectedDomain, categoryFilter]); // Depend on appliedCountryFilter
+  }, [appliedCountryFilter, selectedDomain, categoryFilter]); 
 
-  // Filter startups based on search term
+  // Update URL parameters when filters change
+  const updateUrl = (country: string, domain: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (country === "All") {
+      params.delete("country");
+    } else {
+      params.set("country", country);
+    }
+
+    if (domain === "All") {
+      params.delete("domain");
+    } else {
+      params.set("domain", domain);
+    }
+    
+    // Preserve category filter if it exists
+    if (categoryFilter) {
+      params.set("category", categoryFilter);
+    }
+    
+    router.push(`/allstartup/?${params.toString()}`, { scroll: false });
+  };
+  
+  // Handle domain filter change
+  const handleDomainChange = (domain: string) => {
+    // Note: We update the state first, which triggers the fetch (via useEffect) and then update the URL.
+    setSelectedDomain(domain);
+    updateUrl(appliedCountryFilter, domain);
+  };
+  
+  // Handle country filter submission from dialog
+  const handleApplyCountryFilter = () => {
+    // Note: We update the state first, which triggers the fetch (via useEffect) and then update the URL.
+    setAppliedCountryFilter(selectedCountryFilter);
+    updateUrl(selectedCountryFilter, selectedDomain);
+    setShowCountryDialog(false);
+  };
+
+  // Filter startups based on search term (only for client-side search across all loaded data)
   const filteredStartups = startups.filter(startup =>
     startup.startup_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (startup.country && startup.country.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  
-  // Handle country filter submission from dialog
-  const handleApplyCountryFilter = () => {
-    setAppliedCountryFilter(selectedCountryFilter);
-    setShowCountryDialog(false);
-  };
   
   // Determine grid layout based on active sort mode and view mode
   const getGridLayout = useMemo(() => {
@@ -417,9 +469,14 @@ export default function AllStartupsPage() {
           <p className="text-gray-400 text-sm sm:text-base">
             Explore innovative startups from around the world
           </p>
-          {appliedCountryFilter && appliedCountryFilter !== "All" && (
+          {(appliedCountryFilter && appliedCountryFilter !== "All") && (
             <p className="text-purple-400 text-sm mt-1 font-medium">
-                Active Filter: {getFlagEmoji(appliedCountryFilter)} {appliedCountryFilter}
+                Active Country: {getFlagEmoji(appliedCountryFilter)} {appliedCountryFilter}
+            </p>
+          )}
+          {(selectedDomain && selectedDomain !== "All") && (
+            <p className="text-purple-400 text-sm mt-1 font-medium">
+                Active Domain: {selectedDomain}
             </p>
           )}
         </div>
@@ -448,7 +505,7 @@ export default function AllStartupsPage() {
                   <Button
                     key={filter}
                     variant={selectedDomain === filter ? "default" : "outline"}
-                    onClick={() => setSelectedDomain(filter)}
+                    onClick={() => handleDomainChange(filter)} // Use new handler
                     className={cn(
                       "whitespace-nowrap px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all flex-shrink-0",
                       selectedDomain === filter
@@ -516,7 +573,11 @@ export default function AllStartupsPage() {
               
               {/* Countries Button (Opens Dialog) */}
               <Button
-                onClick={() => setShowCountryDialog(true)}
+                onClick={() => {
+                  // Set dialog's initial selection to the current applied filter before opening
+                  setSelectedCountryFilter(appliedCountryFilter);
+                  setShowCountryDialog(true);
+                }}
                 className="bg-[#2A1B3D] border border-purple-500/50 text-white hover:bg-[#3A2B4D] px-5 py-3 rounded-full text-sm font-medium transition-all shadow-md"
                 size="sm"
               >
@@ -592,7 +653,8 @@ export default function AllStartupsPage() {
           <div className="py-4 space-y-4">
             <Label htmlFor="country-select" className="text-sm text-gray-300">Select a Country</Label>
             <Select
-              value={selectedCountryFilter}
+              // Ensure the dialog's select component is controlled by the temporary state
+              value={selectedCountryFilter} 
               onValueChange={setSelectedCountryFilter}
             >
               <SelectTrigger className="w-full bg-white/10 border-white/20 text-white placeholder:text-gray-400 h-11">
