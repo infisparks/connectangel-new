@@ -2,13 +2,14 @@
 
 import { ArrowRightIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Image from "next/image" // Keep Image import for future use, but won't be used for flags
 import { useRef, useState, useEffect, useCallback } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { countries } from "@/lib/countryflag" // Ensure this path is correct
+import { countries } from "@/lib/countryflag" 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import ReactCountryFlag from "react-country-flag" 
+import React from 'react'; // Import React for CSSProperties type
 
 const domainFilters = [
   "All",
@@ -45,7 +46,6 @@ export default function CountriesSection() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            // Find the original index from the data-original-index attribute
             const originalIndex = cardRefs.current.findIndex(
               (ref) => ref === entry.target && ref?.dataset.originalIndex !== undefined,
             )
@@ -58,12 +58,11 @@ export default function CountriesSection() {
       {
         root: scrollElement,
         rootMargin: "0px",
-        threshold: 0.7, // Adjust threshold for better detection
+        threshold: 0.7, 
       },
     )
 
     cardRefs.current.forEach((ref, index) => {
-      // Only observe the original set of cards to calculate the active index correctly
       if (ref && index < countries.length) observer.observe(ref)
     })
 
@@ -84,11 +83,9 @@ export default function CountriesSection() {
       scrollRef.current.scrollLeft += scrollSpeed
 
       const scrollWidth = scrollRef.current.scrollWidth
-      // We loop the content by duplicating the countries array, so the original content width is half of the total scrollWidth
       const originalContentWidth = scrollWidth / 2
 
       if (scrollRef.current.scrollLeft >= originalContentWidth) {
-        // Jump back to the start of the duplicated content seamlessly
         scrollRef.current.scrollLeft = scrollRef.current.scrollLeft - originalContentWidth
       }
     }
@@ -118,24 +115,19 @@ export default function CountriesSection() {
   }, [startAutoScroll, stopAutoScroll])
 
   // Handlers for manual interaction (Touch and Mouse)
-
-  // Mobile/Touch Handlers
   const handleTouchStart = () => {
     stopAutoScroll()
   }
 
   const handleTouchEnd = () => {
-    // Resume auto-scroll after a short delay to allow for finger lift/scroll momentum
     setTimeout(startAutoScroll, 3000) 
   }
   
-  // PC/Mouse Drag Handlers (New addition for better manual control)
   const handleMouseDown = () => {
     stopAutoScroll()
   }
   
   const handleMouseUp = () => {
-    // Resume auto-scroll after a short delay to allow for scroll momentum
     setTimeout(startAutoScroll, 3000)
   }
 
@@ -149,7 +141,7 @@ export default function CountriesSection() {
         inline: "center",
         block: "nearest",
       })
-      setTimeout(startAutoScroll, 3000) // Resume auto-scroll after navigation
+      setTimeout(startAutoScroll, 3000) 
     }
   }
   
@@ -172,10 +164,8 @@ export default function CountriesSection() {
         query += query ? `&domain=${encodeURIComponent(selectedDomain)}` : `domain=${encodeURIComponent(selectedDomain)}`;
     }
     
-    // Determine the base path
-    let path = "/allstartup"; // Default path
+    let path = "/allstartup"; 
 
-    // Append query if filters are applied
     if (query) {
         path = `${path}?${query}`;
     }
@@ -183,6 +173,22 @@ export default function CountriesSection() {
     router.push(path);
     setShowFilterDialog(false);
   };
+
+  // FIX: Using type assertion to include 'objectFit' for reliable circular cropping
+  const FLAG_STYLE_MAIN: React.CSSProperties = {
+    borderRadius: '50%', 
+    objectFit: 'cover', // This is what makes the flag fully cover the circular area
+    width: '100%', 
+    height: '100%'
+  } as React.CSSProperties;
+
+  // FIX: Using type assertion for the dropdown flags
+  const FLAG_STYLE_DROPDOWN: React.CSSProperties = {
+    borderRadius: '50%', 
+    objectFit: 'cover', // This ensures the smaller flag is cropped correctly
+    width: '20px', 
+    height: '20px'
+  } as React.CSSProperties;
 
   return (
     <section ref={sectionRef} className="relative py-8 sm:py-12 lg:py-16 bg-[#000A18] overflow-hidden">
@@ -214,28 +220,30 @@ export default function CountriesSection() {
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
               }}
-              // Interaction handlers for auto-scroll
-              onMouseEnter={stopAutoScroll} // PC: Pause on hover
-              onMouseLeave={startAutoScroll} // PC: Resume on un-hover
-              onTouchStart={handleTouchStart} // Mobile: Pause on touch start (scroll/drag)
-              onTouchEnd={handleTouchEnd} // Mobile: Resume on touch end
-              onMouseDown={handleMouseDown} // PC: Pause on mouse click down (start of drag/scroll)
-              onMouseUp={handleMouseUp} // PC: Resume on mouse click up (end of drag/scroll)
+              onMouseEnter={stopAutoScroll} 
+              onMouseLeave={startAutoScroll} 
+              onTouchStart={handleTouchStart} 
+              onTouchEnd={handleTouchEnd} 
+              onMouseDown={handleMouseDown} 
+              onMouseUp={handleMouseUp} 
             >
-              {loopedCountries.map(({ name, image }, idx) => (
+              {loopedCountries.map(({ name, code }, idx) => (
                 <div
                   key={`${name}-${idx}`}
-                  // The original content has countries.length cards. The duplicated content starts at countries.length.
                   ref={(el) => (cardRefs.current[idx] = el)}
                   data-original-index={idx % countries.length}
                   className="flex-shrink-0 flex items-center gap-2 sm:gap-3 w-[140px] sm:w-[160px] lg:w-[180px] h-[52px] sm:h-[60px] lg:h-[68px] px-3 sm:px-4 lg:px-[15px] py-2 sm:py-2.5 lg:py-[10px] rounded-lg sm:rounded-xl border border-white/20 cursor-pointer bg-white/[0.08] hover:bg-white/[0.12] hover:border-white/35 backdrop-blur-sm transition-all duration-200"
                   onClick={() => handleCountryCardClick(name)}
                 >
-                  <div className="relative w-[32px] sm:w-[36px] lg:w-[40px] h-[32px] sm:h-[36px] lg:h-[40px] rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center">
-                    {/* UPDATED: Display flag emoji directly as text */}
-                    <span className="text-2xl sm:text-3xl leading-none">
-                      {image}
-                    </span>
+                  {/* Flag Container */}
+                  <div className="relative w-[32px] sm:w-[36px] lg:w-[40px] h-[32px] sm:h-[36px] lg:h-[40px] rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center ring-1 ring-white/10">
+                    {/* Using ReactCountryFlag with type-safe style */}
+                    <ReactCountryFlag 
+                        countryCode={code.toUpperCase()} 
+                        svg
+                        style={FLAG_STYLE_MAIN}
+                        title={name}
+                    />
                   </div>
                   <span
                     className="font-medium text-white text-xs sm:text-sm lg:text-base whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0"
@@ -246,7 +254,6 @@ export default function CountriesSection() {
                 </div>
               ))}
               <style jsx>{`
-                /* Hide scrollbar for compliant browsers */
                 div[ref="scrollRef"]::-webkit-scrollbar {
                   display: none;
                 }
@@ -271,7 +278,6 @@ export default function CountriesSection() {
         </div>
       </div>
       
-      {/* Search Filter Dialog - Enhanced for Mobile */}
       <Dialog open={showFilterDialog} onOpenChange={setShowFilterDialog}>
         <DialogContent className="w-[calc(100vw-2rem)] sm:max-w-[425px] max-w-none mx-auto bg-[#0A0F1C]/95 backdrop-blur-xl text-white border border-white/20 rounded-xl sm:rounded-2xl shadow-2xl">
           <DialogHeader className="pb-2 sm:pb-4">
@@ -299,8 +305,15 @@ export default function CountriesSection() {
                       className="hover:bg-white/10 focus:bg-white/10 text-sm sm:text-base"
                     >
                       <div className="flex items-center gap-2">
-                         {/* Display flag emoji in the select item */}
-                        <span className="text-xl leading-none">{c.image}</span> 
+                         <div className="w-5 h-5 flex-shrink-0 rounded-full overflow-hidden">
+                           {/* Using ReactCountryFlag in dropdown */}
+                           <ReactCountryFlag 
+                                countryCode={c.code.toUpperCase()} 
+                                svg
+                                style={FLAG_STYLE_DROPDOWN}
+                                title={c.name}
+                            />
+                        </div>
                         {c.name}
                       </div>
                     </SelectItem>

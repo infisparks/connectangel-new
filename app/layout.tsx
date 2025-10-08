@@ -3,6 +3,7 @@ import './globals.css'
 import logo from "@/public/img/logo.png"
 import Footer from '@/components/Footer'
 import Navigation from '@/components/Navigation'
+import 'flag-icon-css/css/flag-icons.min.css';
 export const metadata: Metadata = {
   title: 'ConnectAngles - Fresh Minds, Fierce Missions',
   description: 'Submit your startup, find the right opportunities, and get discovered by the right people.',
