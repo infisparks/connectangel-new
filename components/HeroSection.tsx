@@ -232,9 +232,10 @@ export default function HeroSection() {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 w-full mobile-hero-padding">
+      {/* Adjusted vertical padding on smaller screens */}
+      <div className="relative z-10 w-full py-8 sm:py-12 lg:py-16 mobile-hero-padding"> {/* Changed py-8 lg:py-16 to py-8 sm:py-12 lg:py-16 */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 py-8 lg:py-16">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12"> {/* Removed top/bottom padding here to rely on parent */}
             
             {/* Left Column: Text and Search */}
             <div
@@ -392,11 +393,12 @@ export default function HeroSection() {
                     </Button>
                   </div>
 
-                  {/* Search Dropdown */}
+                  {/* Search Dropdown - UPDATED MAX-HEIGHT AND MARGIN */}
                   <AnimatePresence>
                     {showDropdown && (
                       <motion.div
-                        className="absolute top-full left-0 mt-3 w-full max-h-80 overflow-y-auto glass-morphism rounded-2xl shadow-2xl z-50"
+                        // Changed mt-2 to mt-1, and adjusted responsive max-heights
+                        className="absolute top-full left-0 mt-1 w-full max-h-[50vh] sm:max-h-[60vh] lg:max-h-[70vh] overflow-y-auto glass-morphism rounded-2xl shadow-2xl z-50"
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
