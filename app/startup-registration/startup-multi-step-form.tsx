@@ -1874,8 +1874,8 @@ export function StartupMultiStepForm({ userId, initialData }: StartupMultiStepFo
                 </div>
                 
                 {/* Desktop Step Indicators */}
-                <div className="hidden sm:flex justify-between items-center mb-8">
-                  <div className="absolute w-full h-0.5 bg-gray-700 top-6" />
+                <div className="hidden sm:flex justify-between items-center mb-8 relative"> 
+                <div className="absolute w-[calc(100%-24px)] h-0.5 bg-gray-700 top-6 left-3 right-3" />
                   <div 
                     className="absolute h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 top-6 transition-all duration-500"
                     style={{ width: `${((step - 1) / (steps.length - 1)) * 100}%` }}

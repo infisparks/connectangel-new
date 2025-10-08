@@ -1,3 +1,4 @@
+// components/HeroSection.tsx
 "use client";
 
 import { ArrowRightIcon, Star, TrendingUp, MapPin, Sparkles, Crown, ChevronLeft, ChevronRight } from "lucide-react";
@@ -32,6 +33,7 @@ const getAbsoluteUrl = (path: string | null | undefined): string => {
   if (!baseUrl) {
     return "https://placehold.co/320x200/1a1a1a/ffffff?text=No+Image";
   }
+  // Ensure the base URL logic is correct
   const fullUrl = `${baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl}${path.startsWith('/') ? path : '/' + path}`;
   return fullUrl;
 };
@@ -56,10 +58,32 @@ const getFlagUrl = (country: string | null) => {
     'Switzerland': 'ch',
     'Sweden': 'se',
     'Israel': 'il',
+    // Include the new countries from previous context for completeness
+    'Malaysia': 'my', 
+    'Philippines': 'ph',
+    'Qatar': 'qa',
+    'Iran': 'ir',
+    'Bahrain': 'bh',
+    'Serbia': 'rs',
+    'Mexico': 'mx',
+    'South Korea': 'kr',
+    'Saudi Arabia': 'sa',
+    'Egypt': 'eg',
+    'Nigeria': 'ng',
+    'South Africa': 'za',
+    'Argentina': 'ar',
+    'New Zealand': 'nz',
+    'Belgium': 'be',
+    'Austria': 'at',
+    'Greece': 'gr',
+    'Italy': 'it',
+    'Spain': 'es',
+    // Default fallback to 2-letter code if not in map
   };
   
   const code = countryCodeMap[country] || country.toLowerCase().substring(0, 2);
-  return `https://flagcdn.com/w20/${code}.png`;
+  // Using w20 ensures a small, fixed-size image optimized for small display
+  return `https://flagcdn.com/w20/${code.toLowerCase()}.png`;
 };
 
 // Generate star rating
@@ -344,13 +368,16 @@ export default function StartupSection() {
                           
                           <div className="flex items-center gap-2 text-gray-400 mb-3">
                             <MapPin className="w-4 h-4 text-purple-500" />
-                            <Image
-                              src={getFlagUrl(startup.country)}
-                              alt={`${startup.country} flag`}
-                              width={16}
-                              height={12}
-                              className="rounded-sm"
-                            />
+                            {/* FLAG FIX: Removed any clipping or overflow hidden from parent of Image */}
+                            <div className="flex-shrink-0 p-0.5 rounded-sm border border-gray-600/50">
+                              <Image
+                                src={getFlagUrl(startup.country)}
+                                alt={`${startup.country} flag`}
+                                width={18} // Slightly increased size for better visibility
+                                height={14} // Slightly increased size for better visibility (maintains aspect ratio)
+                                className="rounded-sm" // Minimal rounding for a clean rectangle
+                              />
+                            </div>
                             <span className="text-sm">
                               {startup.country || "Global"}
                             </span>
