@@ -13,6 +13,10 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import React from 'react';
+
+import ReactCountryFlag from "react-country-flag";
+
 
 // Define the type for the startup data, now with the incubator name.
 interface Startup {
@@ -28,6 +32,47 @@ interface Startup {
   founder_names: string[] | null; // Added founder_names
 }
 
+// Dummy list of countries (used for filtering/dialog)
+const allCountries = [
+    { name: "All Countries", code: "All" },
+    { name: "Indonesia", code: "ID" },
+    { name: "Bahrain", code: "BH" },
+    { name: "Serbia", code: "RS" },
+    { name: "India", code: "IN" },
+    { name: "United States", code: "US" },
+    { name: "Canada", code: "CA" },
+    { name: "Germany", code: "DE" },
+    { name: "Qatar", code: "QA" },
+    { name: "Iran", code: "IR" },
+    { name: "Turkey", code: "TR" },
+    { name: "United Kingdom", code: "GB" },
+    { name: "France", code: "FR" },
+    { name: "Italy", code: "IT" },
+    { name: "Spain", code: "ES" },
+    { name: "Australia", code: "AU" },
+    { name: "Mexico", code: "MX" },
+    { name: "Brazil", code: "BR" },
+    { name: "China", code: "CN" },
+    { name: "Japan", code: "JP" },
+    { name: "Russia", code: "RU" },
+    { name: "South Korea", code: "KR" },
+    { name: "Saudi Arabia", code: "SA" },
+    { name: "Egypt", code: "EG" },
+    { name: "Nigeria", code: "NG" },
+    { name: "South Africa", code: "ZA" },
+    { name: "Argentina", code: "AR" },
+    { name: "New Zealand", code: "NZ" },
+    { name: "Sweden", code: "SE" },
+    { name: "Switzerland", code: "CH" },
+    { name: "Netherlands", code: "NL" },
+    { name: "Belgium", code: "BE" },
+    { name: "Austria", code: "AT" },
+    { name: "Greece", code: "GR" },
+    { name: "Malaysia", code: "MY" }, 
+    { name: "Philippines", code: "PH" }, 
+];
+
+
 // --- Helper Functions ---
 
 const getAbsoluteUrl = (path: string | null | undefined): string => {
@@ -39,64 +84,16 @@ const getAbsoluteUrl = (path: string | null | undefined): string => {
     return "https://placehold.co/192x96/1a1a1a/ffffff?text=Image";
   }
   const fullUrl = `${baseUrl.endsWith('/') ? baseUrl.slice(0, 1) : baseUrl}${path.startsWith('/') ? path : '/' + path}`;
-  // NOTE: Assuming path is in the format /storage/v1/object/public/bucket_name/image_path
-  // If your path from Supabase is just 'bucket_name/image_path', you might need adjustment here.
   return fullUrl.includes('/storage/v1/object/public') ? fullUrl : `${baseUrl}/storage/v1/object/public${path}`;
 };
 
-const getFlagEmoji = (countryName: string | null) => {
-  const countryCodeMap: { [key: string]: string } = {
-    "Indonesia": "🇮🇩",
-    "Bahrain": "🇧🇭",
-    "Serbia": "🇷🇸",
-    "India": "🇮🇳",
-    "United States": "🇺🇸",
-    "Canada": "🇨🇦",
-    "Germany": "🇩🇪",
-    "Qatar": "🇶🇦",
-    "Iran": "🇮🇷",
-    "Turkey": "🇹🇷",
-    "United Kingdom": "🇬🇧",
-    "France": "🇫🇷",
-    "Italy": "🇮🇹",
-    "Spain": "🇪🇸",
-    "Australia": "🇦🇺",
-    "Mexico": "🇲🇽",
-    "Brazil": "🇧🇷",
-    "China": "🇨🇳",
-    "Japan": "🇯🇵",
-    "Russia": "🇷🇺",
-    "South Korea": "🇰🇷",
-    "Saudi Arabia": "🇸🇦",
-    "Egypt": "🇪🇬",
-    "Nigeria": "🇳🇬",
-    "South Africa": "🇿🇦",
-    "Argentina": "🇦🇷",
-    "New Zealand": "🇳🇿",
-    "Sweden": "🇸🇪",
-    "Switzerland": "🇨🇭",
-    "Netherlands": "🇳🇱",
-    "Belgium": "🇧🇪",
-    "Austria": "🇦🇹",
-    "Greece": "🇬🇷",
-    "Malaysia": "🇲🇾", // Added Malaysia for your example
-    "Philippines": "🇵🇭", // Added Philippines for your example
-  };
-  return countryName ? countryCodeMap[countryName] || "🌍" : "🌍";
+// New function to get 2-letter country code (uppercase)
+const getCountryCode = (countryName: string | null): string => {
+  if (!countryName) return 'US'; // Default to US or a generic if unknown
+  const country = allCountries.find(c => c.name === countryName);
+  return country?.code || 'US';
 };
 
-// Dummy list of countries for the filter dialog
-const allCountries = [
-    { name: "All Countries", code: "All" },
-    { name: "Bahrain", code: "Bahrain" },
-    { name: "Turkey", code: "Turkey" },
-    { name: "Qatar", code: "Qatar" },
-    { name: "Iran", code: "Iran" },
-    { name: "India", code: "India" },
-    { name: "United States", code: "United States" },
-    { name: "Malaysia", code: "Malaysia" },
-    { name: "Philippines", code: "Philippines" },
-];
 
 const domainFilters = [
   "All",
@@ -111,11 +108,14 @@ const domainFilters = [
 
 const sortFilters = ["Startups", "Founder", "Countries"];
 
+
 // --- StartupCard Component ---
 
 const StartupCard = ({ startup, viewMode = "grid", activeSort }: { startup: Startup; viewMode?: "grid" | "list"; activeSort: string }) => {
   const thumbnailUrl = getAbsoluteUrl(startup.thumbnail_url);
   const primaryFounder = startup.founder_names?.[0] ? startup.founder_names[0].split('(')[0].trim() : 'Unknown Founder';
+  const countryCode = getCountryCode(startup.country);
+
 
   // --- Founder View Mode ---
   if (activeSort === "Founder") {
@@ -136,14 +136,23 @@ const StartupCard = ({ startup, viewMode = "grid", activeSort }: { startup: Star
     );
   }
   
-  // --- Country View Mode ---
+  // --- Country View Mode (FIXED FLAG TO FULL RECTANGLE) ---
   if (activeSort === "Countries") {
-    const flagEmoji = getFlagEmoji(startup.country);
     return (
       <Link href={`/startup/${startup.id}`}>
         <div className="group w-full bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4 flex flex-col items-center justify-center h-56 transition-all duration-300 ease-in-out hover:scale-[1.02] hover:border-purple-500/50 hover:shadow-xl hover:shadow-purple-500/20 cursor-pointer">
           
-          <div className="text-5xl mb-3">{flagEmoji}</div> {/* Big flag emoji */}
+          {/* Container for rectangular flag: adjust size as needed, removed overflow-hidden */}
+          {/* Use specific W-20 and H-15 for a typical 4:3 aspect ratio, or adjust as desired */}
+          <div className="flex items-center justify-center mb-3 p-1 rounded-md border border-white/20">
+            <ReactCountryFlag 
+                countryCode={countryCode} 
+                svg
+                // Explicitly set width and height for a typical flag aspect ratio
+                style={{ width: '80px', height: '60px' }} // e.g., 4:3 aspect ratio
+                title={startup.country || 'Global'}
+            />
+          </div>
           
           <h3 className="text-white font-semibold text-xl truncate mb-1 text-center">
             {startup.country || 'Global'}
@@ -188,7 +197,15 @@ const StartupCard = ({ startup, viewMode = "grid", activeSort }: { startup: Star
               {startup.one_sentence_description || "One sentence description not available."}
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs sm:text-sm flex-shrink-0">{getFlagEmoji(startup.country)}</span>
+              {/* FIX: Flag for List View - use appropriate width/height for full display */}
+              <div className="flex-shrink-0 p-0.5 rounded-sm border border-white/10"> {/* Added padding/border for clarity */}
+                <ReactCountryFlag 
+                    countryCode={countryCode} 
+                    svg
+                    style={{ width: '28px', height: '21px' }} // Adjusted for a small uncropped flag (4:3)
+                    title={startup.country || 'Global'}
+                />
+              </div>
               <span className="text-gray-400 text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] flex-shrink-0"> 
                 {startup.country || "Global"}
               </span>
@@ -219,7 +236,7 @@ const StartupCard = ({ startup, viewMode = "grid", activeSort }: { startup: Star
             src={thumbnailUrl}
             alt={startup.startup_name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="rounded-lg object-cover transition-transform duration-300 group-hover:scale-105"
           />
           {startup.is_incubation && (
             <span className="absolute top-3 left-3 bg-purple-600/90 backdrop-blur-sm text-white px-2 py-1 rounded-full text-xs font-medium">
@@ -235,7 +252,15 @@ const StartupCard = ({ startup, viewMode = "grid", activeSort }: { startup: Star
             {startup.one_sentence_description || "One sentence description not available."}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm flex-shrink-0">{getFlagEmoji(startup.country)}</span>
+            {/* FIX: Flag for Grid View - use appropriate width/height for full display */}
+            <div className="flex-shrink-0 p-0.5 rounded-sm border border-white/10">
+              <ReactCountryFlag 
+                  countryCode={countryCode} 
+                  svg
+                  style={{ width: '28px', height: '21px' }} // Adjusted for a small uncropped flag (4:3)
+                  title={startup.country || 'Global'}
+              />
+            </div>
             <span className="text-gray-400 text-xs sm:text-sm truncate max-w-[100px] flex-shrink-0">
               {startup.country || "Global"}
             </span>
@@ -442,7 +467,15 @@ export default function AllStartupsPage() {
                 {featuredStartup.name}
               </h2>
               <div className="flex items-center gap-2">
-                <span className="text-base sm:text-lg">{getFlagEmoji(featuredStartup.country)}</span>
+                {/* FIX: Rectangular Flag in Hero - no overflow hidden, explicitly sized div */}
+                <div className="p-0.5 rounded-sm border border-white/10"> 
+                  <ReactCountryFlag 
+                      countryCode={getCountryCode(featuredStartup.country)} 
+                      svg
+                      style={{ width: '32px', height: '24px' }} // Approx 4:3 aspect
+                      title={featuredStartup.country}
+                  />
+                </div>
                 <span className="text-base sm:text-lg text-gray-200">{featuredStartup.country}</span>
               </div>
             </div>
@@ -470,8 +503,18 @@ export default function AllStartupsPage() {
             Explore innovative startups from around the world
           </p>
           {(appliedCountryFilter && appliedCountryFilter !== "All") && (
-            <p className="text-purple-400 text-sm mt-1 font-medium">
-                Active Country: {getFlagEmoji(appliedCountryFilter)} {appliedCountryFilter}
+            <p className="text-purple-400 text-sm mt-1 font-medium flex items-center gap-2">
+                Active Country: 
+                {/* FIX: Rectangular Flag for Active Filter - no overflow hidden, explicitly sized div */}
+                <span className="p-0.5 rounded-sm border border-white/10">
+                    <ReactCountryFlag 
+                        countryCode={getCountryCode(appliedCountryFilter)} 
+                        svg
+                        style={{ width: '24px', height: '18px' }} // Smaller for inline text
+                        title={appliedCountryFilter}
+                    />
+                </span>
+                {appliedCountryFilter}
             </p>
           )}
           {(selectedDomain && selectedDomain !== "All") && (
@@ -644,7 +687,7 @@ export default function AllStartupsPage() {
         )}
       </section>
       
-      {/* --- Country Filter Dialog --- */}
+      {/* --- Country Filter Dialog (FIXED FLAGS) --- */}
       <Dialog open={showCountryDialog} onOpenChange={setShowCountryDialog}>
         <DialogContent className="sm:max-w-[425px] bg-[#1B0E2B] border-purple-500/50 text-white">
           <DialogHeader>
@@ -664,10 +707,26 @@ export default function AllStartupsPage() {
                 {allCountries.map((c) => (
                   <SelectItem 
                     key={c.code} 
-                    value={c.code}
+                    value={c.name} // Changed value to c.name to align with appliedCountryFilter state
                     className="hover:bg-purple-600/20 focus:bg-purple-600/20"
                   >
-                    {c.name} {getFlagEmoji(c.name)}
+                    <div className="flex items-center gap-2">
+                       {/* FIX: Rectangular Flag in Dropdown - no overflow hidden, explicitly sized div */}
+                      <div className="p-0.5 rounded-sm border border-white/10 flex-shrink-0">
+                        {c.code !== 'All' ? (
+                          <ReactCountryFlag 
+                              countryCode={c.code} 
+                              svg
+                              style={{ width: '24px', height: '18px' }} // Adjusted for small dropdown flag
+                              title={c.name}
+                          />
+                        ) : (
+                           // Placeholder for "All Countries"
+                          <span className="text-lg leading-none">🌍</span>
+                        )}
+                      </div>
+                      {c.name}
+                    </div>
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -215,7 +215,8 @@ export default function HeroSection() {
 
         @media (max-width: 768px) {
           .mobile-hero-padding {
-            padding-top: max(env(safe-area-inset-top), 80px);
+            /* Reduced mobile padding for vertical space */
+            padding-top: max(env(safe-area-inset-top), 40px); 
             padding-bottom: env(safe-area-inset-bottom);
           }
         }
@@ -232,20 +233,23 @@ export default function HeroSection() {
       </div>
 
       {/* Main Content */}
-      {/* Adjusted vertical padding on smaller screens */}
-      <div className="relative z-10 w-full py-8 sm:py-12 lg:py-16 mobile-hero-padding"> {/* Changed py-8 lg:py-16 to py-8 sm:py-12 lg:py-16 */}
+      {/* Reduced py-8 sm:py-12 to py-6 sm:py-8 to compress vertical space */}
+      <div className="relative z-10 w-full py-6 sm:py-8 lg:py-16 mobile-hero-padding"> 
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12"> {/* Removed top/bottom padding here to rely on parent */}
+          {/* Reduced gap from lg:gap-12 to lg:gap-8 for smaller screens */}
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-8"> 
             
             {/* Left Column: Text and Search */}
+            {/* Reduced space-y-6 to space-y-4 for smaller screens */}
             <div
-              className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:w-[60%] space-y-6 lg:space-y-8"
+              className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:w-[60%] space-y-4 lg:space-y-8"
             >
               {/* Main Heading */}
-              <div className="space-y-3 lg:space-y-4">
-                <div className="flex items-center justify-center lg:justify-start mb-4">
-                  <Sparkles className="w-6 h-6 sm:w-8 sm:h-8 text-purple-400 mr-2 animate-pulse" />
-                  <span className="text-purple-300 text-sm sm:text-base font-medium tracking-wider uppercase">
+              {/* Reduced space-y-3 to space-y-2 */}
+              <div className="space-y-2 lg:space-y-4">
+                <div className="flex items-center justify-center lg:justify-start mb-2">
+                  <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 mr-2 animate-pulse" />
+                  <span className="text-purple-300 text-xs sm:text-sm font-medium tracking-wider uppercase">
                     Discover Tomorrow
                   </span>
                 </div>
@@ -254,7 +258,8 @@ export default function HeroSection() {
                   className="font-bold text-white leading-tight"
                   style={{
                     fontFamily: "Poppins, sans-serif",
-                    fontSize: "clamp(1.75rem, 8vw, 4rem)",
+                    // FIX: Adjusted clamp values for smaller max font size and better auto-scaling
+                    fontSize: "clamp(1.5rem, 6vw, 3.5rem)", 
                     lineHeight: "1.1"
                   }}
                 >
@@ -281,7 +286,8 @@ export default function HeroSection() {
                   className="font-light text-gray-200 leading-relaxed max-w-2xl mx-auto lg:mx-0"
                   style={{
                     fontFamily: "Poppins, sans-serif",
-                    fontSize: "clamp(1rem, 3vw, 1.25rem)"
+                    // FIX: Reduced clamp range for smaller subheading text
+                    fontSize: "clamp(0.9rem, 2.5vw, 1.15rem)" 
                   }}
                 >
                   Stream stories, join events, invest in ideas – be part of the startup movement that's shaping the future.
@@ -293,15 +299,15 @@ export default function HeroSection() {
                 className="w-full max-w-4xl"
               >
                 {/* Mobile Category Selector */}
-                <div className="block sm:hidden mb-6">
+                <div className="block sm:hidden mb-4"> {/* Reduced mb-6 to mb-4 */}
                   <button
-                    className="glass-morphism w-full p-4 rounded-2xl flex items-center justify-between text-white transition-all"
+                    className="glass-morphism w-full p-3 rounded-xl flex items-center justify-between text-white transition-all" // Reduced padding/rounded
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   >
-                    <span className="font-medium">
+                    <span className="font-medium text-sm"> {/* Reduced font size */}
                       {categoryButtons.find(btn => btn.active)?.label || 'Select Category'}
                     </span>
-                    <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${
+                    <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${ // Reduced icon size
                       isMobileMenuOpen ? 'rotate-180' : ''
                     }`} />
                   </button>
@@ -309,7 +315,7 @@ export default function HeroSection() {
                   <AnimatePresence>
                     {isMobileMenuOpen && (
                       <motion.div
-                        className="glass-morphism mt-2 rounded-2xl overflow-hidden"
+                        className="glass-morphism mt-1 rounded-xl overflow-hidden" // Reduced margin/rounded
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
@@ -318,7 +324,7 @@ export default function HeroSection() {
                         {categoryButtons.map((button) => (
                           <button
                             key={button.id}
-                            className={`w-full p-4 text-left border-b border-white/10 last:border-b-0 transition-colors duration-200 ${
+                            className={`w-full p-3 text-left border-b border-white/10 last:border-b-0 transition-colors duration-200 text-sm ${ // Reduced padding/font
                               button.active ? 'bg-purple-600/30 text-purple-300' : 'text-white hover:bg-white/10'
                             }`}
                             onClick={() => {
@@ -339,13 +345,13 @@ export default function HeroSection() {
                 </div>
 
                 {/* Desktop Category Buttons */}
-                <div className="hidden sm:flex flex-wrap justify-center lg:justify-start gap-3 mb-6">
+                <div className="hidden sm:flex flex-wrap justify-center lg:justify-start gap-2 mb-4"> {/* Reduced gap and mb-6 to mb-4 */}
                   {categoryButtons.map((button) => (
                     <div
                       key={button.id}
                     >
                       <Button
-                        className={`px-6 py-3 rounded-full text-sm sm:text-base font-medium transition-all duration-300 transform hover:scale-105 ${
+                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 transform hover:scale-105 ${ // Reduced padding/size
                           button.active
                             ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg pulse-glow'
                             : 'glass-morphism text-white hover:bg-white/20'
@@ -370,22 +376,22 @@ export default function HeroSection() {
                   className="relative w-full"
                   ref={dropdownRef}
                 >
-                  <div className="flex gap-3">
+                  <div className="flex gap-2"> {/* Reduced gap-3 to gap-2 */}
                     <div className="relative flex-1">
                       <Input
                         type="text"
                         placeholder={`Search for ${activeSearch || 'startups'}...`}
-                        className="glass-morphism h-14 pl-14 pr-4 rounded-2xl text-base text-white placeholder-gray-300 border border-purple-500/30 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 shadow-lg"
+                        className="glass-morphism h-12 pl-12 pr-3 rounded-xl text-sm text-white placeholder-gray-300 border border-purple-500/30 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300 shadow-lg" // Reduced height/padding/rounded/font
                         style={{ fontFamily: "Poppins, sans-serif" }}
                         value={searchTerm}
                         onChange={handleSearchChange}
                         onFocus={() => searchTerm.length >= 2 && setShowDropdown(true)}
                       />
-                      <SearchIcon className="absolute left-5 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-400" />
+                      <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-purple-400" /> {/* Reduced left/size */}
                     </div>
                     
                     <Button
-                      className="h-14 px-8 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-2xl text-base font-medium text-white transition-all duration-300 transform hover:scale-105 shadow-lg"
+                      className="h-12 px-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl text-sm font-medium text-white transition-all duration-300 transform hover:scale-105 shadow-lg" // Reduced height/padding/rounded/font
                       style={{ fontFamily: "Poppins, sans-serif" }}
                       onClick={handleSearchSubmit}
                     >
@@ -393,12 +399,11 @@ export default function HeroSection() {
                     </Button>
                   </div>
 
-                  {/* Search Dropdown - UPDATED MAX-HEIGHT AND MARGIN */}
+                  {/* Search Dropdown */}
                   <AnimatePresence>
                     {showDropdown && (
                       <motion.div
-                        // Changed mt-2 to mt-1, and adjusted responsive max-heights
-                        className="absolute top-full left-0 mt-1 w-full max-h-[50vh] sm:max-h-[60vh] lg:max-h-[70vh] overflow-y-auto glass-morphism rounded-2xl shadow-2xl z-50"
+                        className="absolute top-full left-0 mt-1 w-full max-h-[50vh] sm:max-h-[60vh] lg:max-h-[70vh] overflow-y-auto glass-morphism rounded-xl shadow-2xl z-50" // Reduced margin/rounded
                         initial={{ opacity: 0, y: -10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -408,17 +413,17 @@ export default function HeroSection() {
                           searchResults.map((item, index) => (
                             <div
                               key={item.id}
-                              className="flex items-center gap-4 px-6 py-4 cursor-pointer hover:bg-white/10 transition-all duration-200 border-b border-white/5 last:border-b-0"
+                              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/10 transition-all duration-200 border-b border-white/5 last:border-b-0" // Reduced padding/gap
                               onClick={() => handleSelectResult(item.id)}
                             >
                               {item.logo_url && (
                                 <img
                                   src={item.logo_url}
                                   alt={`Logo`}
-                                  className="w-10 h-10 rounded-full object-cover border border-purple-500/30"
+                                  className="w-8 h-8 rounded-full object-cover border border-purple-500/30" // Reduced size
                                 />
                               )}
-                              <span className="text-white font-medium">
+                              <span className="text-white font-medium text-sm"> {/* Reduced font size */}
                                 {'startup_name' in item
                                   ? item.startup_name
                                   : 'incubator_accelerator_name' in item
@@ -428,8 +433,8 @@ export default function HeroSection() {
                             </div>
                           ))
                         ) : (
-                          <div className="px-6 py-8 text-gray-400 text-center">
-                            <SearchIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                          <div className="px-4 py-6 text-gray-400 text-center text-sm"> {/* Reduced padding/font */}
+                            <SearchIcon className="w-8 h-8 mx-auto mb-2 opacity-50" /> {/* Reduced size/margin */}
                             <p>No {activeSearch || 'startups'} found.</p>
                           </div>
                         )}
@@ -446,7 +451,7 @@ export default function HeroSection() {
             >
               {/* Heading */}
               <h2
-                className="text-gray-100 text-lg lg:text-xl font-semibold mb-6 text-center leading-tight"
+                className="text-gray-100 text-base lg:text-lg font-semibold mb-4 text-center leading-tight" // Reduced font size/margin
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
                 The Global Symphony of{" "}
@@ -455,9 +460,9 @@ export default function HeroSection() {
 
               {/* Dynamic Graph Container */}
               <div
-                className="relative group w-full max-w-[590px] h-auto aspect-[590/390] rounded-3xl shadow-2xl border border-purple-500/30 object-cover transition-all duration-500 p-4 glass-morphism"
+                className="relative group w-full max-w-[590px] h-auto aspect-[590/390] rounded-2xl shadow-xl border border-purple-500/30 object-cover transition-all duration-500 p-3 glass-morphism" // Reduced rounded/shadow/padding
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600/20 to-pink-600/20 rounded-2xl blur-lg group-hover:blur-xl transition-all duration-300" />
                 
                 {/* The dynamically loaded chart component */}
                 <DynamicGraph currentGraphIndex={currentGraphIndex} />
@@ -465,13 +470,13 @@ export default function HeroSection() {
               </div>
 
               {/* Dot Slider */}
-              <div className="flex justify-center mt-8 space-x-3">
+              <div className="flex justify-center mt-4 space-x-2"> {/* Reduced margin/space-x */}
                 {graphTitles.map((_, index) => (
                   <button
                     key={index}
-                    className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${ // Reduced size
                       currentGraphIndex === index
-                        ? "bg-gradient-to-r from-purple-600 to-pink-600 scale-125 shadow-lg"
+                        ? "bg-gradient-to-r from-purple-600 to-pink-600 scale-125 shadow-sm"
                         : "bg-gray-600 hover:bg-gray-400 hover:scale-110"
                     }`}
                     onClick={() => setCurrentGraphIndex(index)}
