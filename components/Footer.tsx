@@ -34,7 +34,7 @@ const legalLinks = [
 ]
 
 const contactInfo = [
-  { icon: Mail, text: "hello@connectangelsott.com", href: "mailto:hello@connectangelsott.com" },
+  { icon: Mail, text: "info@connectangels.com", href: "mailto:info@connectangels.com" },
   { icon: Phone, text: "+91 84220 60195", href: "tel:+918422060195" },
   { icon: MapPin, text: "Mumbai, Maharashtra, India", href: "#location" },
 ]
